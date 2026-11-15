@@ -7,3 +7,4 @@ public/data
 .firebase
 .env
 .env.*
+*.tsbuildinfo
