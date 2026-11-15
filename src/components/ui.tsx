@@ -2,7 +2,7 @@ import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useFighters } from '../lib/data';
 import { initials } from '../lib/format';
 
-type IconName = 'home' | 'users' | 'swords' | 'calendar' | 'chart' | 'x' | 'up' | 'down' | 'chev' | 'info' | 'trophy' | 'belt' | 'more';
+type IconName = 'home' | 'users' | 'swords' | 'calendar' | 'chart' | 'x' | 'up' | 'down' | 'chev' | 'info' | 'trophy' | 'belt' | 'more' | 'search';
 
 export function Icon({ name, className }: { name: IconName; className?: string }) {
   const p = { fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
@@ -19,6 +19,7 @@ export function Icon({ name, className }: { name: IconName; className?: string }
     info: <><circle {...p} cx="12" cy="12" r="9" /><path {...p} d="M12 11v6M12 7.5v.5" /></>,
     trophy: <path {...p} d="M8 4h8v5a4 4 0 0 1-8 0V4ZM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8M9.5 17h5" />,
     belt: <><rect {...p} x="2" y="9" width="20" height="6" rx="1.5" /><rect {...p} x="8.5" y="7" width="7" height="10" rx="2" /><circle {...p} cx="12" cy="12" r="1.6" /></>,
+    search: <><circle {...p} cx="11" cy="11" r="6.5" /><path {...p} d="m16 16 4.5 4.5" /></>,
     more: <><circle cx="5" cy="12" r="1.8" fill="currentColor" /><circle cx="12" cy="12" r="1.8" fill="currentColor" /><circle cx="19" cy="12" r="1.8" fill="currentColor" /></>,
   };
   return (
@@ -30,9 +31,10 @@ export function Icon({ name, className }: { name: IconName; className?: string }
 
 export function Logo() {
   return (
-    <svg viewBox="0 0 32 32" aria-hidden="true">
-      <polygon points="10,2 22,2 30,10 30,22 22,30 10,30 2,22 2,10" fill="none" stroke="#ed1c24" strokeWidth="2.5" />
-      <polygon points="12.5,8 19.5,8 24,12.5 24,19.5 19.5,24 12.5,24 8,19.5 8,12.5" fill="#ed1c24" opacity="0.9" />
+    <svg viewBox="0 0 64 64" aria-hidden="true">
+      <polygon points="57.9,42.7 42.7,57.9 21.3,57.9 6.1,42.7 6.1,21.3 21.3,6.1 42.7,6.1 57.9,21.3" fill="none" stroke="#ed1c24" strokeWidth="4" strokeLinejoin="round" />
+      <path d="M16.6 25.5V35a3.4 3.4 0 0 0 6.8 0V25.5M28.6 40V25.5H35.4M28.6 32.6H34.2M47.2 29c-1.3-2.4-3.2-3.5-5.4-3.5-3 0-4.8 2.2-4.8 5.4v4.2c0 3.2 1.8 5.4 4.8 5.4 2.2 0 4.1-1.1 5.4-3.5" fill="none" stroke="#fff" strokeWidth="3.3" />
+      <rect x="19" y="45.2" width="26" height="3" rx="1.5" fill="#ed1c24" />
     </svg>
   );
 }

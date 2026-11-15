@@ -116,3 +116,31 @@ a:hover > .chip, .fighter-card:hover .chip { transform: translateY(-1px); }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: 0.001ms !important; animation-delay: 0ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
 }
+
+/* ---------- lupa e busca rápida ---------- */
+.search-btn { all: unset; box-sizing: border-box; display: grid; place-items: center; width: 38px; height: 38px; border-radius: 50%; color: var(--text-2); cursor: pointer; margin-left: auto; transition: color 0.2s, background-color 0.25s, transform 0.3s var(--ease-spring), box-shadow 0.25s; }
+.search-btn svg { width: 20px; height: 20px; }
+.search-btn:hover { color: #fff; background: #1c1c1c; transform: scale(1.1) rotate(-8deg); box-shadow: 0 0 0 1px #2e2e2e; }
+.search-btn:active { transform: scale(0.92); }
+.search-btn:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.search-btn + .header-cta { margin-left: 0; }
+@media (min-width: 900px) { .search-btn { margin-left: 0; } }
+
+.qs-wrap { position: fixed; inset: 0; z-index: 80; display: flex; justify-content: center; align-items: flex-start; padding: 12vh 16px 16px; }
+.qs-backdrop { position: absolute; inset: 0; background: rgba(0, 0, 0, 0.68); backdrop-filter: blur(4px); animation: fadeIn 0.2s ease both; }
+.qs-panel { position: relative; width: 100%; max-width: 620px; background: #121214; border: 1px solid #2a2a2e; border-radius: 16px; box-shadow: 0 30px 80px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(237, 28, 36, 0.12); overflow: hidden; animation: popIn 0.25s var(--ease-out) both; transform-origin: top center; }
+.qs-input { display: flex; align-items: center; gap: 12px; padding: 0 16px; border-bottom: 1px solid #232326; }
+.qs-input svg { width: 20px; height: 20px; color: var(--brand); flex: none; }
+.qs-input input { flex: 1; min-width: 0; height: 56px; background: none; border: 0; outline: 0; font-size: 17px; color: var(--text); }
+.qs-input kbd { font: 700 11px var(--font-mono); color: var(--muted); border: 1px solid #333; border-radius: 6px; padding: 3px 7px; }
+.qs-hint { padding: 10px 18px 2px; font-size: 11px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.qs-list { padding: 8px; max-height: min(60vh, 460px); overflow-y: auto; }
+.qs-item { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 12px; width: 100%; padding: 9px 10px; border-radius: 10px; cursor: pointer; transition: background-color 0.15s, transform 0.2s var(--ease-out); }
+.qs-item[aria-selected='true'] { background: #1f1f23; transform: translateX(3px); box-shadow: inset 3px 0 0 var(--brand); }
+.qs-main { flex: 1; min-width: 0; }
+.qs-main .n { font-weight: 800; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.qs-main .n em { font-style: normal; font-weight: 600; color: var(--muted); font-size: 12.5px; }
+.qs-main .s { font-size: 12.5px; color: var(--text-2); margin-top: 2px; }
+.qs-empty { padding: 28px 12px; text-align: center; color: var(--text-2); }
+@media (max-width: 560px) { .qs-item .chip { display: none; } .qs-wrap { padding-top: 8vh; } }
+.logo svg { width: 34px; height: 34px; }

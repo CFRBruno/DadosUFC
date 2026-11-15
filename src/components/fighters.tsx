@@ -1,10 +1,11 @@
-import { useMemo, useRef, useState } from 'react';
-import { Link } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { DIVISION_BY_KEY } from '../shared/divisions';
 import type { FightEntry, FighterSummary } from '../shared/types';
 import { S } from '../shared/types';
 import { divisionName, fmtDate, fmtPct, fmtTime, methodText, recordStr } from '../lib/format';
 import { Avatar, Flag, Icon, ResultBadge } from './ui';
+import { useFighters } from '../lib/data';
 
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
@@ -183,6 +184,62 @@ export function FightRow({ f, fighterSlug, fighterName }: { f: FightEntry; fight
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+/** Busca rápida (lupa do cabeçalho): abre com Ctrl/⌘+K ou "/", navega com ↑ ↓ e Enter. */
+export function QuickSearch({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const { data } = useFighters();
+  const nav = useNavigate();
+  const [q, setQ] = useState('');
+  const [idx, setIdx] = useState(0);
+  const input = useRef<HTMLInputElement>(null);
+  useEffect(() => {
+    if (open) { setQ(''); setIdx(0); setTimeout(() => input.current?.focus(), 30); }
+  }, [open]);
+  const results = useMemo(() => {
+    if (!data) return [];
+    return (q.trim() ? searchFighters(data, q) : [...data].sort((a, b) => b.elo - a.elo)).slice(0, 8);
+  }, [data, q]);
+  if (!open) return null;
+  const go = (f: FighterSummary) => { onClose(); nav(`/lutador/${f.slug}`); };
+  return (
+    <div className="qs-wrap" role="dialog" aria-modal="true" aria-label="Buscar lutador">
+      <div className="qs-backdrop" onClick={onClose} />
+      <div className="qs-panel">
+        <div className="qs-input">
+          <Icon name="search" />
+          <input
+            ref={input}
+            value={q}
+            placeholder="Buscar lutador por nome ou apelido…"
+            aria-label="Buscar lutador"
+            onChange={(e) => { setQ(e.target.value); setIdx(0); }}
+            onKeyDown={(e) => {
+              if (e.key === 'ArrowDown') { e.preventDefault(); setIdx((i) => Math.min(results.length - 1, i + 1)); }
+              else if (e.key === 'ArrowUp') { e.preventDefault(); setIdx((i) => Math.max(0, i - 1)); }
+              else if (e.key === 'Enter' && results[idx]) { e.preventDefault(); go(results[idx]); }
+              else if (e.key === 'Escape') onClose();
+            }}
+          />
+          <kbd>Esc</kbd>
+        </div>
+        {!q.trim() && <div className="qs-hint">Maiores ratings Elo</div>}
+        <div className="qs-list" role="listbox">
+          {results.map((f, i) => (
+            <button key={f.id} role="option" aria-selected={i === idx} className="qs-item" onMouseEnter={() => setIdx(i)} onClick={() => go(f)}>
+              <Avatar name={f.name} id={f.id} size="sm" />
+              <div className="qs-main">
+                <div className="n"><Flag src={f.flag} country={f.country} /> {f.name}{f.nickname ? <em> "{f.nickname}"</em> : null}</div>
+                <div className="s">{recordStr(f.record)} · {divisionName(f.division)} · Elo {f.elo}</div>
+              </div>
+              {f.official && <OfficialChip o={f.official} />}
+            </button>
+          ))}
+          {data && results.length === 0 && <div className="qs-empty">Nenhum lutador encontrado para "{q}".</div>}
+        </div>
+      </div>
     </div>
   );
 }

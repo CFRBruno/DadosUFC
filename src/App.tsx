@@ -1,5 +1,6 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom';
+import { QuickSearch } from './components/fighters';
 import { Icon, Logo } from './components/ui';
 import { useMeta } from './lib/data';
 import { fmtDate } from './lib/format';
@@ -36,6 +37,18 @@ export default function App() {
     setMoreOpen(false);
   }, [pathname]);
   const meta = useMeta().data;
+
+  // busca rápida: lupa, Ctrl/⌘+K ou "/"
+  const [searchOpen, setSearchOpen] = useState(false);
+  useEffect(() => {
+    const on = (e: KeyboardEvent) => {
+      const t = e.target as HTMLElement | null;
+      const typing = !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.tagName === 'SELECT' || t.isContentEditable);
+      if ((e.key === 'k' && (e.ctrlKey || e.metaKey)) || (e.key === '/' && !typing)) { e.preventDefault(); setSearchOpen(true); }
+    };
+    window.addEventListener('keydown', on);
+    return () => window.removeEventListener('keydown', on);
+  }, []);
 
   // indicador deslizante sob a aba ativa
   const navRef = useRef<HTMLElement>(null);
@@ -74,9 +87,13 @@ export default function App() {
             ))}
             {ind && <span className="nav-ind" style={{ transform: `translateX(${ind.x}px)`, width: ind.w }} aria-hidden="true" />}
           </nav>
+          <button className="search-btn" onClick={() => setSearchOpen(true)} aria-label="Buscar lutador" title="Buscar lutador (Ctrl+K ou /)">
+            <Icon name="search" />
+          </button>
           <Link to="/comparar" className="btn btn-primary btn-sm header-cta">Comparar</Link>
         </div>
       </header>
+      <QuickSearch open={searchOpen} onClose={() => setSearchOpen(false)} />
       <main key={pathname.split('/').slice(0, 2).join('/')} className="page-enter">
         <Routes>
           <Route path="/" element={<Home />} />
