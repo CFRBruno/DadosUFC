@@ -133,6 +133,9 @@ export interface FighterSummary {
   /** foto (Wikimedia Commons) e página do arquivo, para crédito/licença */
   photo: string | null;
   photoPage: string | null;
+  /** país (pt-BR) e bandeira, via ESPN */
+  country: string;
+  flag: string;
 }
 
 export interface FighterDetail extends FighterSummary {

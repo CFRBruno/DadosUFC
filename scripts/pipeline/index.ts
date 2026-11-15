@@ -15,6 +15,7 @@ import { fetchMirror, fetchUpcoming, rawExists, RAW_DIR, type ScrapedEvent } fro
 import { classifyStyle, computePercentiles, computeRates, recentStreak, strengthsWeaknesses } from './insights';
 import { loadDataset, type RawFight } from './load';
 import { fetchWikiPhotos, photoMatcher } from './photos';
+import { checkHeadshots, countryPt, espnHeadshot, espnPage, espnUpcoming, fetchEspn, matchEspnIds } from './espn';
 
 /** Lutadores que lutaram no UFC a partir desta data entram no site. */
 const SCOPE_FROM = '2026-01-01';
@@ -51,10 +52,19 @@ async function main() {
     upcoming = JSON.parse(await readFile(path.join(RAW_DIR, 'upcoming.json'), 'utf8'));
     upcomingSource = 'UFCStats (cache)';
   }
+  console.log('• Buscando calendário, fotos e países na ESPN…');
+  const espn = await fetchEspn(offline, Number(SCOPE_FROM.slice(0, 4)));
+  if (!upcoming.length) {
+    upcoming = espnUpcoming(espn, today);
+    if (upcoming.length) upcomingSource = 'ESPN';
+  }
+  const pairKey = (a: string, b: string) => [norm(a), norm(b)].sort().join('|');
+  const knownPairs = new Set(upcoming.flatMap((u) => u.bouts.map((b) => pairKey(b.a.name, b.b.name))));
   try {
     const manual: ScrapedEvent[] = JSON.parse(await readFile('data/manual/upcoming.json', 'utf8')).events ?? [];
     for (const ev of manual) {
-      if (!upcoming.some((u) => norm(u.name) === norm(ev.name))) {
+      const dup = upcoming.some((u) => norm(u.name) === norm(ev.name)) || ev.bouts.some((b) => knownPairs.has(pairKey(b.a.name, b.b.name)));
+      if (!dup) {
         upcoming.push(ev);
         upcomingSource = upcomingSource === 'nenhuma' ? 'manual' : upcomingSource + ' + manual';
       }
@@ -100,14 +110,25 @@ async function main() {
   for (const f of fights) for (const s of f.fighters) idByName.set(norm(s.name), s.id);
   for (const b of bios.values()) if (!idByName.has(norm(b.name))) idByName.set(norm(b.name), b.id);
 
+  // ESPN ↔ nossos ids (lutadores ativos desde 2024)
+  const fightsByDate = new Map<string, [string, string][]>();
+  for (const f of fights) {
+    if (!fightsByDate.has(f.date)) fightsByDate.set(f.date, []);
+    fightsByDate.get(f.date)!.push([f.fighters[0].id, f.fighters[1].id]);
+  }
+  const active = [...fightsBy.entries()].filter(([, fs]) => fs[fs.length - 1].date >= '2024-01-01').map(([id]) => ({ id, name: bios.get(id)?.name ?? id }));
+  const espnOf = matchEspnIds(espn, active, (d) => fightsByDate.get(d) ?? []);
+  const ourOfEspn = new Map([...espnOf.entries()].map(([k, v]) => [v, k]));
+
   const scope = new Set<string>();
   for (const f of fights) if (f.date >= SCOPE_FROM) f.fighters.forEach((s) => scope.add(s.id));
 
   // próximos eventos
   const upcomingEvents: EventInfo[] = [];
   const nextBout = new Map<string, UpcomingBout>();
-  const resolveUp = (p: { name: string; ufcstatsId: string | null }) => {
+  const resolveUp = (p: { name: string; ufcstatsId: string | null; espnId?: string }) => {
     if (p.ufcstatsId && (fightsBy.has(p.ufcstatsId) || bios.has(p.ufcstatsId))) return p.ufcstatsId;
+    if (p.espnId && ourOfEspn.has(p.espnId)) return ourOfEspn.get(p.espnId)!;
     return idByName.get(norm(p.name)) ?? (p.ufcstatsId || 'x' + norm(p.name));
   };
   const debutants = new Map<string, string>();
@@ -118,13 +139,15 @@ async function main() {
       const wc = parseWeightClass(bt.weightClass || '');
       const ia = resolveUp(bt.a);
       const ib = resolveUp(bt.b);
+      if (bt.a.espnId && !espnOf.has(ia)) espnOf.set(ia, bt.a.espnId);
+      if (bt.b.espnId && !espnOf.has(ib)) espnOf.set(ib, bt.b.espnId);
       for (const [id, nm] of [[ia, bt.a.name], [ib, bt.b.name]]) {
         scope.add(id);
         if (!fightsBy.has(id)) debutants.set(id, nm);
       }
       const bout: UpcomingBout = {
         eventId: ev.id, event: ev.name, date: ev.date, division: wc.division, title: wc.title,
-        rounds: order === 0 || wc.title ? 5 : 3, order,
+        rounds: bt.rounds ?? (order === 0 || wc.title ? 5 : 3), order,
         a: { id: ia, name: bt.a.name, slug: null },
         b: { id: ib, name: bt.b.name, slug: null },
       };
@@ -161,6 +184,7 @@ async function main() {
     DEC: { n: 0, byRound: [0, 0, 0, 0, 0] }, OTHER: { n: 0, byRound: [0, 0, 0, 0, 0] },
   });
 
+  const withHeadshot = await checkHeadshots([...scope].map((id) => espnOf.get(id)).filter((x): x is string => !!x), offline);
   for (const id of scope) {
     const bio = bios.get(id);
     const st = proc.states.get(id) ?? emptyState();
@@ -229,8 +253,12 @@ async function main() {
       streak: lastRes && streakN ? `${lastRes === 'W' ? 'V' : lastRes === 'L' ? 'D' : 'E'}${streakN}` : '',
       upcoming: nextBout.has(id),
       ...(() => {
+        const eid = espnOf.get(id);
+        const ath = eid ? espn.athletes.get(eid) : undefined;
+        const geo = { country: ath?.country ? countryPt(ath.country) : '', flag: ath?.flag ?? '' };
+        if (eid && withHeadshot.has(eid)) return { ...geo, photo: espnHeadshot(eid), photoPage: espnPage(eid) };
         const ph = photoOf(nameOf(id), bio?.dob ?? null);
-        return { photo: ph?.url ?? null, photoPage: ph?.page ?? null };
+        return { ...geo, photo: ph?.url ?? null, photoPage: ph?.page ?? null };
       })(),
       divisions: [...new Set(entries.map((e) => e.division))],
       heightCm: cm(bio?.heightIn ?? null),
@@ -309,8 +337,8 @@ async function main() {
   await rm(OUT, { recursive: true, force: true });
   await mkdir(path.join(OUT, 'fighters'), { recursive: true });
   const summaries: FighterSummary[] = details
-    .map(({ id, slug, name, nickname, division, women, record, elo, lastFight, age, style, streak, upcoming, photo, photoPage }) => ({
-      id, slug, name, nickname, division, women, record, elo, lastFight, age, style, streak, upcoming, photo, photoPage,
+    .map(({ id, slug, name, nickname, division, women, record, elo, lastFight, age, style, streak, upcoming, photo, photoPage, country, flag }) => ({
+      id, slug, name, nickname, division, women, record, elo, lastFight, age, style, streak, upcoming, photo, photoPage, country, flag,
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
   await writeFile(path.join(OUT, 'fighters.json'), JSON.stringify(summaries));

@@ -3,7 +3,7 @@
 Site pessoal de estatísticas do UFC. Traz histórico, estilo de luta, pontos fortes e fracos de cada lutador e um **comparador** que estima a chance de vitória e o método mais provável.
 
 - **Escopo:** todos os lutadores que lutaram no UFC desde **01/01/2026** ou que têm luta marcada (masculino e feminino, todas as categorias). Para eles, mostramos a **carreira completa dentro do UFC**. Lutas fora do UFC não entram.
-- **Fonte:** [UFCStats](http://ufcstats.com), a base oficial de estatísticas do UFC (todas as lutas desde 1993, round a round).
+- **Fontes:** [UFCStats](http://ufcstats.com), a base oficial de estatísticas do UFC (todas as lutas desde 1993, round a round). A ESPN fornece as fotos, a bandeira do país e o calendário de próximos eventos. O Wikimedia Commons é a fonte reserva de fotos, com licença livre.
 - **Stack:** React 19 + Vite + TypeScript. É um site estático com PWA, então dá para instalar no Android. Hospedagem gratuita no Firebase.
 
 ## Páginas
@@ -15,7 +15,7 @@ Site pessoal de estatísticas do UFC. Traz histórico, estilo de luta, pontos fo
 | `/lutador/:slug` | Bio, estilo de luta, pontos fortes e fracos, estatísticas com percentil na categoria, métodos de vitória e derrota por round, alvos e posições dos golpes, gráfico do Elo e histórico completo no UFC |
 | `/lutador/:slug/luta/:id` | Estatísticas da luta, total e round a round |
 | `/comparar?a=…&b=…` | Previsão (% de vitória e 6 resultados possíveis), fatores que mais pesam, por que cada um pode vencer, como a luta deve se desenrolar, números lado a lado, últimas 5 lutas e adversários em comum |
-| `/eventos`, `/evento/:id` | Próximos cards e eventos de 2026 |
+| `/eventos`, `/evento/:id` | Linha do tempo de todos os eventos desde 2026, em ordem cronológica, com o card aberto ao clicar |
 | `/modelo` | Como a previsão funciona e quanto ela acerta |
 
 ## Como a previsão funciona
@@ -48,7 +48,7 @@ npm run dev
 
 ### Lutas futuras cadastradas à mão
 
-O pipeline busca os próximos cards no UFCStats. Se precisar adiantar uma luta que ainda não está lá, edite `data/manual/upcoming.json` (os lutadores são encontrados pelo nome).
+O pipeline busca os próximos cards no UFCStats e, se não conseguir, na ESPN. Se precisar adiantar uma luta que nenhuma das duas trouxe, edite `data/manual/upcoming.json`: os lutadores são encontrados pelo nome, e as lutas que já vieram de outra fonte são ignoradas.
 
 ## Publicando no Firebase (grátis)
 
@@ -86,7 +86,9 @@ O site já é um **PWA**. No Chrome do Android, abra o endereço e use *Adiciona
 
 ```
 scripts/pipeline/   coleta e processamento (Node + TypeScript)
-  fetch.ts          download dos CSVs e dos próximos eventos
+  fetch.ts          download dos CSVs e dos próximos eventos (UFCStats)
+  espn.ts           calendário, fotos e países (ESPN)
+  photos.ts         fotos com licença livre (Wikidata/Wikimedia Commons)
   load.ts           normalização, desambiguação de homônimos
   build.ts          médias por categoria, Elo, treino e backtest do modelo
   insights.ts       taxas, percentis, estilo, pontos fortes e fracos
@@ -100,6 +102,6 @@ data/manual/        lutas futuras cadastradas à mão
 
 ## Limitações conhecidas
 
-- Sem fotos dos lutadores: o UFC.com bloqueia acesso automatizado. O site usa as iniciais.
+- Fotos: vêm da ESPN, por uma API pública mas não oficial, e são protegidas por direitos autorais. Servem para uso pessoal; não publique o site. Quem não tem foto aparece com as iniciais. O UFC.com bloqueia acesso automatizado e não é usado.
 - Estreantes e lutadores com poucas lutas no UFC têm previsões menos confiáveis.
 - O modelo não sabe de lesões, corte de peso, troca de equipe ou mudança de categoria.

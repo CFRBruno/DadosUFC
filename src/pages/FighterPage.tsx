@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { BodyMap, EloChart, MethodBlock, MethodLegend, SimpleBars } from '../components/charts';
 import { compareUrl } from '../components/events';
 import { FightRow } from '../components/fighters';
-import { Avatar, ErrorBox, Icon, Loading } from '../components/ui';
+import { Avatar, ErrorBox, Flag, Icon, Loading } from '../components/ui';
 import { useFighter } from '../lib/data';
 import { cmToFtIn, divisionName, fmtDate, fmtNum, fmtPct, recordStr } from '../lib/format';
 import type { FighterDetail, Rates } from '../shared/types';
@@ -48,13 +48,14 @@ function Profile({ f }: { f: FighterDetail }) {
         <div>
           <Avatar name={f.name} id={f.id} size="lg" />
           {f.photoPage && (
-            <div className="photo-credit"><a href={f.photoPage} target="_blank" rel="noreferrer">Foto: Wikimedia</a></div>
+            <div className="photo-credit"><a href={f.photoPage} target="_blank" rel="noreferrer">Foto: {f.photoPage.includes('espn.com') ? 'ESPN' : 'Wikimedia'}</a></div>
           )}
         </div>
         <div>
           {f.nickname && <div className="nick">"{f.nickname}"</div>}
           <h1>{f.name}</h1>
           <div className="chips">
+            {f.country && <span className="chip"><Flag src={f.flag} country={f.country} />{f.country}</span>}
             <span className="chip chip-record" title="Cartel somente no UFC">UFC {recordStr(f.record)}</span>
             {f.eloRank && <span className="chip chip-rank" title="Posição no rating Elo da categoria (entre os lutadores do site)">#{f.eloRank.division} Elo · {divisionName(f.division)}</span>}
             {!f.eloRank && <span className="chip">{divisionName(f.division)}</span>}

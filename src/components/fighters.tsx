@@ -4,7 +4,7 @@ import { DIVISION_BY_KEY } from '../shared/divisions';
 import type { FightEntry, FighterSummary } from '../shared/types';
 import { S } from '../shared/types';
 import { divisionName, fmtDate, fmtPct, fmtTime, methodText, recordStr } from '../lib/format';
-import { Avatar, Icon, ResultBadge } from './ui';
+import { Avatar, Flag, Icon, ResultBadge } from './ui';
 
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
 
@@ -33,7 +33,7 @@ export function FighterCard({ f }: { f: FighterSummary }) {
       <Avatar name={f.name} id={f.id} />
       <div className="info">
         {f.nickname && <div className="nick">"{f.nickname}"</div>}
-        <div className="name">{f.name}</div>
+        <div className="name"><Flag src={f.flag} country={f.country} /> {f.name}</div>
         <div className="meta">
           <span className="chip chip-record">{recordStr(f.record)}</span>
           <span className="chip">{DIVISION_BY_KEY[f.division]?.short ?? f.division}</span>

@@ -66,9 +66,11 @@ export async function rawExists(name: string): Promise<boolean> {
 // --- Próximos eventos ----------------------------------------------------------
 
 export interface ScrapedBout {
-  a: { name: string; ufcstatsId: string | null };
-  b: { name: string; ufcstatsId: string | null };
+  a: { name: string; ufcstatsId: string | null; espnId?: string };
+  b: { name: string; ufcstatsId: string | null; espnId?: string };
   weightClass: string;
+  /** rounds previstos, quando a fonte informa */
+  rounds?: number;
 }
 export interface ScrapedEvent {
   id: string;

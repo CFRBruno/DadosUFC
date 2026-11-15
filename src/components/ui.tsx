@@ -104,3 +104,8 @@ export function ResultBadge({ r }: { r: 'W' | 'L' | 'D' | 'NC' }) {
     </span>
   );
 }
+
+export function Flag({ src, country }: { src?: string | null; country?: string | null }) {
+  if (!src) return null;
+  return <img className="flag" src={src} alt={country ?? ''} title={country ?? ''} width={18} height={18} loading="lazy" referrerPolicy="no-referrer" />;
+}

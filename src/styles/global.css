@@ -464,3 +464,123 @@ main { min-height: 70vh; padding-bottom: 96px; }
 .tl-item.open .tl-chev { transform: rotate(180deg); color: var(--brand); }
 .tl-panel { border-top: 1px solid var(--border); padding: 16px; }
 @media (max-width: 600px) { .tl-group { padding-left: 14px; } .tl-month::before { left: -22px; } .tl-head { grid-template-columns: 48px 1fr auto; gap: 10px; padding: 12px; } }
+
+/* =====================================================================
+   Estilo B — híbrido: preto + relevo suave (neumorphism)
+   ===================================================================== */
+:root {
+  --bg: #050505;
+  --radius: 10px;
+  --radius-lg: 14px;
+  --neu-face: linear-gradient(160deg, #17171a, #0e0e10);
+  --neu-face-2: linear-gradient(160deg, #1a1a1e, #111114);
+  --neu-raised: 8px 8px 20px #000, -4px -4px 14px #19191c, inset 1px 1px 0 rgba(255, 255, 255, 0.04);
+  --neu-raised-sm: 4px 4px 10px #000, -2px -2px 8px #1b1b1f, inset 1px 1px 0 rgba(255, 255, 255, 0.035);
+  --neu-inset: inset 3px 3px 6px #000, inset -2px -2px 5px #1c1c20;
+  --neu-inset-sm: inset 2px 2px 4px #000, inset -1px -1px 3px #1c1c20;
+  --neu-well: #0b0b0c;
+  --red-face: linear-gradient(160deg, #ff2a32, #c40f17);
+}
+
+/* superfícies em relevo */
+.panel, .fighter-card, .pick-card, .event-card, .tl-item, .kpi {
+  background: var(--neu-face);
+  border: 1px solid rgba(255, 255, 255, 0.025);
+  box-shadow: var(--neu-raised);
+}
+.fighter-card:hover, .event-card:hover, .tl-item:hover, .tl-item.open {
+  border-color: rgba(237, 28, 36, 0.28);
+  box-shadow: var(--neu-raised), 0 0 0 1px rgba(237, 28, 36, 0.12);
+}
+.pick-card.a { border-color: rgba(229, 56, 59, 0.45); }
+.pick-card.b { border-color: rgba(59, 139, 240, 0.45); }
+.tl-item.upcoming { border-left: 3px solid var(--brand); }
+
+/* elementos internos com relevo menor */
+.stat-tile, .bout, .fight-row, .insight-list li, .most-likely, .callout {
+  background: var(--neu-face-2);
+  border: 1px solid rgba(255, 255, 255, 0.02);
+  box-shadow: var(--neu-raised-sm);
+  border-radius: var(--radius);
+}
+.most-likely { border-color: rgba(237, 28, 36, 0.35); background: linear-gradient(160deg, #1d0709, #120405); }
+.callout { background: linear-gradient(160deg, #0f1828, #0a111d); border-color: #1d3557; }
+.insight-list.good li { border-left: 3px solid var(--win); }
+.insight-list.bad li { border-left: 3px solid var(--loss); }
+
+/* bio e números do herói: blocos separados em relevo */
+.bio-grid, .hero-stats { gap: 10px; background: transparent; border: 0; overflow: visible; }
+.bio-grid div, .hero-stats div { background: var(--neu-face-2); border-radius: var(--radius); box-shadow: var(--neu-raised-sm); }
+
+/* trilhos "afundados" das barras */
+.cmp-bar, .predict-bar, .pct-bar, .outcome-row .bar, .pos-bars .bar, .diverge {
+  background: var(--neu-well);
+  box-shadow: var(--neu-inset);
+  border-radius: 999px;
+}
+.cmp-bar { height: 12px; padding: 3px; gap: 3px; }
+.cmp-bar i:first-child, .cmp-bar i:last-child { border-radius: 999px; }
+.predict-bar { height: 20px; padding: 4px; gap: 4px; }
+.predict-bar i:first-child, .predict-bar i:last-child { border-radius: 999px; }
+.predict-bar i:first-child { box-shadow: 0 0 12px rgba(229, 56, 59, 0.55); }
+.predict-bar i:last-child { box-shadow: 0 0 12px rgba(59, 139, 240, 0.45); }
+.pct-bar { height: 8px; padding: 2px; }
+.outcome-row .bar, .pos-bars .bar { height: 12px; padding: 2px; }
+.outcome-row .bar i, .pos-bars .bar i, .pct-bar i { border-radius: 999px; }
+.diverge { height: 12px; }
+.diverge i { border-radius: 999px; top: 2px; bottom: 2px; }
+.stack-bar { padding: 3px; background: var(--neu-well); box-shadow: var(--neu-inset); border-radius: 8px; height: 28px; }
+
+/* campos e controles segmentados afundados */
+.input, .select {
+  background-color: var(--neu-well);
+  border: 1px solid transparent;
+  box-shadow: var(--neu-inset);
+  border-radius: var(--radius);
+}
+.input:focus, .select:focus { border-color: rgba(237, 28, 36, 0.5); }
+.seg { background: var(--neu-well); border: 0; box-shadow: var(--neu-inset); border-radius: var(--radius); padding: 4px; gap: 4px; }
+.seg button { background: transparent; height: 34px; border-radius: 7px; }
+.seg button + button { border-left: 0; }
+.seg button.on { background: var(--red-face); color: #fff; box-shadow: 0 0 14px rgba(237, 28, 36, 0.35); }
+
+/* botões em relevo */
+.btn { border-radius: var(--radius); }
+.btn-primary {
+  background: var(--red-face);
+  box-shadow: 5px 5px 14px #000, 0 0 22px rgba(237, 28, 36, 0.35), inset 1px 1px 0 rgba(255, 255, 255, 0.18);
+}
+.btn-primary:hover { background: linear-gradient(160deg, #ff3b42, #d3121b); box-shadow: 5px 5px 14px #000, 0 0 30px rgba(237, 28, 36, 0.55), inset 1px 1px 0 rgba(255, 255, 255, 0.2); }
+.btn-primary:active { box-shadow: inset 3px 3px 6px rgba(0, 0, 0, 0.45), 0 0 18px rgba(237, 28, 36, 0.35); }
+.btn-outline, .btn-ghost, .quick-pick {
+  background: var(--neu-face-2);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  box-shadow: var(--neu-raised-sm);
+}
+.btn-outline { border-color: rgba(255, 255, 255, 0.35); }
+.btn-outline:hover, .btn-ghost:hover, .quick-pick:hover { border-color: rgba(237, 28, 36, 0.5); }
+.btn-outline:active, .btn-ghost:active, .quick-pick:active { box-shadow: var(--neu-inset); }
+
+/* etiquetas afundadas */
+.chip { background: var(--neu-well); border: 0; box-shadow: var(--neu-inset-sm); border-radius: 999px; padding: 3px 10px; }
+.chip-record { color: #fff; }
+.chip-rank { color: #f2c94c; background: #120f05; }
+.chip-red { color: #ff6b70; background: #160405; }
+.chip-style { color: #c4b0f7; background: #0f0c16; }
+.chip-up { color: #4ade80; background: #05140a; }
+.tag-box { border-radius: 8px; box-shadow: var(--neu-inset-sm); background: #0a0304; }
+.flag { display: inline-block; width: 16px; height: 16px; border-radius: 50%; object-fit: cover; vertical-align: -3px; margin-right: 2px; }
+
+/* VS, data dos eventos, ícones de insight */
+.vs-badge { background: var(--neu-face); border: 0; box-shadow: var(--neu-raised-sm), 0 0 18px rgba(237, 28, 36, 0.15); }
+.tl-date { background: var(--neu-well); border: 0; box-shadow: var(--neu-inset); }
+.tl-month::before { background: var(--bg); box-shadow: 0 0 10px rgba(237, 28, 36, 0.6); }
+.combo-list { background: #121214; border: 1px solid rgba(255, 255, 255, 0.06); border-radius: var(--radius); box-shadow: 10px 10px 30px #000; }
+.bottom-nav { background: linear-gradient(180deg, #111113, #08080a); border-top: 1px solid rgba(255, 255, 255, 0.04); box-shadow: 0 -8px 20px #000; }
+.chart-tip { background: #111113; border-radius: var(--radius); box-shadow: 8px 8px 20px #000; }
+/* headshots da ESPN: aproxima o rosto dentro do octógono */
+.avatar.has-photo img { object-position: 50% 12%; transform: scale(1.12); transform-origin: 50% 20%; }
+@media (max-width: 700px) {
+  .quick-picks { flex-wrap: nowrap; overflow-x: auto; padding: 4px 4px 12px; margin: 0 -4px; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
+  .quick-pick { flex: none; scroll-snap-align: start; }
+}

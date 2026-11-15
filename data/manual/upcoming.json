@@ -1,19 +1,4 @@
 {
-  "_comment": "Lutas futuras cadastradas manualmente. São usadas quando o UFCStats não traz o evento (ou não está acessível). O pipeline resolve os lutadores pelo nome. Datas em AAAA-MM-DD (ou null se ainda não confirmada).",
-  "events": [
-    {
-      "id": "manual-ufc-335",
-      "name": "UFC 335",
-      "date": null,
-      "location": "",
-      "source": "manual",
-      "bouts": [
-        {
-          "a": { "name": "Charles Oliveira", "ufcstatsId": null },
-          "b": { "name": "Diego Lopes", "ufcstatsId": null },
-          "weightClass": ""
-        }
-      ]
-    }
-  ]
+  "_comment": "Lutas futuras cadastradas manualmente. Use só quando nenhuma fonte automática (UFCStats ou ESPN) trouxer o evento. O pipeline resolve os lutadores pelo nome e ignora lutas que já vieram de outra fonte. Datas em AAAA-MM-DD (ou null).",
+  "events": []
 }

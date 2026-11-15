@@ -3,10 +3,10 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { BodyMap, CmpBar } from '../components/charts';
 import { compareUrl } from '../components/events';
 import { FighterPicker } from '../components/fighters';
-import { Avatar, Icon, Loading, ResultBadge, Rich } from '../components/ui';
+import { Avatar, Flag, Icon, Loading, ResultBadge, Rich } from '../components/ui';
 import { analyze, shortName, type Analysis } from '../lib/compare';
 import { useEvents, useFighter, useFighters, useModel } from '../lib/data';
-import { divisionName, fmtDate, fmtInt, fmtNum, fmtPct, recordStr, todayIso } from '../lib/format';
+import { divisionName, fmtDate, fmtDateShort, fmtInt, fmtNum, fmtPct, recordStr, todayIso } from '../lib/format';
 import { DIVISION_BY_KEY, type DivisionKey } from '../shared/divisions';
 import type { FighterDetail, FighterSummary, ModelParams } from '../shared/types';
 
@@ -35,7 +35,8 @@ export default function Compare() {
   const pick = (side: 'a' | 'b') => (f: FighterSummary) => update({ [side]: f.slug, ev: null, d: null });
 
   const quick = useMemo(
-    () => (events?.upcoming ?? []).flatMap((e) => e.bouts.filter((b) => b.a.slug && b.b.slug)).slice(0, 14),
+    // luta principal e co-principal de cada evento
+    () => (events?.upcoming ?? []).flatMap((e) => e.bouts.filter((b) => b.a.slug && b.b.slug).slice(0, 2)).slice(0, 12),
     [events],
   );
 
@@ -59,7 +60,8 @@ export default function Compare() {
           <div className="quick-picks">
             {quick.map((b, i) => (
               <Link key={i} to={compareUrl(b)} className="quick-pick">
-                {shortName(b.a.name)} <span style={{ color: 'var(--brand)' }}>vs</span> {shortName(b.b.name)} <small>{b.event}</small>
+                {shortName(b.a.name)} <span style={{ color: 'var(--brand)' }}>vs</span> {shortName(b.b.name)}{' '}
+                <small>{b.event.split(':')[0]} · {b.date ? fmtDateShort(b.date) : 'a definir'}</small>
               </Link>
             ))}
           </div>
@@ -125,6 +127,7 @@ function PickCard({
           <span className="chip chip-record">{recordStr(f.record)}</span>
           {f.eloRank && <span className="chip chip-rank">#{f.eloRank.division} Elo</span>}
           <span className="chip">{DIVISION_BY_KEY[f.division]?.short}</span>
+          {f.country && <span className="chip"><Flag src={f.flag} country={f.country} />{f.country}</span>}
         </div>
       </div>
     </div>
