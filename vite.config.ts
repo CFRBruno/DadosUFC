@@ -2,7 +2,11 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
 
+// identifica a versão publicada (o GitHub Actions informa o commit)
+const BUILD = { sha: (process.env.GITHUB_SHA ?? 'local').slice(0, 7), at: new Date().toISOString() };
+
 export default defineConfig({
+  define: { __BUILD__: JSON.stringify(BUILD) },
   plugins: [
     react(),
     VitePWA({
@@ -28,10 +32,10 @@ export default defineConfig({
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
         runtimeCaching: [
           {
-            // dados: mostra o cache na hora e atualiza em segundo plano
+            // dados: rede primeiro (dados novos sempre que houver internet); o cache só cobre a falta de conexão
             urlPattern: ({ url }) => url.pathname.startsWith('/data/'),
-            handler: 'StaleWhileRevalidate',
-            options: { cacheName: 'dados', expiration: { maxEntries: 1000, maxAgeSeconds: 60 * 60 * 24 * 30 } },
+            handler: 'NetworkFirst',
+            options: { cacheName: 'dados', networkTimeoutSeconds: 4, expiration: { maxEntries: 1000, maxAgeSeconds: 60 * 60 * 24 * 30 } },
           },
         ],
       },

@@ -98,6 +98,7 @@ export default function App() {
           <span>
             Dados: UFCStats · fotos e calendário: ESPN
             {meta ? ` · atualizado em ${fmtDate(meta.generatedAt.slice(0, 10))}` : ''}
+            {` · versão ${__BUILD__.sha} (${new Date(__BUILD__.at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })})`}
           </span>
         </div>
       </footer>
