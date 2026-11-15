@@ -1,0 +1,9 @@
+node_modules
+dist
+dev-dist
+data/raw
+public/data
+*.log
+.firebase
+.env
+.env.*

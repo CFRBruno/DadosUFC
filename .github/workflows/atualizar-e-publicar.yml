@@ -1,0 +1,44 @@
+name: Atualizar dados e publicar
+
+on:
+  # todo dia às 09:17 UTC (06:17 em Brasília) — pega os eventos de sábado já no domingo/segunda
+  schedule:
+    - cron: '17 9 * * *'
+  workflow_dispatch:
+  # em qualquer push o build é validado; o deploy só acontece na branch padrão
+  push:
+
+concurrency:
+  group: publicar
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      # usado só para decidir se o deploy roda (sem o segredo, o workflow só valida o build)
+      HAS_FIREBASE: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Gerar dados (UFCStats)
+        run: npm run data
+
+      - name: Build do site
+        run: npm run build
+
+      - name: Publicar no Firebase Hosting
+        if: ${{ env.HAS_FIREBASE == 'true' && github.ref_name == github.event.repository.default_branch }}
+        uses: FirebaseExtended/action-hosting-deploy@v0
+        with:
+          repoToken: ${{ secrets.GITHUB_TOKEN }}
+          firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          projectId: ${{ vars.FIREBASE_PROJECT_ID }}
+          channelId: live

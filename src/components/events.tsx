@@ -1,0 +1,73 @@
+import { Link } from 'react-router-dom';
+import type { EventFight, FighterSummary, UpcomingBout } from '../shared/types';
+import { divisionName, recordStr } from '../lib/format';
+import { METHOD_LABEL } from '../shared/translate';
+import { Avatar, Icon } from './ui';
+
+export function compareUrl(b: UpcomingBout) {
+  const p = new URLSearchParams();
+  if (b.a.slug) p.set('a', b.a.slug);
+  if (b.b.slug) p.set('b', b.b.slug);
+  p.set('r', String(b.rounds));
+  if (b.division !== 'OPEN') p.set('d', b.division);
+  p.set('ev', b.event);
+  return `/comparar?${p}`;
+}
+
+export function UpcomingBoutRow({ b, byId }: { b: UpcomingBout; byId: Map<string, FighterSummary> }) {
+  const fa = b.a.id ? byId.get(b.a.id) : undefined;
+  const fb = b.b.id ? byId.get(b.b.id) : undefined;
+  const label = b.order === 0 ? 'Luta principal' : b.title ? 'Cinturão' : null;
+  return (
+    <div className="bout-wrap">
+      <div className="bout-meta">
+        <span>{label && <span style={{ color: 'var(--brand)' }}>{label} · </span>}{divisionName(b.division, true)} · {b.rounds} rounds</span>
+        {b.a.slug && b.b.slug && (
+          <Link to={compareUrl(b)} className="btn btn-primary btn-sm" style={{ height: 30, fontSize: 11 }}>
+            <Icon name="swords" className="arrow" /> Analisar
+          </Link>
+        )}
+      </div>
+      <div className="bout">
+        <Side name={b.a.name} slug={b.a.slug} rec={fa ? recordStr(fa.record) : 'Estreia'} side="a" />
+        <div className="mid"><b>vs</b></div>
+        <Side name={b.b.name} slug={b.b.slug} rec={fb ? recordStr(fb.record) : 'Estreia'} side="b" right />
+      </div>
+    </div>
+  );
+}
+
+export function ResultBoutRow({ f }: { f: EventFight }) {
+  const how = f.result === 'NC' ? 'Sem resultado' : f.result === 'D' ? 'Empate' : METHOD_LABEL[f.method];
+  const winSlug = f.winner === 0 ? f.a.slug : f.winner === 1 ? f.b.slug : f.a.slug;
+  return (
+    <div className="bout-wrap">
+      <div className="bout-meta">
+        <span>{f.title && <span style={{ color: 'var(--brand)' }}>Cinturão · </span>}{divisionName(f.division)}</span>
+        {winSlug && <Link to={`/lutador/${winSlug}/luta/${f.id}`} style={{ color: 'var(--brand)' }}>Estatísticas →</Link>}
+      </div>
+      <div className="bout">
+        <Side name={f.a.name} slug={f.a.slug} rec={f.winner === 0 ? 'Venceu' : f.winner === 1 ? 'Perdeu' : ''} cls={f.winner === 0 ? 'win' : f.winner === 1 ? 'lose' : ''} side="a" />
+        <div className="mid"><b>{how}</b>R{f.endRound} · {f.endTime}</div>
+        <Side name={f.b.name} slug={f.b.slug} rec={f.winner === 1 ? 'Venceu' : f.winner === 0 ? 'Perdeu' : ''} cls={f.winner === 1 ? 'win' : f.winner === 0 ? 'lose' : ''} side="b" right />
+      </div>
+    </div>
+  );
+}
+
+function Side({ name, slug, rec, right, cls = '', side }: { name: string; slug: string | null; rec: string; right?: boolean; cls?: string; side: 'a' | 'b' }) {
+  const inner = (
+    <>
+      <Avatar name={name} size="sm" side={side} />
+      <div style={{ minWidth: 0 }}>
+        <div className="nm">{name}</div>
+        <div className="rc">{rec}</div>
+      </div>
+    </>
+  );
+  return slug ? (
+    <Link to={`/lutador/${slug}`} className={`side ${right ? 'right' : ''} ${cls}`}>{inner}</Link>
+  ) : (
+    <div className={`side ${right ? 'right' : ''} ${cls}`}>{inner}</div>
+  );
+}
