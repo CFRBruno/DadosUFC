@@ -1,0 +1,118 @@
+/* Movimento: curto, suave e discreto. Tudo some com "reduzir movimento" do sistema. */
+:root {
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+/* ---------- entrada de página ---------- */
+@keyframes fadeUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: none; } }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes popIn { from { opacity: 0; transform: translateY(-6px) scale(0.97); } to { opacity: 1; transform: none; } }
+@keyframes sheetIn { from { opacity: 0; transform: translateY(14px) scale(0.96); } to { opacity: 1; transform: none; } }
+@keyframes barGrow { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+@keyframes markerIn { from { opacity: 0; transform: scale(0.2); } to { opacity: 1; transform: none; } }
+@keyframes shimmer { to { background-position: -200% 0; } }
+
+.page-enter { animation: fadeUp 0.45s var(--ease-out) backwards; }
+
+/* itens de grades e listas entram em cascata (só os primeiros, para não atrasar a tela) */
+.grid-3 > *, .stat-tiles > *, .reign-list > *, .kpis > *, .rank-list > *, .bio-grid > *, .quick-picks > * {
+  animation: fadeUp 0.5s var(--ease-out) backwards; /* 'backwards': depois de entrar, o hover pode mexer no transform */
+}
+:is(.grid-3, .stat-tiles, .reign-list, .kpis, .rank-list, .bio-grid, .quick-picks) > :nth-child(1) { animation-delay: 0.02s; }
+:is(.grid-3, .stat-tiles, .reign-list, .kpis, .rank-list, .bio-grid, .quick-picks) > :nth-child(2) { animation-delay: 0.06s; }
+:is(.grid-3, .stat-tiles, .reign-list, .kpis, .rank-list, .bio-grid, .quick-picks) > :nth-child(3) { animation-delay: 0.10s; }
+:is(.grid-3, .stat-tiles, .reign-list, .kpis, .rank-list, .bio-grid, .quick-picks) > :nth-child(4) { animation-delay: 0.14s; }
+:is(.grid-3, .stat-tiles, .reign-list, .kpis, .rank-list, .bio-grid, .quick-picks) > :nth-child(5) { animation-delay: 0.18s; }
+:is(.grid-3, .stat-tiles, .reign-list, .kpis, .rank-list, .bio-grid, .quick-picks) > :nth-child(6) { animation-delay: 0.22s; }
+:is(.grid-3, .stat-tiles, .reign-list, .kpis, .rank-list, .bio-grid, .quick-picks) > :nth-child(7) { animation-delay: 0.26s; }
+:is(.grid-3, .stat-tiles, .reign-list, .kpis, .rank-list, .bio-grid, .quick-picks) > :nth-child(8) { animation-delay: 0.30s; }
+:is(.grid-3, .stat-tiles, .reign-list, .kpis, .rank-list, .bio-grid, .quick-picks) > :nth-child(n + 9) { animation-delay: 0.34s; }
+
+/* ---------- barra de navegação ---------- */
+.site-header { transition: background-color 0.3s, box-shadow 0.3s, border-color 0.3s; }
+.site-header .bar { transition: height 0.3s var(--ease-out); }
+.site-header.scrolled { background: rgba(0, 0, 0, 0.94); box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55); border-bottom-color: #2a0a0d; }
+.site-header.scrolled .bar { height: 54px; }
+.logo svg { transition: transform 0.6s var(--ease-spring), filter 0.3s; }
+.logo:hover svg { transform: rotate(90deg) scale(1.08); filter: drop-shadow(0 0 10px rgba(237, 28, 36, 0.9)); }
+
+.nav { position: relative; }
+.nav a { position: relative; border-bottom: 0 !important; transition: color 0.25s, transform 0.25s var(--ease-out); }
+.nav a:hover { transform: translateY(-1px); }
+/* sublinhado "de passagem" ao pairar; a aba ativa usa o indicador deslizante */
+.nav a::after { content: ''; position: absolute; left: 0; right: 0; bottom: -2px; height: 2px; background: var(--text-2); transform: scaleX(0); transform-origin: left; transition: transform 0.3s var(--ease-out); }
+.nav a:hover::after { transform: scaleX(1); }
+.nav a.active::after { display: none; }
+.nav-ind {
+  position: absolute; left: 0; bottom: 0; height: 2px; border-radius: 2px; background: var(--brand);
+  box-shadow: 0 0 10px rgba(237, 28, 36, 0.8);
+  transition: transform 0.45s var(--ease-out), width 0.45s var(--ease-out);
+}
+
+/* navegação do celular */
+.bottom-nav a, .bottom-nav .more-btn { transition: color 0.25s, transform 0.25s var(--ease-out); }
+.bottom-nav a svg, .bottom-nav .more-btn svg { transition: transform 0.35s var(--ease-spring); }
+.bottom-nav a.active svg, .bottom-nav .more-btn.active svg { transform: translateY(-3px) scale(1.14); }
+.bottom-nav a:active, .bottom-nav .more-btn:active { transform: scale(0.92); }
+.more-backdrop { animation: fadeIn 0.25s ease both; }
+.more-sheet { animation: sheetIn 0.3s var(--ease-out) both; transform-origin: bottom right; }
+.more-sheet a { transition: background-color 0.2s, color 0.2s, transform 0.2s var(--ease-out); }
+.more-sheet a:hover { transform: translateX(3px); }
+
+/* ---------- interações ---------- */
+.btn { transition: background 0.2s, box-shadow 0.25s, border-color 0.2s, transform 0.2s var(--ease-out), color 0.2s; }
+.btn:hover { transform: translateY(-1px); }
+.btn:active { transform: translateY(0) scale(0.97); }
+.btn .arrow { transition: transform 0.25s var(--ease-out); }
+.btn:hover .arrow { transform: translateX(3px); }
+
+.fighter-card, .event-card, .stat-tile, .pick-card, .rank-row, .bio-grid a {
+  transition: transform 0.3s var(--ease-out), border-color 0.25s, box-shadow 0.3s, background-color 0.25s;
+}
+.fighter-card:hover, .event-card:hover, a.stat-tile:hover, .bio-grid a:hover { transform: translateY(-3px); }
+.fighter-card:active, .event-card:active { transform: translateY(-1px) scale(0.99); }
+.rank-row:hover { transform: translateX(3px); }
+.fighter-card .avatar, .fighter-card img { transition: transform 0.4s var(--ease-out); }
+.fighter-card:hover .avatar, .fighter-card:hover img { transform: scale(1.06); }
+
+.chip { transition: transform 0.2s var(--ease-out), background-color 0.2s, border-color 0.2s; }
+a:hover > .chip, .fighter-card:hover .chip { transform: translateY(-1px); }
+
+.seg button { transition: background-color 0.25s, color 0.25s, box-shadow 0.3s, transform 0.15s; }
+.seg button:active { transform: scale(0.94); }
+.select, .input { transition: border-color 0.25s, box-shadow 0.25s, background-color 0.25s; }
+.input:focus, .select:focus { box-shadow: 0 0 0 3px rgba(237, 28, 36, 0.18); }
+
+/* menus de filtro */
+.country-menu { animation: popIn 0.22s var(--ease-out) both; transform-origin: top right; }
+.country-menu label { transition: background-color 0.15s; }
+.country-filter summary::after { transition: transform 0.25s var(--ease-out); }
+.combo-list, .combo .list { animation: popIn 0.2s var(--ease-out) both; }
+
+/* acordeão de eventos */
+.tl-panel { animation: fadeUp 0.35s var(--ease-out) both; }
+.tl-item { transition: border-color 0.25s, box-shadow 0.3s, transform 0.3s var(--ease-out); }
+.tl-item:hover { transform: translateX(2px); }
+.tl-chev { transition: transform 0.35s var(--ease-spring); }
+.tl-item.open .tl-chev { transform: rotate(90deg); }
+.tl-item.open { border-color: #4a1013; }
+
+/* ---------- barras que "enchem" ---------- */
+.pct-bar i, .cmp-bar i, .predict-bar i, .outcome-row .bar i, .pos-bars .bar i, .diverge i {
+  transform-origin: left; animation: barGrow 0.9s var(--ease-out) 0.15s both;
+}
+.diverge i[style*="right: 50%"] { transform-origin: right; }
+.form-gauge i { animation: markerIn 0.7s var(--ease-spring) 0.3s both; transition: left 0.6s var(--ease-out); }
+.form-dot { animation: markerIn 0.5s var(--ease-spring) backwards; }
+.form-dot:nth-child(1) { animation-delay: 0.25s; } .form-dot:nth-child(2) { animation-delay: 0.32s; } .form-dot:nth-child(3) { animation-delay: 0.39s; }
+.form-dot:nth-child(4) { animation-delay: 0.46s; } .form-dot:nth-child(5) { animation-delay: 0.53s; }
+.form-dot { transition: transform 0.2s var(--ease-spring); }
+.form-dot:hover { transform: translateY(-3px) scale(1.12); }
+
+/* carregando */
+.spinner { transition: opacity 0.2s; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.001ms !important; animation-delay: 0ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+}

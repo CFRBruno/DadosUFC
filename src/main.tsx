@@ -9,6 +9,7 @@ import '@fontsource/oswald/600.css';
 import '@fontsource/oswald/700.css';
 import '@fontsource/roboto-mono/700.css';
 import './styles/global.css';
+import './styles/motion.css';
 import App from './App';
 
 createRoot(document.getElementById('root')!).render(

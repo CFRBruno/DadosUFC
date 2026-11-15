@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { Icon, Logo } from './components/ui';
 import { useMeta } from './lib/data';
@@ -36,24 +36,48 @@ export default function App() {
     setMoreOpen(false);
   }, [pathname]);
   const meta = useMeta().data;
+
+  // indicador deslizante sob a aba ativa
+  const navRef = useRef<HTMLElement>(null);
+  const [ind, setInd] = useState<{ x: number; w: number } | null>(null);
+  useLayoutEffect(() => {
+    const place = () => {
+      const a = navRef.current?.querySelector<HTMLElement>('a.active');
+      setInd(a ? { x: a.offsetLeft, w: a.offsetWidth } : null);
+    };
+    place();
+    window.addEventListener('resize', place);
+    document.fonts?.ready.then(place);
+    return () => window.removeEventListener('resize', place);
+  }, [pathname]);
+
+  // cabeçalho mais compacto ao rolar
+  const [scrolled, setScrolled] = useState(false);
+  useEffect(() => {
+    const on = () => setScrolled(window.scrollY > 12);
+    on();
+    window.addEventListener('scroll', on, { passive: true });
+    return () => window.removeEventListener('scroll', on);
+  }, []);
   const moreActive = MOBILE_MORE.some((n) => pathname.startsWith(n.to));
   return (
     <>
-      <header className="site-header">
+      <header className={`site-header ${scrolled ? 'scrolled' : ''}`}>
         <div className="container bar">
           <Link to="/" className="logo" aria-label="DadosUFC — início">
             <Logo />
             <span>DADOS<span className="accent">UFC</span></span>
           </Link>
-          <nav className="nav" aria-label="Principal">
+          <nav className="nav" aria-label="Principal" ref={navRef}>
             {NAV.map((n) => (
               <NavLink key={n.to} to={n.to} end={n.end}>{n.label}</NavLink>
             ))}
+            {ind && <span className="nav-ind" style={{ transform: `translateX(${ind.x}px)`, width: ind.w }} aria-hidden="true" />}
           </nav>
           <Link to="/comparar" className="btn btn-primary btn-sm header-cta">Comparar</Link>
         </div>
       </header>
-      <main>
+      <main key={pathname.split('/').slice(0, 2).join('/')} className="page-enter">
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/lutadores" element={<Fighters />} />

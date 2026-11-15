@@ -1,4 +1,4 @@
-import { Fragment, useState, type ReactNode } from 'react';
+import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useFighters } from '../lib/data';
 import { initials } from '../lib/format';
 
@@ -150,4 +150,26 @@ export function ResultBadge({ r }: { r: 'W' | 'L' | 'D' | 'NC' }) {
 export function Flag({ src, country }: { src?: string | null; country?: string | null }) {
   if (!src) return null;
   return <img className="flag" src={src} alt={country ?? ''} title={country ?? ''} width={18} height={18} loading="lazy" referrerPolicy="no-referrer" />;
+}
+
+/** Número que "sobe" até o valor (ease-out); respeita prefers-reduced-motion. */
+export function CountUp({ value, format, ms = 900 }: { value: number; format: (n: number) => string; ms?: number }) {
+  const [shown, setShown] = useState(value);
+  const from = useRef(0);
+  useEffect(() => {
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { setShown(value); return; }
+    const start = performance.now();
+    const a = from.current;
+    let raf = 0;
+    const tick = (t: number) => {
+      const k = Math.min(1, (t - start) / ms);
+      const v = a + (value - a) * (1 - Math.pow(1 - k, 3));
+      setShown(v);
+      from.current = v;
+      if (k < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [value, ms]);
+  return <>{format(shown)}</>;
 }

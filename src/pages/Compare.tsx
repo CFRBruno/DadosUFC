@@ -3,7 +3,7 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { BodyMap, CmpBar } from '../components/charts';
 import { compareUrl } from '../components/events';
 import { FighterPicker } from '../components/fighters';
-import { Avatar, Flag, Icon, Loading, ResultBadge, Rich } from '../components/ui';
+import { Avatar, CountUp, Flag, Icon, Loading, ResultBadge, Rich } from '../components/ui';
 import { analyze, shortName, type Analysis } from '../lib/compare';
 import { useEvents, useFighter, useFighters, useModel } from '../lib/data';
 import { divisionName, fmtDate, fmtDateShort, fmtInt, fmtNum, fmtPct, recordStr, todayIso } from '../lib/format';
@@ -163,12 +163,12 @@ function AnalysisView({ A, B, an, model }: { A: FighterDetail; B: FighterDetail;
         <div className="panel-title">Previsão</div>
         <div className="predict-top">
           <div>
-            <div className="pct" style={{ color: 'var(--a)' }}>{fmtPct(an.pA)}</div>
+            <div className="pct" style={{ color: 'var(--a)' }}><CountUp value={an.pA} format={(n) => fmtPct(n)} /></div>
             <div className="who">{nA}</div>
           </div>
           <div className="note" style={{ textAlign: 'center', paddingBottom: 6 }}>chance de<br />vitória</div>
           <div className="right">
-            <div className="pct" style={{ color: 'var(--b)' }}>{fmtPct(1 - an.pA)}</div>
+            <div className="pct" style={{ color: 'var(--b)' }}><CountUp value={1 - an.pA} format={(n) => fmtPct(n)} /></div>
             <div className="who">{nB}</div>
           </div>
         </div>

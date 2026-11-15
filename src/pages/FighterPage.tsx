@@ -3,7 +3,7 @@ import { Link, useParams } from 'react-router-dom';
 import { BodyMap, EloChart, MethodBlock, MethodLegend, SimpleBars } from '../components/charts';
 import { compareUrl } from '../components/events';
 import { FightRow, OfficialChip } from '../components/fighters';
-import { Avatar, ErrorBox, Flag, Icon, Loading } from '../components/ui';
+import { Avatar, CountUp, ErrorBox, Flag, Icon, Loading } from '../components/ui';
 import { useFighter } from '../lib/data';
 import { rankingUrl } from '../lib/rankingStats';
 import { cmToFtIn, divisionName, fmtDate, fmtNum, fmtPct, recordStr } from '../lib/format';
@@ -239,7 +239,7 @@ function FormPanel({ form }: { form: NonNullable<FighterDetail['form']> }) {
       <div className="panel-title left">Forma recente</div>
       <div className="form-grid">
         <div className={`form-score ${tone}`}>
-          <b>{form.score}</b>
+          <b><CountUp value={form.score} format={(n) => String(Math.round(n))} /></b>
           <span>{form.label}</span>
         </div>
         <div style={{ flex: 1, minWidth: 0 }}>
