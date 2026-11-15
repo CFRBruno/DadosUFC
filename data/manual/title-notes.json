@@ -1,0 +1,104 @@
+{
+  "_comment": "Notas da linha do tempo dos cinturões. Fonte principal: Wikipedia (List of UFC champions e páginas de eventos/lutadores). 'source': 'wiki' = motivo informado na fonte; 'dados' = fato verificado na base de lutas, usado quando a fonte não explica. Nomes seguem a grafia do UFCStats. Datas AAAA-MM-DD; 'dateLabel' quando a fonte só informa o mês.",
+  "events": [
+    { "division": "HW", "date": "1998-01-15", "dateLabel": "jan 1998", "kind": "vacancy", "who": "Randy Couture", "title": "Couture deixa o UFC e o cinturão <em>fica vago</em>", "reason": "Cinturão retirado quando Couture saiu do UFC por uma disputa contratual." },
+    { "division": "HW", "date": "1999-06-15", "dateLabel": "jun 1999", "kind": "vacancy", "who": "Bas Rutten", "title": "Rutten abre mão do cinturão <em>para descer de categoria</em>", "reason": "Deixou o título para lutar no meio-pesado e se aposentou pouco depois por lesões nos treinos." },
+    { "division": "HW", "date": "2002-07-26", "kind": "vacancy", "who": "Josh Barnett", "title": "Barnett perde o cinturão <em>no antidoping</em>", "reason": "Retirado após teste positivo para esteroides anabolizantes." },
+    { "division": "HW", "date": "2003-10-15", "kind": "vacancy", "who": "Tim Sylvia", "title": "Sylvia perde o cinturão <em>no antidoping</em>", "reason": "Retirado após teste positivo para esteroides anabolizantes." },
+    { "division": "HW", "date": "2005-08-12", "kind": "vacancy", "who": "Frank Mir", "promote": "Andrei Arlovski", "title": "Mir perde o cinturão parado e <em>Arlovski é promovido</em>", "reason": "Retirado por inatividade, pelas lesões de um acidente de moto. O interino Arlovski virou campeão." },
+    { "division": "HW", "date": "2023-01-14", "kind": "vacancy", "who": "Francis Ngannou", "title": "Ngannou deixa o UFC <em>ainda campeão</em>", "reason": "Cinturão retirado quando saiu do UFC por uma disputa contratual." },
+    { "division": "HW", "date": "2025-06-21", "kind": "vacancy", "who": "Jon Jones", "promote": "Tom Aspinall", "title": "Jones se aposenta e <em>Aspinall herda o cinturão</em>", "reason": "Jones deixou o título ao anunciar a aposentadoria; o interino Aspinall foi promovido." },
+    { "division": "HW", "date": "2026-09-14", "kind": "vacancy", "who": "Tom Aspinall", "promote": "Ciryl Gane", "title": "Aspinall deixa o cinturão e <em>Gane é promovido</em>", "reason": "Aspinall deixou o título pelas complicações das lesões nos olhos; o interino Gane foi promovido." },
+
+    { "division": "LHW", "date": "1999-11-24", "kind": "vacancy", "who": "Frank Shamrock", "title": "Shamrock sai do UFC <em>sem perder o cinturão</em>", "reason": "Deixou o título ao sair do UFC, alegando falta de adversários à altura." },
+    { "division": "LHW", "date": "2015-04-28", "kind": "vacancy", "who": "Jon Jones", "title": "Jones perde o cinturão <em>fora do octógono</em>", "reason": "Retirado após o envolvimento e a prisão em um caso de atropelamento com fuga." },
+    { "division": "LHW", "date": "2016-11-09", "kind": "vacancy", "interimOnly": true, "who": "Jon Jones", "title": "Jones perde o <em>cinturão interino</em>", "reason": "Retirado pela suspensão de um ano após um teste antidoping positivo antes de uma luta." },
+    { "division": "LHW", "date": "2017-09-13", "kind": "note", "who": "Jon Jones", "title": "Vitória de Jones é anulada e <em>Cormier volta a ser campeão</em>", "reason": "Jones venceu no UFC 214, mas o resultado virou 'sem resultado' por doping; Cormier foi reconhecido de novo como campeão." },
+    { "division": "LHW", "date": "2018-12-28", "kind": "vacancy", "who": "Daniel Cormier", "title": "Cormier abre mão do <em>meio-pesado</em>", "reason": "Deixou o título 174 dias depois de conquistar o cinturão do peso-pesado." },
+    { "division": "LHW", "date": "2020-08-17", "kind": "vacancy", "who": "Jon Jones", "title": "Jones deixa o cinturão <em>para subir aos pesados</em>", "reason": "Deixou o título citando a negociação salarial com o UFC e o desejo de lutar no peso-pesado." },
+    { "division": "LHW", "date": "2022-11-23", "kind": "vacancy", "who": "Jiri Prochazka", "title": "Procházka abre mão do cinturão <em>por lesão</em>", "reason": "Deixou o título após uma lesão grave no ombro." },
+    { "division": "LHW", "date": "2023-07-14", "kind": "vacancy", "who": "Jamahal Hill", "title": "Hill deixa o cinturão <em>por lesão</em>", "reason": "Deixou o título após romper o tendão de Aquiles." },
+    { "division": "LHW", "date": "2026-04-11", "kind": "vacancy", "who": "Alex Pereira", "title": "Pereira abre mão do cinturão <em>para subir aos pesados</em>", "reason": "Anunciado em 27 fev 2026; vago oficialmente em 11 abr 2026." },
+
+    { "division": "MW", "date": "2002-10-05", "kind": "vacancy", "who": "Murilo Bustamante", "title": "Bustamante troca o UFC <em>pelo Pride</em>", "reason": "Cinturão retirado quando saiu do UFC para lutar no Pride." },
+    { "division": "MW", "date": "2017-12-07", "kind": "vacancy", "who": "Georges St-Pierre", "promote": "Robert Whittaker", "title": "St-Pierre deixa o cinturão e <em>Whittaker é promovido</em>", "reason": "St-Pierre deixou o título por colite ulcerativa; o interino Whittaker foi promovido." },
+
+    { "division": "WW", "date": "2004-05-17", "kind": "vacancy", "who": "BJ Penn", "title": "Penn troca o UFC <em>pelo K-1</em>", "reason": "Cinturão retirado quando saiu do UFC para o K-1." },
+    { "division": "WW", "date": "2013-12-13", "kind": "vacancy", "who": "Georges St-Pierre", "title": "St-Pierre se afasta e <em>deixa o cinturão</em>", "reason": "Deixou o título para dar um tempo na carreira." },
+    { "division": "WW", "date": "2018-09-08", "kind": "vacancy", "interimOnly": true, "who": "Colby Covington", "title": "Covington perde o <em>cinturão interino</em>", "reason": "Retirado por lesão, sem poder enfrentar o campeão." },
+
+    { "division": "LW", "date": "2002-03-23", "kind": "vacancy", "who": "Jens Pulver", "title": "Pulver deixa o UFC e o cinturão <em>fica vago</em>", "reason": "Pulver saiu do UFC por uma disputa contratual e teve o cinturão retirado." },
+    { "division": "LW", "date": "2007-12-08", "kind": "vacancy", "who": "Sean Sherk", "title": "Sherk perde o cinturão <em>fora do octógono</em>", "reason": "Retirado após teste positivo para esteroides anabolizantes." },
+    { "division": "LW", "date": "2018-04-07", "kind": "vacancy", "alsoInterim": true, "who": "Conor McGregor", "title": "McGregor e Ferguson perdem os cinturões <em>no mesmo dia</em>", "reason": "McGregor por inatividade; o interino Ferguson por lesão." },
+    { "division": "LW", "date": "2021-03-19", "kind": "vacancy", "who": "Khabib Nurmagomedov", "title": "Khabib se aposenta <em>invicto</em>", "reason": "Aposentadoria anunciada logo após o UFC 254; o cinturão foi declarado vago em março de 2021." },
+    { "division": "LW", "date": "2022-05-06", "kind": "vacancy", "who": "Charles Oliveira", "title": "Oliveira perde o cinturão <em>na balança</em>", "reason": "Ficou acima do peso para a defesa contra Gaethje no UFC 274 e teve o título retirado." },
+    { "division": "LW", "date": "2025-05-13", "kind": "vacancy", "who": "Islam Makhachev", "title": "Makhachev abre mão do cinturão <em>para subir de peso</em>", "reason": "Deixou o título para disputar o meio-médio; vago oficialmente em 28 jun 2025." },
+
+    { "division": "FW", "date": "2010-11-20", "kind": "promotion", "who": "Jose Aldo", "title": "Aldo, campeão do WEC, vira o <em>primeiro campeão</em> do UFC", "reason": "Com a fusão entre WEC e UFC, o campeão do WEC foi reconhecido como primeiro campeão peso-pena do UFC." },
+    { "division": "FW", "date": "2016-11-26", "kind": "vacancy", "who": "Conor McGregor", "promote": "Jose Aldo", "title": "McGregor perde o peso-pena e <em>Aldo volta a ser campeão</em>", "reason": "Retirado 14 dias depois de McGregor conquistar o cinturão do peso-leve; o interino Aldo foi promovido." },
+    { "division": "FW", "date": "2025-02-19", "kind": "vacancy", "who": "Ilia Topuria", "title": "Topuria abre mão do cinturão <em>para subir de peso</em>", "reason": "Deixou o título para disputar o peso-leve; vago oficialmente em 12 abr 2025." },
+
+    { "division": "BW", "date": "2010-12-16", "kind": "promotion", "who": "Dominick Cruz", "title": "Cruz, campeão do WEC, vira o <em>primeiro campeão</em> do UFC", "reason": "Venceu Scott Jorgensen no WEC 53; com a fusão WEC–UFC, o título passou a ser o cinturão do UFC." },
+    { "division": "BW", "date": "2014-01-06", "kind": "vacancy", "who": "Dominick Cruz", "promote": "Renan Barao", "title": "Cruz deixa o cinturão e <em>Barão é promovido</em>", "reason": "Cruz deixou o título após lesões repetidas; o interino Barão foi promovido." },
+    { "division": "BW", "date": "2019-03-20", "kind": "vacancy", "who": "TJ Dillashaw", "title": "Dillashaw abre mão do cinturão <em>após doping</em>", "reason": "Deixou o título por um teste antidoping positivo." },
+    { "division": "BW", "date": "2020-05-24", "kind": "vacancy", "who": "Henry Cejudo", "title": "Cejudo se aposenta <em>como campeão</em>", "reason": "Aposentadoria anunciada em 9 mai 2020; vago oficialmente em 24 mai 2020." },
+
+    { "division": "FLW", "date": "2020-02-29", "kind": "vacancy", "who": "Henry Cejudo", "title": "Cejudo abre mão <em>do peso-mosca</em>", "reason": "Deixou o título para se dedicar ao cinturão do peso-galo (anunciado em dezembro de 2019)." },
+
+    { "division": "WBW", "date": "2012-12-06", "kind": "promotion", "who": "Ronda Rousey", "title": "Rousey é anunciada a <em>primeira campeã</em> do UFC", "reason": "Campeã do Strikeforce, foi reconhecida como primeira campeã peso-galo do UFC." },
+    { "division": "WBW", "date": "2023-06-20", "kind": "vacancy", "who": "Amanda Nunes", "title": "Nunes se aposenta <em>com dois cinturões</em>", "reason": "Aposentadoria anunciada em 10 jun 2023; vago oficialmente em 20 jun 2023." },
+
+    { "division": "WFLW", "date": "2018-09-07", "kind": "vacancy", "who": "Nicco Montano", "title": "Montaño perde o cinturão <em>na véspera da defesa</em>", "reason": "Retirada após desistir da defesa no UFC 228 por problemas no corte de peso." },
+    { "division": "WFLW", "date": "2026-10-03", "kind": "vacancy", "who": "Valentina Shevchenko", "title": "Shevchenko abre mão do cinturão <em>por lesão</em>", "reason": "Anunciado em 5 set 2026; vago oficialmente em 3 out 2026." },
+
+    { "division": "WSW", "date": "2025-10-25", "kind": "vacancy", "who": "Zhang Weili", "title": "Zhang deixa o cinturão <em>para subir de peso</em>", "reason": "Deixou o título para disputar o peso-mosca; anunciado em 28 ago 2025." },
+
+    { "division": "WFW", "date": "2017-06-19", "kind": "vacancy", "who": "Germaine de Randamie", "title": "De Randamie perde o cinturão <em>ao recusar Cyborg</em>", "reason": "Retirada após se recusar a defender o título contra Cris Cyborg." },
+    { "division": "WFW", "date": "2023-06-20", "kind": "vacancy", "who": "Amanda Nunes", "title": "Nunes se aposenta <em>com dois cinturões</em>", "reason": "Aposentadoria anunciada em 10 jun 2023; vago oficialmente em 20 jun 2023." },
+
+    { "division": "BMF", "date": "2023-05-16", "kind": "vacancy", "who": "Jorge Masvidal", "title": "Masvidal se aposenta e o BMF <em>fica vago</em>", "reason": "Cinturão retirado após a aposentadoria no UFC 287." }
+  ],
+  "inauguralTournament": [
+    { "division": "WSW", "date": "2014-12-12" },
+    { "division": "WFLW", "date": "2017-12-01" }
+  ],
+  "interimReasons": {
+    "LHW|2003-06-06": { "source": "wiki", "text": "O campeão Tito Ortiz alegou conflito de agenda para não enfrentar Liddell; o UFC criou o primeiro interino da história para pressioná-lo." },
+    "HW|2005-02-05": { "source": "wiki", "text": "O campeão Frank Mir estava parado após um grave acidente de moto." },
+    "WW|2007-12-29": { "source": "wiki", "text": "O campeão Matt Serra se lesionou nas costas; o vencedor enfrentaria Serra depois." },
+    "HW|2008-02-02": { "source": "wiki", "text": "O campeão Randy Couture recusou a luta contra Nogueira." },
+    "HW|2010-03-27": { "source": "wiki", "text": "O campeão Brock Lesnar ficou fora por uma doença intestinal que exigiu cirurgia." },
+    "WW|2012-02-04": { "source": "wiki", "text": "O campeão Georges St-Pierre se lesionou no joelho." },
+    "BW|2012-07-21": { "source": "wiki", "text": "O campeão Dominick Cruz estava lesionado." },
+    "HW|2014-11-15": { "source": "wiki", "text": "O campeão Cain Velasquez se lesionou no joelho; Mark Hunt entrou como substituto." },
+    "FW|2015-07-11": { "source": "wiki", "text": "O campeão José Aldo fraturou uma costela e saiu da luta contra McGregor." },
+    "LHW|2016-04-23": { "source": "wiki", "text": "O campeão Daniel Cormier machucou o pé e saiu da revanche; Ovince Saint Preux entrou no lugar." },
+    "FW|2016-07-09": { "source": "dados", "text": "O campeão McGregor fazia suas lutas seguintes no meio-médio, contra Nate Diaz." },
+    "FW|2016-12-10": { "source": "wiki", "text": "Com McGregor no peso-leve, o UFC colocou o interino em jogo; logo depois Aldo foi promovido a campeão linear." },
+    "MW|2017-07-08": { "source": "wiki", "text": "O campeão Michael Bisping aguardava a defesa já anunciada contra Georges St-Pierre." },
+    "LW|2017-10-07": { "source": "dados", "text": "McGregor não defendia o cinturão desde a conquista, em novembro de 2016." },
+    "WW|2018-06-09": { "source": "dados", "text": "O campeão Tyron Woodley não lutava desde julho de 2017." },
+    "LW|2019-04-13": { "source": "wiki", "text": "Khabib estava suspenso pela confusão após o UFC 229." },
+    "MW|2019-04-13": { "source": "dados", "text": "O campeão Robert Whittaker não lutava desde junho de 2018." },
+    "LW|2020-05-09": { "source": "wiki", "text": "Khabib ficou fora do UFC 249 por restrições de viagem da pandemia de COVID-19." },
+    "HW|2021-08-07": { "source": "wiki", "text": "Segundo o UFC, o campeão Francis Ngannou não aceitou defender o cinturão em agosto." },
+    "BW|2021-10-30": { "source": "wiki", "text": "O campeão Aljamain Sterling saiu da luta por problemas no pescoço; Cory Sandhagen entrou contra Yan." },
+    "FLW|2022-07-30": { "source": "dados", "text": "O campeão Deiveson Figueiredo não lutava desde janeiro de 2022." },
+    "FW|2023-02-11": { "source": "dados", "text": "O campeão Volkanovski lutava na mesma noite pelo cinturão do peso-leve." },
+    "HW|2023-11-11": { "source": "wiki", "text": "O campeão Jon Jones rompeu o peitoral e saiu da luta contra Stipe Miocic." },
+    "LW|2026-01-24": { "source": "wiki", "text": "O campeão Topuria anunciou que não lutaria no 1º trimestre de 2026, por motivos pessoais." },
+    "HW|2026-06-14": { "source": "wiki", "text": "O campeão Tom Aspinall estava fora por uma lesão no olho sofrida contra Gane em outubro de 2025." }
+  },
+  "bmf": {
+    "fights": [
+      { "date": "2019-11-02", "winner": "Jorge Masvidal", "loser": "Nate Diaz" },
+      { "date": "2023-07-29", "winner": "Justin Gaethje", "loser": "Dustin Poirier" },
+      { "date": "2024-04-13", "winner": "Max Holloway", "loser": "Justin Gaethje" },
+      { "date": "2025-07-19", "winner": "Max Holloway", "loser": "Dustin Poirier" },
+      { "date": "2026-03-07", "winner": "Charles Oliveira", "loser": "Max Holloway" }
+    ],
+    "upcoming": [
+      { "event": "UFC 335", "a": "Charles Oliveira", "b": "Diego Lopes" }
+    ]
+  }
+}

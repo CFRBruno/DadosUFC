@@ -28,6 +28,16 @@ jobs:
 
       - run: npm ci
 
+      # caches das buscas de fotos (ESPN/Wikidata) entre execuções
+      - uses: actions/cache@v4
+        with:
+          path: |
+            data/raw/cache-*.json
+            data/raw/espn-headshots.json
+            data/raw/wikidata-photos.json
+          key: dados-cache-${{ github.run_id }}
+          restore-keys: dados-cache-
+
       - name: Gerar dados (UFCStats)
         run: npm run data
 

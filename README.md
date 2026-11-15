@@ -16,7 +16,7 @@ Site pessoal de estatísticas do UFC. Traz histórico, estilo de luta, pontos fo
 | `/lutador/:slug/luta/:id` | Estatísticas da luta, total e round a round |
 | `/comparar?a=…&b=…` | Previsão (% de vitória e 6 resultados possíveis), fatores que mais pesam, por que cada um pode vencer, como a luta deve se desenrolar, números lado a lado, últimas 5 lutas e adversários em comum |
 | `/ranking` | Ranking por qualquer estatística física, de cartel ou de desempenho, por categoria ou peso absoluto (com filtro de gênero e mínimo de lutas) |
-| `/cinturoes` | Todas as disputas de cinturão do UFC desde 1993 (linear e interino), última disputa por categoria e, como opção, as finais de torneio |
+| `/cinturoes` | **Linha do tempo** de cada cinturão (12 categorias + BMF): visão geral dos reinados e modo história com scroll, com manchetes, scorecards, campeão com defesas e dias, interinos, vacâncias com motivo e recordes que são quebrados ao vivo. Também a lista de todas as disputas desde 1993 |
 | `/eventos`, `/evento/:id` | Linha do tempo de todos os eventos desde 2026, em ordem cronológica, com o card aberto ao clicar |
 | `/modelo` | Como a previsão funciona e quanto ela acerta |
 
@@ -99,8 +99,15 @@ src/shared/         código usado pelo pipeline E pelo site (modelo, tipos, trad
 src/lib/            dados, formatação e a análise de confronto (compare.ts)
 src/components/     UI (gráficos, cartões, comparador)
 src/pages/          páginas
-data/manual/        lutas futuras cadastradas à mão
+data/manual/        dados curados à mão:
+  upcoming.json       lutas futuras (quando nenhuma fonte trouxer)
+  title-notes.json    vacâncias, promoções, motivos dos interinos e histórico do BMF (fonte: Wikipedia)
+  photos.json         fotos manuais (nome → URL), com prioridade sobre ESPN/Wikimedia
 ```
+
+### Linha do tempo dos cinturões
+
+As lutas vêm da base. Os motivos de vacância e de interinos, as promoções sem luta e as lutas do BMF ficam em `data/manual/title-notes.json`. Quando surgir uma nova vacância, um novo interino ou uma nova luta valendo o BMF, acrescente uma entrada nesse arquivo. Quem estiver sem foto na linha do tempo aparece em `data/raw/sem-foto-cinturoes.txt`; para completar, cadastre a foto em `data/manual/photos.json`.
 
 ## Limitações conhecidas
 

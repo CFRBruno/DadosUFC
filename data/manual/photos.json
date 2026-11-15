@@ -1,0 +1,4 @@
+{
+  "_comment": "Fotos cadastradas à mão (nome exatamente como no UFCStats → URL da imagem). Têm prioridade sobre ESPN/Wikimedia. A lista de quem está sem foto na linha do tempo fica em data/raw/sem-foto-cinturoes.txt depois de rodar 'npm run data'.",
+  "photos": {}
+}

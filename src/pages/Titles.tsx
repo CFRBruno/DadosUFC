@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { lazy, Suspense, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Avatar, ErrorBox, Loading } from '../components/ui';
 import { useJson } from '../lib/data';
@@ -6,9 +6,36 @@ import { divisionName, fmtDate, methodText } from '../lib/format';
 import { MAIN_DIVISIONS, type DivisionKey } from '../shared/divisions';
 import type { TitleFight } from '../shared/types';
 
-const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+const Timeline = lazy(() => import('./titles/Timeline'));
 
 export default function Titles() {
+  const [params, setParams] = useSearchParams();
+  const view = params.get('ver') === 'lista' ? 'lista' : 'linha';
+  const set = (v: string) => {
+    const p = new URLSearchParams(params);
+    if (v === 'lista') { p.set('ver', 'lista'); p.delete('peso'); } else p.delete('ver');
+    setParams(p, { replace: true });
+  };
+  return (
+    <>
+      <div className="container" style={{ paddingTop: 20 }}>
+        <div className="seg" role="tablist" aria-label="Visualização">
+          <button role="tab" aria-selected={view === 'linha'} className={view === 'linha' ? 'on' : ''} onClick={() => set('linha')}>Linha do tempo</button>
+          <button role="tab" aria-selected={view === 'lista'} className={view === 'lista' ? 'on' : ''} onClick={() => set('lista')}>Todas as disputas</button>
+        </div>
+      </div>
+      {view === 'linha' ? (
+        <div style={{ marginTop: 16 }}>
+          <Suspense fallback={<Loading />}><Timeline /></Suspense>
+        </div>
+      ) : <TitleList />}
+    </>
+  );
+}
+
+const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+
+function TitleList() {
   const { data, error } = useJson<TitleFight[]>('titles.json');
   const [params, setParams] = useSearchParams();
   const cat = (params.get('cat') as DivisionKey | null) ?? '';

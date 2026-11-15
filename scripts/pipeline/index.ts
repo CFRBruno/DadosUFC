@@ -16,6 +16,7 @@ import { fetchMirror, fetchUpcoming, rawExists, RAW_DIR, type ScrapedEvent } fro
 import { classifyStyle, computePercentiles, computeRates, recentStreak, strengthsWeaknesses } from './insights';
 import { loadDataset, type RawFight } from './load';
 import { fetchWikiPhotos, photoMatcher } from './photos';
+import { buildTitleHistory } from './titleHistory';
 import { checkHeadshots, countryPt, espnHeadshot, espnPage, espnUpcoming, fetchEspn, matchEspnIds } from './espn';
 
 /** Lutadores que lutaram no UFC a partir desta data entram no site. */
@@ -363,6 +364,20 @@ async function main() {
     }))
     .reverse();
   await writeFile(path.join(OUT, 'titles.json'), JSON.stringify(titles));
+
+  // linha do tempo dos cinturões
+  console.log('• Montando a linha do tempo dos cinturões…');
+  const big = (u: string) => u.replace('w=240&h=174', 'w=700&h=508');
+  const th = await buildTitleHistory({
+    fights,
+    slugOf: (id) => slugOf.get(id) ?? null,
+    photoById: new Map(details.filter((d) => d.photo).map((d) => [d.id, big(d.photo!)])),
+    wikiPhoto: (n) => photoOf(n, null)?.url ?? null,
+    offline,
+  });
+  await writeFile(path.join(OUT, 'title-history.json'), JSON.stringify(th.history));
+  console.log(`  ${Object.values(th.history.divisions).reduce((n, d) => n + d.chapters.length, 0)} lutas de cinturão · ${Object.keys(th.history.photos).length} fotos · sem foto: ${th.missingPhotos.length}`);
+  await writeFile(path.join('data', 'raw', 'sem-foto-cinturoes.txt'), th.missingPhotos.join('\n'));
 
   // ranking: valores por lutador (só quem já lutou no UFC)
   const rankings: RankingRow[] = details
