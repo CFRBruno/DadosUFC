@@ -130,6 +130,9 @@ export interface FighterSummary {
   style: string;
   streak: string;
   upcoming: boolean;
+  /** foto (Wikimedia Commons) e página do arquivo, para crédito/licença */
+  photo: string | null;
+  photoPage: string | null;
 }
 
 export interface FighterDetail extends FighterSummary {

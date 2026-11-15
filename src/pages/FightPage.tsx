@@ -38,7 +38,7 @@ export default function FightPage() {
 
       <div className="pick-row">
         <Link to={`/lutador/${f.slug}`} className="pick-card a">
-          <Avatar name={f.name} side="a" size="lg" />
+          <Avatar name={f.name} id={f.id} side="a" size="lg" />
           <div>
             <h3>{f.name}</h3>
             <div className="chips"><span className="chip chip-record">{fight.recordBefore}</span><ResultBadge r={fight.result} /></div>
@@ -47,7 +47,7 @@ export default function FightPage() {
         <div className="vs-badge">VS</div>
         {opp.slug ? (
           <Link to={`/lutador/${opp.slug}`} className="pick-card b">
-            <Avatar name={opp.name} side="b" size="lg" />
+            <Avatar name={opp.name} id={opp.id} side="b" size="lg" />
             <div>
               <h3>{opp.name}</h3>
               <div className="chips"><span className="chip chip-record">{fight.oppRecordBefore}</span></div>
@@ -55,7 +55,7 @@ export default function FightPage() {
           </Link>
         ) : (
           <div className="pick-card b">
-            <Avatar name={opp.name} side="b" size="lg" />
+            <Avatar name={opp.name} id={opp.id} side="b" size="lg" />
             <div><h3>{opp.name}</h3><div className="chips"><span className="chip chip-record">{fight.oppRecordBefore}</span></div></div>
           </div>
         )}

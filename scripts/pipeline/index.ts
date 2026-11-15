@@ -14,6 +14,7 @@ import { computePriors, processChronologically, trainModel } from './build';
 import { fetchMirror, fetchUpcoming, rawExists, RAW_DIR, type ScrapedEvent } from './fetch';
 import { classifyStyle, computePercentiles, computeRates, recentStreak, strengthsWeaknesses } from './insights';
 import { loadDataset, type RawFight } from './load';
+import { fetchWikiPhotos, photoMatcher } from './photos';
 
 /** Lutadores que lutaram no UFC a partir desta data entram no site. */
 const SCOPE_FROM = '2026-01-01';
@@ -64,6 +65,8 @@ async function main() {
 
   // 2. Leitura e processamento ---------------------------------------------------
   console.log('• Lendo CSVs…');
+  console.log('• Buscando fotos (Wikidata / Wikimedia Commons)…');
+  const photoOf = photoMatcher(await fetchWikiPhotos(offline));
   const { bios, fights, events } = await loadDataset();
   console.log(`  ${fights.length} lutas, ${bios.size} lutadores, ${events.size} eventos`);
   const { priors, fiveRoundDecFactor } = computePriors(fights);
@@ -225,6 +228,10 @@ async function main() {
       style: '',
       streak: lastRes && streakN ? `${lastRes === 'W' ? 'V' : lastRes === 'L' ? 'D' : 'E'}${streakN}` : '',
       upcoming: nextBout.has(id),
+      ...(() => {
+        const ph = photoOf(nameOf(id), bio?.dob ?? null);
+        return { photo: ph?.url ?? null, photoPage: ph?.page ?? null };
+      })(),
       divisions: [...new Set(entries.map((e) => e.division))],
       heightCm: cm(bio?.heightIn ?? null),
       reachCm: cm(bio?.reachIn ?? null),
@@ -302,8 +309,8 @@ async function main() {
   await rm(OUT, { recursive: true, force: true });
   await mkdir(path.join(OUT, 'fighters'), { recursive: true });
   const summaries: FighterSummary[] = details
-    .map(({ id, slug, name, nickname, division, women, record, elo, lastFight, age, style, streak, upcoming }) => ({
-      id, slug, name, nickname, division, women, record, elo, lastFight, age, style, streak, upcoming,
+    .map(({ id, slug, name, nickname, division, women, record, elo, lastFight, age, style, streak, upcoming, photo, photoPage }) => ({
+      id, slug, name, nickname, division, women, record, elo, lastFight, age, style, streak, upcoming, photo, photoPage,
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
   await writeFile(path.join(OUT, 'fighters.json'), JSON.stringify(summaries));
@@ -321,6 +328,7 @@ async function main() {
     upcomingSource,
   };
   await writeFile(path.join(OUT, 'meta.json'), JSON.stringify(meta, null, 1));
+  console.log(`  ${details.filter((d) => d.photo).length} lutadores com foto`);
   console.log(`✔ Pronto: ${details.length} lutadores, ${past.length} eventos em ${SCOPE_FROM.slice(0, 4)}, ${upcomingEvents.length} eventos futuros (${upcomingSource}).`);
 }
 

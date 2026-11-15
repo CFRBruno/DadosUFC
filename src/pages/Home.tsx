@@ -97,7 +97,7 @@ export default function Home() {
           <>
             <div className="section-title">
               <h2>Próximo evento</h2>
-              <Link to="/eventos">Todos os eventos →</Link>
+              <Link to="/eventos?ordem=recentes">Todos os eventos →</Link>
             </div>
             {nextEvent ? (
               <div className="panel">

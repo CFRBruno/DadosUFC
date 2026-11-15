@@ -45,7 +45,12 @@ function Profile({ f }: { f: FighterDetail }) {
   return (
     <div className="container">
       <div className="profile-head">
-        <Avatar name={f.name} size="lg" />
+        <div>
+          <Avatar name={f.name} id={f.id} size="lg" />
+          {f.photoPage && (
+            <div className="photo-credit"><a href={f.photoPage} target="_blank" rel="noreferrer">Foto: Wikimedia</a></div>
+          )}
+        </div>
         <div>
           {f.nickname && <div className="nick">"{f.nickname}"</div>}
           <h1>{f.name}</h1>

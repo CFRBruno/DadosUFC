@@ -29,9 +29,9 @@ export function UpcomingBoutRow({ b, byId }: { b: UpcomingBout; byId: Map<string
         )}
       </div>
       <div className="bout">
-        <Side name={b.a.name} slug={b.a.slug} rec={fa ? recordStr(fa.record) : 'Estreia'} side="a" />
+        <Side id={b.a.id} name={b.a.name} slug={b.a.slug} rec={fa ? recordStr(fa.record) : 'Estreia'} side="a" />
         <div className="mid"><b>vs</b></div>
-        <Side name={b.b.name} slug={b.b.slug} rec={fb ? recordStr(fb.record) : 'Estreia'} side="b" right />
+        <Side id={b.b.id} name={b.b.name} slug={b.b.slug} rec={fb ? recordStr(fb.record) : 'Estreia'} side="b" right />
       </div>
     </div>
   );
@@ -47,18 +47,18 @@ export function ResultBoutRow({ f }: { f: EventFight }) {
         {winSlug && <Link to={`/lutador/${winSlug}/luta/${f.id}`} style={{ color: 'var(--brand)' }}>Estatísticas →</Link>}
       </div>
       <div className="bout">
-        <Side name={f.a.name} slug={f.a.slug} rec={f.winner === 0 ? 'Venceu' : f.winner === 1 ? 'Perdeu' : ''} cls={f.winner === 0 ? 'win' : f.winner === 1 ? 'lose' : ''} side="a" />
+        <Side id={f.a.id} name={f.a.name} slug={f.a.slug} rec={f.winner === 0 ? 'Venceu' : f.winner === 1 ? 'Perdeu' : ''} cls={f.winner === 0 ? 'win' : f.winner === 1 ? 'lose' : ''} side="a" />
         <div className="mid"><b>{how}</b>R{f.endRound} · {f.endTime}</div>
-        <Side name={f.b.name} slug={f.b.slug} rec={f.winner === 1 ? 'Venceu' : f.winner === 0 ? 'Perdeu' : ''} cls={f.winner === 1 ? 'win' : f.winner === 0 ? 'lose' : ''} side="b" right />
+        <Side id={f.b.id} name={f.b.name} slug={f.b.slug} rec={f.winner === 1 ? 'Venceu' : f.winner === 0 ? 'Perdeu' : ''} cls={f.winner === 1 ? 'win' : f.winner === 0 ? 'lose' : ''} side="b" right />
       </div>
     </div>
   );
 }
 
-function Side({ name, slug, rec, right, cls = '', side }: { name: string; slug: string | null; rec: string; right?: boolean; cls?: string; side: 'a' | 'b' }) {
+function Side({ id, name, slug, rec, right, cls = '', side }: { id: string | null; name: string; slug: string | null; rec: string; right?: boolean; cls?: string; side: 'a' | 'b' }) {
   const inner = (
     <>
-      <Avatar name={name} size="sm" side={side} />
+      <Avatar name={name} id={id} size="sm" side={side} />
       <div style={{ minWidth: 0 }}>
         <div className="nm">{name}</div>
         <div className="rc">{rec}</div>

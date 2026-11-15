@@ -30,7 +30,7 @@ export function searchFighters(list: FighterSummary[], q: string): FighterSummar
 export function FighterCard({ f }: { f: FighterSummary }) {
   return (
     <Link to={`/lutador/${f.slug}`} className="fighter-card">
-      <Avatar name={f.name} />
+      <Avatar name={f.name} id={f.id} />
       <div className="info">
         {f.nickname && <div className="nick">"{f.nickname}"</div>}
         <div className="name">{f.name}</div>
@@ -96,7 +96,7 @@ export function FighterPicker({
               onMouseDown={(e) => { e.preventDefault(); pick(f); }}
               onMouseEnter={() => setIdx(i)}
             >
-              <Avatar name={f.name} size="sm" />
+              <Avatar name={f.name} id={f.id} size="sm" />
               <div style={{ minWidth: 0 }}>
                 <div className="n">{f.name}</div>
                 <div className="s">{recordStr(f.record)} · {DIVISION_BY_KEY[f.division]?.short} · Elo {f.elo}</div>

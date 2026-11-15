@@ -117,7 +117,7 @@ function PickCard({
   return (
     <div className={`pick-card ${side}`}>
       <button className="clear" onClick={onClear} aria-label={`Remover ${f.name}`}><Icon name="x" /></button>
-      <Avatar name={f.name} side={side} size="lg" />
+      <Avatar name={f.name} id={f.id} side={side} size="lg" />
       <div style={{ minWidth: 0 }}>
         {f.nickname && <div className="nick">"{f.nickname}"</div>}
         <Link to={`/lutador/${f.slug}`}><h3>{f.name}</h3></Link>

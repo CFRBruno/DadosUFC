@@ -1,4 +1,5 @@
-import { Fragment, type ReactNode } from 'react';
+import { Fragment, useState, type ReactNode } from 'react';
+import { useFighters } from '../lib/data';
 import { initials } from '../lib/format';
 
 type IconName = 'home' | 'users' | 'swords' | 'calendar' | 'chart' | 'x' | 'up' | 'down' | 'chev' | 'info';
@@ -33,10 +34,33 @@ export function Logo() {
   );
 }
 
-export function Avatar({ name, side, size }: { name: string; side?: 'a' | 'b'; size?: 'sm' | 'lg' }) {
+type PhotoMap = Map<string, { url: string; page: string | null }>;
+const EMPTY: PhotoMap = new Map();
+const photoMaps = new WeakMap<object, PhotoMap>();
+
+/** Mapa id → foto, montado uma única vez a partir da lista de lutadores. */
+function usePhotoMap(): PhotoMap {
+  const list = useFighters().data;
+  if (!list) return EMPTY;
+  let m = photoMaps.get(list);
+  if (!m) {
+    m = new Map(list.filter((f) => f.photo).map((f) => [f.id, { url: f.photo!, page: f.photoPage }]));
+    photoMaps.set(list, m);
+  }
+  return m;
+}
+
+export function Avatar({ name, id, side, size }: { name: string; id?: string | null; side?: 'a' | 'b'; size?: 'sm' | 'lg' }) {
+  const photos = usePhotoMap();
+  const [failed, setFailed] = useState(false);
+  const photo = id ? photos.get(id) : undefined;
   return (
-    <div className={['avatar', side, size].filter(Boolean).join(' ')} aria-hidden="true">
-      {initials(name)}
+    <div className={['avatar', side, size, photo && !failed ? 'has-photo' : ''].filter(Boolean).join(' ')} aria-hidden="true">
+      {photo && !failed ? (
+        <img src={photo.url} alt="" loading="lazy" decoding="async" referrerPolicy="no-referrer" onError={() => setFailed(true)} />
+      ) : (
+        initials(name)
+      )}
     </div>
   );
 }
