@@ -46,7 +46,7 @@ export function ResultBoutRow({ f }: { f: EventFight }) {
         <span>{f.title && <span style={{ color: 'var(--brand)' }}>Cinturão · </span>}{divisionName(f.division)}</span>
         {winSlug && <Link to={`/lutador/${winSlug}/luta/${f.id}`} style={{ color: 'var(--brand)' }}>Estatísticas →</Link>}
       </div>
-      <div className={`bout ${f.winner === 0 ? 'win-a' : f.winner === 1 ? 'win-b' : ''}`}>
+      <div className={`bout ${f.winner === 0 ? 'win-a' : f.winner === 1 ? 'win-b' : f.result === 'D' ? 'draw' : ''}`}>
         <Side id={f.a.id} name={f.a.name} slug={f.a.slug} rec={f.winner === 0 ? 'Venceu' : f.winner === 1 ? 'Perdeu' : ''} cls={f.winner === 0 ? 'win' : f.winner === 1 ? 'lose' : ''} side="a" />
         <div className="mid"><b>{how}</b>R{f.endRound} · {f.endTime}</div>
         <Side id={f.b.id} name={f.b.name} slug={f.b.slug} rec={f.winner === 1 ? 'Venceu' : f.winner === 0 ? 'Perdeu' : ''} cls={f.winner === 1 ? 'win' : f.winner === 0 ? 'lose' : ''} side="b" right />
