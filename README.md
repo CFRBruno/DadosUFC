@@ -38,6 +38,13 @@ Site pessoal de estatísticas do UFC. Traz histórico, estilo de luta, pontos fo
 
 Os números são recalculados a cada atualização e aparecem em `/modelo`.
 
+### Ranking oficial, forma recente e cinturões
+
+- **Ranking oficial:** desde 20/06/2026 o UFC usa o *Meta UFC Rankings* (modelo baseado em Elo, campeão + 15 por categoria). Como o ufc.com bloqueia acesso automatizado, o pipeline lê a tabela mantida na Wikipédia (`UFC_rankings`), que cita o ufc.com a cada atualização semanal. A data da divulgação fica em `meta.json`. O ranking só cobre quem está no site (lutou em 2026 ou tem luta marcada).
+- **Forma recente:** nota de 0 a 100 com as últimas 5 lutas (peso 0,75 por luta mais antiga), usando "resultado − esperado pelo Elo" e um pequeno ajuste por finalização/nocaute.
+- **Cinturões:** passagens por cinturões calculadas a partir da linha do tempo (inclui interino e BMF, que não contam como "ex-campeão").
+- **Posição nas estatísticas:** cada estatística mostra a colocação na categoria (ou entre todos do gênero quando a categoria tem menos de 15 lutadores elegíveis).
+
 ### Linhas de mercado
 
 A ESPN só publica as linhas perto da data da luta e depois as retira. Por isso, cada execução do pipeline guarda o que encontrar em `data/odds/archive.json`, e o GitHub Actions grava esse arquivo de volta no repositório (commit automático "Atualiza arquivo de linhas de mercado"). Se você trabalha no repositório localmente, faça `git pull` antes de enviar alterações.

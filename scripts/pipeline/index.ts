@@ -7,7 +7,7 @@ import path from 'node:path';
 import { DIVISION_BY_KEY, parseWeightClass, type DivisionKey } from '../../src/shared/divisions';
 import type {
   RankingRow, TitleFight,
-  EventInfo, FightEntry, FighterDetail, FighterSummary, MethodBreakdown, Meta, UpcomingBout,
+  EventInfo, FightEntry, FighterDetail, FighterSummary, MethodBreakdown, Meta, StatRank, TitleReign, UpcomingBout,
 } from '../../src/shared/types';
 import { S } from '../../src/shared/types';
 import { emptyState } from '../../src/shared/model';
@@ -17,11 +17,13 @@ import { buildFeatures, currentSnapshot } from './features';
 import { loadOdds, marketLookup, updateOdds } from './odds';
 import { trainModel2, type MethodInfo } from './train';
 import { fetchMirror, fetchUpcoming, rawExists, RAW_DIR, type ScrapedEvent } from './fetch';
-import { classifyStyle, computePercentiles, computeRates, recentStreak, strengthsWeaknesses } from './insights';
+import { classifyStyle, computeForm, computePercentiles, computeRates, recentStreak, strengthsWeaknesses } from './insights';
 import { loadDataset, type RawFight } from './load';
 import { fetchWikiPhotos, photoMatcher } from './photos';
 import { buildTitleHistory } from './titleHistory';
 import { checkHeadshots, countryPt, espnHeadshot, espnPage, espnUpcoming, fetchEspn, matchEspnIds } from './espn';
+import { fetchOfficialRankings } from './rankings';
+import { buildStory } from '../../src/lib/titleStory';
 
 /** Lutadores que lutaram no UFC a partir desta data entram no site. */
 const SCOPE_FROM = '2026-01-01';
@@ -64,6 +66,7 @@ async function main() {
   const oddsArchive = await loadOdds();
   await updateOdds(oddsArchive, espn, offline);
   const marketOf = marketLookup(oddsArchive);
+  const officialRankings = await fetchOfficialRankings(offline);
   if (!upcoming.length) {
     upcoming = espnUpcoming(espn, today);
     if (upcoming.length) upcomingSource = 'ESPN';
@@ -286,9 +289,15 @@ async function main() {
       firstFight: entries.length ? entries[entries.length - 1].date : null,
       eloPeak: hist.length ? Math.max(...hist.map((h) => h[1])) : 1500,
       eloHistory: hist,
-      eloRank: null,
       rates,
       percentiles: {},
+      statRanks: {},
+      titleReigns: [],
+      form: computeForm(entries),
+      official: null,
+      champ: null,
+      bestStats: [],
+      eloRank: null,
       totals: st,
       wins, losses, target, targetAbs, position,
       styleTags: [], styleText: '',
@@ -302,9 +311,14 @@ async function main() {
   }
 
   // percentis, estilo, pontos fortes/fracos, ranking Elo
-  const pcts = computePercentiles(details.map((d) => ({ id: d.id, group: d.division, women: d.women, rates: d.rates, st: d.totals })));
+  const ranksOut = new Map<string, Partial<Record<keyof FighterDetail['rates'], StatRank>>>();
+  const pcts = computePercentiles(details.map((d) => ({ id: d.id, group: d.division, women: d.women, rates: d.rates, st: d.totals })), ranksOut);
+  const BEST: [keyof FighterDetail['rates'], string][] = [['slpm', 'Golpes/min'], ['acc', 'Precisão'], ['def', 'Defesa de golpes'], ['td', 'Quedas'], ['tdAcc', 'Precisão de quedas'], ['tdDef', 'Defesa de quedas'], ['sub', 'Finalizações'], ['kd', 'Knockdowns'], ['ctrl', 'Controle'], ['finishRate', 'Vitórias antes do fim']];
   for (const d of details) {
     d.percentiles = pcts.get(d.id) ?? {};
+    d.statRanks = ranksOut.get(d.id) ?? {};
+    d.bestStats = BEST.flatMap(([k, label]) => { const r = d.statRanks[k]; return r && r.scope === 'cat' && r.of >= 8 ? [{ key: k as string, label, pos: r.pos, of: r.of }] : []; })
+      .sort((a, b) => a.pos / a.of - b.pos / b.of).slice(0, 2);
     const s = classifyStyle(d.totals, d.rates, d.percentiles, d.target, d.position);
     d.style = s.style;
     d.styleTags = s.tags;
@@ -355,13 +369,6 @@ async function main() {
   console.log('• Gravando JSON…');
   await rm(OUT, { recursive: true, force: true });
   await mkdir(path.join(OUT, 'fighters'), { recursive: true });
-  const summaries: FighterSummary[] = details
-    .map(({ id, slug, name, nickname, division, women, record, elo, lastFight, age, style, streak, upcoming, photo, photoPage, country, flag }) => ({
-      id, slug, name, nickname, division, women, record, elo, lastFight, age, style, streak, upcoming, photo, photoPage, country, flag,
-    }))
-    .sort((a, b) => a.name.localeCompare(b.name));
-  await writeFile(path.join(OUT, 'fighters.json'), JSON.stringify(summaries));
-  for (const d of details) await writeFile(path.join(OUT, 'fighters', `${d.slug}.json`), JSON.stringify(d));
   await writeFile(path.join(OUT, 'model.json'), JSON.stringify(model));
   await writeFile(path.join(OUT, 'events.json'), JSON.stringify({ upcoming: upcomingEvents, past }));
 
@@ -395,6 +402,42 @@ async function main() {
   await writeFile(path.join(OUT, 'title-history.json'), JSON.stringify(th.history));
   console.log(`  ${Object.values(th.history.divisions).reduce((n, d) => n + d.chapters.length, 0)} lutas de cinturão · ${Object.keys(th.history.photos).length} fotos · sem foto: ${th.missingPhotos.length}`);
   await writeFile(path.join('data', 'raw', 'sem-foto-cinturoes.txt'), th.missingPhotos.join('\n'));
+
+  // ranking oficial (Meta UFC Rankings) + passagens por cinturões (dependem do histórico de títulos)
+  const detailById = new Map(details.map((d) => [d.id, d]));
+  const unmatched: string[] = [];
+  for (const e of officialRankings.entries) {
+    const d = detailById.get(idByName.get(norm(e.name)) ?? '');
+    if (d) d.official = { division: e.division as DivisionKey, pos: e.pos, interim: e.interim };
+    else unmatched.push(e.name);
+  }
+  console.log(`  Ranking oficial (${officialRankings.released ?? 'indisponível'}): ${officialRankings.entries.length - unmatched.length} de ${officialRankings.entries.length} no site${unmatched.length ? ` · fora do escopo ou sem correspondência: ${unmatched.join(', ')}` : ''}`);
+  for (const [key, div] of Object.entries(th.history.divisions)) {
+    const story = buildStory(div, today);
+    const add = (id: string | undefined, rg: TitleReign) => { const d = id ? detailById.get(id) : undefined; if (d) d.titleReigns.push(rg); };
+    for (const rg of story.reigns) {
+      add(idByName.get(norm(rg.name)), { division: key, divisionName: div.name, kind: 'champion', start: rg.start, end: rg.ongoing ? null : rg.end, def: rg.def, endKind: rg.endKind });
+    }
+    let lastInterim = '';
+    for (const c of div.chapters) {
+      if (!c.interim || c.result !== 'W') continue;
+      if (c.a.name !== lastInterim) add(c.a.id ?? undefined, { division: key, divisionName: div.name, kind: 'interim', start: c.date, end: null, def: 0, endKind: 'interim' });
+      lastInterim = c.a.name;
+    }
+  }
+  for (const d of details) {
+    d.titleReigns.sort((x, y) => x.start.localeCompare(y.start));
+    const real = d.titleReigns.filter((t) => t.kind === 'champion' && t.division !== 'BMF');
+    d.champ = real.some((t) => t.end === null) ? 'atual' : real.length ? 'ex' : null;
+  }
+
+  const summaries: FighterSummary[] = details
+    .map(({ id, slug, name, nickname, division, women, record, elo, lastFight, age, style, streak, upcoming, photo, photoPage, country, flag, form, official, champ, bestStats, eloRank }) => ({
+      id, slug, name, nickname, division, women, record, elo, lastFight, age, style, streak, upcoming, photo, photoPage, country, flag, form, official, champ, bestStats, eloRank,
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+  await writeFile(path.join(OUT, 'fighters.json'), JSON.stringify(summaries));
+  for (const d of details) await writeFile(path.join(OUT, 'fighters', `${d.slug}.json`), JSON.stringify(d));
 
   // ranking: valores por lutador (só quem já lutou no UFC)
   const rankings: RankingRow[] = details
@@ -438,6 +481,7 @@ async function main() {
     fightCount: fights.length,
     model: model.metrics,
     upcomingSource,
+    rankingsDate: officialRankings.released,
   };
   await writeFile(path.join(OUT, 'meta.json'), JSON.stringify(meta, null, 1));
   console.log(`  ${details.filter((d) => d.photo).length} lutadores com foto · ${titles.filter((t) => !t.tournament).length} disputas de cinturão`);

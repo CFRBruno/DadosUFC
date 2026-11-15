@@ -40,6 +40,7 @@ jobs:
           path: |
             data/raw/cache-*.json
             data/raw/espn-headshots.json
+            data/raw/wikipedia-ufc-rankings.txt
             data/raw/wikidata-photos.json
           key: dados-cache-${{ github.run_id }}
           restore-keys: dados-cache-

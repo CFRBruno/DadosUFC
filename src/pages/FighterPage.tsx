@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { BodyMap, EloChart, MethodBlock, MethodLegend, SimpleBars } from '../components/charts';
 import { compareUrl } from '../components/events';
-import { FightRow } from '../components/fighters';
+import { FightRow, OfficialChip } from '../components/fighters';
 import { Avatar, ErrorBox, Flag, Icon, Loading } from '../components/ui';
 import { useFighter } from '../lib/data';
 import { rankingUrl } from '../lib/rankingStats';
@@ -60,6 +60,8 @@ function Profile({ f }: { f: FighterDetail }) {
             <span className="chip chip-record" title="Cartel somente no UFC">UFC {recordStr(f.record)}</span>
             {f.eloRank && <span className="chip chip-rank" title="Posição no rating Elo da categoria (entre os lutadores do site)">#{f.eloRank.division} Elo · {divisionName(f.division)}</span>}
             {!f.eloRank && <span className="chip">{divisionName(f.division)}</span>}
+            {f.official && <OfficialChip o={f.official} />}
+            {f.champ && <span className={`chip ${f.champ === 'atual' ? 'chip-gold' : 'chip-tag'}`}>{f.champ === 'atual' ? 'Campeão atual' : 'Ex-campeão do UFC'}</span>}
             {f.style && <span className="chip chip-style">{f.style}</span>}
             {f.streak && <span className={`chip ${f.streak.startsWith('V') ? 'chip-up' : 'chip-red'}`}>{f.streak.startsWith('V') ? `${f.streak.slice(1)} vitória(s) seguida(s)` : f.streak.startsWith('D') ? `${f.streak.slice(1)} derrota(s) seguida(s)` : 'Empate'}</span>}
           </div>
@@ -89,6 +91,9 @@ function Profile({ f }: { f: FighterDetail }) {
         <Link to={rankingUrl('avgMin', f.division)} title="Ver ranking"><span>Tempo médio</span><b>{f.rates.avgFightMin ? `${fmtNum(f.rates.avgFightMin, 1)} min` : '—'}</b><small>por luta</small></Link>
         <Link to={rankingUrl('five', f.division)} title="Ver ranking"><span>5 rounds</span><b>{f.fiveRoundFights}</b><small>{f.titleFights ? `${f.titleFights} por cinturão` : 'lutas'}</small></Link>
       </div>
+
+      {f.form && <FormPanel form={f.form} />}
+      {f.titleReigns.length > 0 && <TitlePanel f={f} />}
 
       {debut ? (
         <div className="panel" style={{ marginTop: 16 }}>
@@ -142,6 +147,11 @@ function Profile({ f }: { f: FighterDetail }) {
                       <>
                         <div className="pct-bar"><i style={{ width: `${p}%` }} /></div>
                         <div className="pct-label"><span>Percentil</span><span>{p}</span></div>
+                        {f.statRanks[t.key] && (
+                          <div className="pct-label rank-line" title={f.statRanks[t.key]!.scope === 'cat' ? `Posição entre os lutadores do ${divisionName(f.division)} no site` : 'Categoria pequena: posição entre todos os lutadores do mesmo gênero no site'}>
+                            <span>Posição</span><span><b>{f.statRanks[t.key]!.pos}º</b> de {f.statRanks[t.key]!.of}{f.statRanks[t.key]!.scope === 'gen' ? ' (gênero)' : ''}</span>
+                          </div>
+                        )}
                       </>
                     )}
                   </Link>
@@ -150,7 +160,7 @@ function Profile({ f }: { f: FighterDetail }) {
             </div>
             <p className="note" style={{ marginTop: 12 }}>
               {tileCount
-                ? `Percentil = posição entre os lutadores do ${divisionName(f.division)} no site (100 = melhor da categoria; para "absorvidos" e "sofridos", menos é melhor).`
+                ? `Percentil: 100 = melhor da categoria. Posição: colocação entre os lutadores do ${divisionName(f.division)} no site (para "absorvidos" e "sofridos", menos é melhor).`
                 : 'Percentis aparecem a partir de 2 lutas e 15 minutos no UFC.'}
             </p>
           </div>
@@ -215,6 +225,74 @@ function Profile({ f }: { f: FighterDetail }) {
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+const METHOD_PT: Record<string, string> = { KO: 'nocaute', SUB: 'finalização', DEC: 'decisão' };
+const RES = { W: 'V', L: 'D', D: 'E' } as const;
+
+function FormPanel({ form }: { form: NonNullable<FighterDetail['form']> }) {
+  const tone = form.score >= 58 ? 'good' : form.score >= 43 ? 'mid' : 'bad';
+  return (
+    <div className="panel" style={{ marginTop: 16 }}>
+      <div className="panel-title left">Forma recente</div>
+      <div className="form-grid">
+        <div className={`form-score ${tone}`}>
+          <b>{form.score}</b>
+          <span>{form.label}</span>
+        </div>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div className="form-gauge" role="img" aria-label={`Forma ${form.score} de 100`}>
+            <i style={{ left: `${form.score}%` }} />
+          </div>
+          <div className="form-gauge-scale"><span>Em crise</span><span>Regular</span><span>Em alta</span></div>
+          <div className="form-dots">
+            {[...form.last5].reverse().map((x) => (
+              <span key={x.date + x.opp} className={`form-dot ${x.r}`} title={`${fmtDate(x.date)} · ${x.r === 'W' ? 'Vitória' : x.r === 'L' ? 'Derrota' : 'Empate'} contra ${x.opp} (${METHOD_PT[x.method] ?? x.method})`}>
+                {RES[x.r]}
+              </span>
+            ))}
+            <small>da mais antiga à mais recente</small>
+          </div>
+        </div>
+      </div>
+      <p className="note" style={{ marginTop: 12 }}>
+        Nota de 0 a 100 com as últimas 5 lutas; as mais recentes pesam mais. Cada luta vale o resultado menos o esperado pelo Elo: vencer um adversário forte pontua mais, perder para um muito mais forte pesa pouco, e finalização ou nocaute ajustam um pouco. 50 é o neutro. Funciona nos dois sentidos: boas fases sobem a nota, fases ruins a derrubam.
+      </p>
+    </div>
+  );
+}
+
+function TitlePanel({ f }: { f: FighterDetail }) {
+  const champs = f.titleReigns.filter((t) => t.kind === 'champion' && t.division !== 'BMF');
+  const divs = [...new Set(champs.map((t) => t.divisionName))];
+  const interim = f.titleReigns.filter((t) => t.kind === 'interim');
+  const bmf = f.titleReigns.filter((t) => t.division === 'BMF');
+  const summary = champs.length
+    ? `${champs.length === 1 ? 'Campeão uma vez' : `Campeão ${champs.length} vezes`} · ${divs.join(' e ')}`
+    : interim.length ? 'Já foi campeão interino' : 'Passou pelo cinturão BMF';
+  return (
+    <div className="panel" style={{ marginTop: 16 }}>
+      <div className="panel-title left">Cinturões no UFC</div>
+      <p style={{ fontWeight: 800, marginBottom: 12 }}>{summary}{interim.length ? ` · ${interim.length} interino${interim.length > 1 ? 's' : ''}` : ''}{bmf.length ? ' · BMF' : ''}</p>
+      <ul className="reign-list">
+        {f.titleReigns.map((t) => (
+          <li key={t.division + t.kind + t.start}>
+            <span className={`chip ${t.kind === 'interim' ? 'chip-tag' : t.division === 'BMF' ? 'chip-red' : 'chip-gold'}`}>{t.division === 'BMF' ? 'BMF' : t.kind === 'interim' ? 'Interino' : 'Campeão'}</span>
+            <b>{t.division === 'BMF' ? 'Cinturão BMF' : t.divisionName}</b>
+            <span className="reign-when">
+              {t.kind === 'interim'
+                ? `conquistou em ${fmtDate(t.start)}`
+                : `${fmtDate(t.start)} → ${t.end ? fmtDate(t.end) : 'atual'}`}
+            </span>
+            {t.kind === 'champion' && <span className="reign-def">{t.def} defesa{t.def === 1 ? '' : 's'}{t.end && t.endKind === 'vacated' ? ' · deixou vago' : ''}</span>}
+          </li>
+        ))}
+      </ul>
+      <p className="note" style={{ marginTop: 10 }}>
+        <Link to="/cinturoes" style={{ color: 'var(--brand)' }}>Ver a linha do tempo completa →</Link>
+      </p>
     </div>
   );
 }

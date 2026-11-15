@@ -131,6 +131,31 @@ export interface Insight {
   score: number; // força do sinal 0..1
 }
 
+/** Forma recente: nota 0–100 (alto = boa fase) com base nas últimas 5 lutas. */
+export interface FormInfo {
+  score: number;
+  label: string;
+  /** da mais recente para a mais antiga */
+  last5: { r: 'W' | 'L' | 'D'; opp: string; method: string; date: string; delta: number }[];
+}
+
+/** Posição no ranking oficial do UFC (Meta UFC Rankings). `pos` 0 = campeão. */
+export interface OfficialRank { division: DivisionKey; pos: number; interim: boolean }
+
+/** Posição numa estatística dentro da categoria (ou entre todos do mesmo gênero quando a categoria é pequena). */
+export interface StatRank { pos: number; of: number; scope: 'cat' | 'gen' }
+
+/** Passagem por um cinturão do UFC. */
+export interface TitleReign {
+  division: string;       // DivisionKey ou 'BMF'
+  divisionName: string;
+  kind: 'champion' | 'interim';
+  start: string;
+  end: string | null;     // null = atual
+  def: number;
+  endKind: 'lost' | 'vacated' | 'ongoing' | 'interim';
+}
+
 export interface FighterSummary {
   id: string;
   slug: string;
@@ -151,6 +176,13 @@ export interface FighterSummary {
   /** país (pt-BR) e bandeira, via ESPN */
   country: string;
   flag: string;
+  form: FormInfo | null;
+  official: OfficialRank | null;
+  /** campeão atual / ex-campeão do UFC (cinturão linear; o BMF não conta) */
+  champ: 'atual' | 'ex' | null;
+  /** as estatísticas em que ele está mais bem colocado na categoria (até 2) */
+  bestStats: { key: string; label: string; pos: number; of: number }[];
+  eloRank: { division: number; of: number } | null;
 }
 
 export interface FighterDetail extends FighterSummary {
@@ -162,9 +194,10 @@ export interface FighterDetail extends FighterSummary {
   firstFight: string | null;
   eloPeak: number;
   eloHistory: [string, number][];
-  eloRank: { division: number; of: number } | null;
   rates: Rates;
   percentiles: Partial<Record<keyof Rates, number>>;
+  statRanks: Partial<Record<keyof Rates, StatRank>>;
+  titleReigns: TitleReign[];
   totals: ModelState;
   wins: MethodBreakdown;
   losses: MethodBreakdown;
@@ -234,6 +267,8 @@ export interface Meta {
   fightCount: number;
   model: ModelMetrics;
   upcomingSource: string;
+  /** data de divulgação do ranking oficial exibido */
+  rankingsDate: string | null;
 }
 
 /** Disputa de cinturão (ou final de torneio) do histórico completo do UFC. */

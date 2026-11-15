@@ -27,6 +27,13 @@ export function searchFighters(list: FighterSummary[], q: string): FighterSummar
     .map((x) => x.f);
 }
 
+export function OfficialChip({ o }: { o: NonNullable<FighterSummary['official']> }) {
+  const div = divisionName(o.division);
+  return o.pos === 0
+    ? <span className="chip chip-gold" title="Ranking oficial do UFC">{o.interim ? 'Campeão interino' : 'Campeão'} · {div}</span>
+    : <span className="chip chip-gold-soft" title="Ranking oficial do UFC (Meta UFC Rankings)">#{o.pos} ranking UFC · {div}</span>;
+}
+
 export function FighterCard({ f }: { f: FighterSummary }) {
   return (
     <Link to={`/lutador/${f.slug}`} className="fighter-card">
@@ -40,6 +47,13 @@ export function FighterCard({ f }: { f: FighterSummary }) {
           {f.style && f.style !== 'Estreante' && <span className="chip chip-style">{f.style}</span>}
           {f.style === 'Estreante' && <span className="chip chip-red">Estreante</span>}
           {f.upcoming && <span className="chip chip-up">Próxima luta</span>}
+        </div>
+        <div className="meta card-ranks">
+          {f.official && <OfficialChip o={f.official} />}
+          {!f.official && f.champ === 'ex' && <span className="chip chip-tag">Ex-campeão</span>}
+          {f.form && <span className={`chip form-chip ${f.form.score >= 58 ? 'good' : f.form.score >= 43 ? 'mid' : 'bad'}`} title={`Forma recente: ${f.form.label}`}>Forma {f.form.score}</span>}
+          {f.eloRank && <span className="chip" title={`Posição no Elo da categoria (${f.eloRank.of} lutadores)`}>{f.eloRank.division}º Elo</span>}
+          {f.bestStats.map((b) => <span key={b.key} className="chip chip-tag" title={`${b.pos}º de ${b.of} em ${b.label} na categoria`}>{b.pos}º {b.label}</span>)}
         </div>
       </div>
       <div className="elo">

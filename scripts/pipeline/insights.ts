@@ -1,6 +1,6 @@
 // Taxas de carreira, percentis, estilo de luta e pontos fortes/fracos (regras).
 
-import type { FightEntry, Insight, ModelState, Rates } from '../../src/shared/types';
+import type { FightEntry, FormInfo, Insight, ModelState, Rates, StatRank } from '../../src/shared/types';
 import { S } from '../../src/shared/types';
 
 const nf = (n: number, d = 1) => n.toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -57,12 +57,13 @@ export function eligibleFor(key: keyof Rates, st: ModelState): boolean {
   return true;
 }
 
-/** Percentis "orientados" (0–100, maior = melhor) dentro de cada grupo. */
+/** Percentis "orientados" (0–100, maior = melhor) dentro de cada grupo; `ranksOut` recebe também a posição. */
 export function computePercentiles(
   items: { id: string; group: string; women: boolean; rates: Rates; st: ModelState }[],
+  ranksOut?: Map<string, Partial<Record<keyof Rates, StatRank>>>,
 ): Map<string, Partial<Record<keyof Rates, number>>> {
   const out = new Map<string, Partial<Record<keyof Rates, number>>>();
-  for (const it of items) out.set(it.id, {});
+  for (const it of items) { out.set(it.id, {}); ranksOut?.set(it.id, {}); }
   const groups = new Map<string, typeof items>();
   for (const it of items) {
     if (!groups.has(it.group)) groups.set(it.group, []);
@@ -72,15 +73,47 @@ export function computePercentiles(
     for (const it of items) {
       if (!eligibleFor(key, it.st)) continue;
       let pool = (groups.get(it.group) ?? []).filter((o) => eligibleFor(key, o.st));
-      if (pool.length < 15) pool = items.filter((o) => o.women === it.women && eligibleFor(key, o.st));
+      let scope: StatRank['scope'] = 'cat';
+      if (pool.length < 15) { pool = items.filter((o) => o.women === it.women && eligibleFor(key, o.st)); scope = 'gen'; }
       const v = it.rates[key] as number;
       const vals = pool.map((o) => o.rates[key] as number);
       const below = vals.filter((x) => (higher ? x < v : x > v)).length;
       const equal = vals.filter((x) => x === v).length;
       out.get(it.id)![key] = Math.round((100 * (below + equal / 2)) / vals.length);
+      const better = vals.filter((x) => (higher ? x > v : x < v)).length;
+      if (ranksOut) ranksOut.get(it.id)![key] = { pos: better + 1, of: vals.length, scope };
     }
   }
   return out;
+}
+
+// --- Forma recente -----------------------------------------------------------------------
+
+/**
+ * Nota de forma (0–100) com as últimas 5 lutas, as mais recentes pesando mais (×0,75 por luta).
+ * Cada luta vale "resultado − resultado esperado pelo Elo": vencer um adversário forte pontua mais,
+ * perder para um muito mais forte pesa pouco. Finalização/nocaute ajusta ±0,10. Poucas lutas
+ * puxam a nota para 50.
+ */
+export function computeForm(entries: FightEntry[]): FormInfo | null {
+  const last = entries.filter((e) => e.result !== 'NC').slice(0, 5); // entries: mais recente primeiro
+  if (!last.length) return null;
+  let sum = 0, wsum = 0;
+  const last5: FormInfo['last5'] = [];
+  last.forEach((e, k) => {
+    const exp = 1 / (1 + 10 ** ((e.oppEloBefore - e.eloBefore) / 400));
+    const sc = e.result === 'W' ? 1 : e.result === 'L' ? 0 : 0.5;
+    const fin = e.method === 'KO' || e.method === 'SUB';
+    const perf = sc - exp + (sc === 1 && fin ? 0.1 : sc === 0 && fin ? -0.1 : 0);
+    const w = 0.75 ** k;
+    sum += w * perf; wsum += w;
+    last5.push({ r: e.result as 'W' | 'L' | 'D', opp: e.opponent.name, method: e.method, date: e.date, delta: Math.round(perf * 100) / 100 });
+  });
+  const n = last.length;
+  const avg = (sum / wsum) * (n / (n + 1));
+  const score = Math.max(0, Math.min(100, Math.round(50 + 55 * avg)));
+  const label = score >= 70 ? 'Em alta' : score >= 58 ? 'Boa fase' : score >= 43 ? 'Regular' : score >= 30 ? 'Em baixa' : 'Em crise';
+  return { score, label, last5 };
 }
 
 // --- Estilo -------------------------------------------------------------------------
