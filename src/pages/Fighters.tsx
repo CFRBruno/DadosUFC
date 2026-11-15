@@ -20,6 +20,8 @@ export default function Fighters() {
   const gender = params.get('genero') ?? '';
   const sort = (params.get('ordem') ?? 'nome') as keyof typeof SORTS;
   const onlyUpcoming = params.get('marcada') === '1';
+  const styles = useMemo(() => (params.get('estilo') ?? '').split('|').filter(Boolean), [params]);
+  const [countryQ, setCountryQ] = useState('');
   const countries = useMemo(() => (params.get('pais') ?? '').split('|').filter(Boolean), [params]);
   const [limit, setLimit] = useState(60);
 
@@ -50,18 +52,29 @@ export default function Fighters() {
     for (const c of countries) if (!m.has(c)) m.set(c, { n: 0, flag: '' }); // mantém marcado mesmo sem lutadores
     return [...m.entries()].sort((a, b) => b[1].n - a[1].n || a[0].localeCompare(b[0], 'pt-BR'));
   }, [base, countries]);
+  const styleOptions = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const f of base) if (f.style) m.set(f.style, (m.get(f.style) ?? 0) + 1);
+    for (const s of styles) if (!m.has(s)) m.set(s, 0);
+    return [...m.entries()].sort((a, b) => b[1] - a[1]);
+  }, [base, styles]);
+  const toggleStyle = (c: string) => set('estilo', (styles.includes(c) ? styles.filter((x) => x !== c) : [...styles, c]).join('|'));
+  const norm = (t: string) => t.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const shownCountries = countryOptions.filter(([c]) => !countryQ || norm(c).includes(norm(countryQ)));
   const toggleCountry = (c: string) => set('pais', (countries.includes(c) ? countries.filter((x) => x !== c) : [...countries, c]).join('|'));
 
   const list = useMemo(() => {
     if (!data) return [];
-    let l = countries.length ? base.filter((f) => countries.includes(f.country)) : base;
+    let l = base;
+    if (countries.length) l = l.filter((f) => countries.includes(f.country));
+    if (styles.length) l = l.filter((f) => styles.includes(f.style));
     if (q) return searchFighters(l, q);
     l = [...l];
     if (sort === 'elo') l.sort((a, b) => b.elo - a.elo);
     else if (sort === 'vitorias') l.sort((a, b) => b.record.w - a.record.w || b.elo - a.elo);
     else if (sort === 'recente') l.sort((a, b) => (b.lastFight ?? '').localeCompare(a.lastFight ?? ''));
     return l;
-  }, [data, base, countries, q, sort]);
+  }, [data, base, countries, styles, q, sort]);
 
   const divisions = MAIN_DIVISIONS.filter((d) => !gender || (gender === 'f' ? d.women : !d.women));
 
@@ -88,13 +101,30 @@ export default function Fighters() {
             {countries.length === 0 ? 'Todas as nacionalidades' : countries.length === 1 ? countries[0] : `${countries.length} nacionalidades`}
           </summary>
           <div className="country-menu">
+            <input className="input country-search" placeholder="Buscar país…" value={countryQ} onChange={(e) => setCountryQ(e.target.value)} aria-label="Buscar nacionalidade" />
             {countries.length > 0 && <button className="country-clear" onClick={() => set('pais', '')}>Limpar seleção</button>}
-            {countryOptions.map(([c, o]) => (
+            {shownCountries.length === 0 && <div className="note" style={{ padding: 8 }}>Nenhum país encontrado.</div>}
+            {shownCountries.map(([c, o]) => (
               <label key={c}>
                 <input type="checkbox" checked={countries.includes(c)} onChange={() => toggleCountry(c)} />
                 {o.flag ? <img src={o.flag} alt="" loading="lazy" /> : <span className="country-noflag" />}
                 <span>{c}</span>
                 <b>{o.n}</b>
+              </label>
+            ))}
+          </div>
+        </details>
+        <details className="country-filter">
+          <summary className="select">
+            {styles.length === 0 ? 'Todos os estilos' : styles.length === 1 ? styles[0] : `${styles.length} estilos`}
+          </summary>
+          <div className="country-menu">
+            {styles.length > 0 && <button className="country-clear" onClick={() => set('estilo', '')}>Limpar seleção</button>}
+            {styleOptions.map(([c, n]) => (
+              <label key={c}>
+                <input type="checkbox" checked={styles.includes(c)} onChange={() => toggleStyle(c)} />
+                <span>{c}</span>
+                <b>{n}</b>
               </label>
             ))}
           </div>

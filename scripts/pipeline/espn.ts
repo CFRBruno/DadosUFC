@@ -53,7 +53,12 @@ export async function fetchEspn(offline: boolean, fromYear: number): Promise<Esp
   for (const e of events)
     for (const c of e.competitions)
       for (const k of c.competitors)
-        athletes.set(k.id, { id: k.id, name: k.athlete.displayName, country: k.athlete.flag?.alt ?? '', flag: smallFlag(k.athlete.flag?.href ?? '') });
+        {
+        // sem nacionalidade cadastrada, a ESPN devolve alt "default" e uma bandeira em branco
+        const fl = k.athlete.flag;
+        const blank = !fl?.alt || fl.alt.toLowerCase() === 'default' || /blank/i.test(fl.href ?? '');
+        athletes.set(k.id, { id: k.id, name: k.athlete.displayName, country: blank ? '' : fl!.alt, flag: blank ? '' : smallFlag(fl!.href) });
+      }
   return { events, athletes };
 }
 

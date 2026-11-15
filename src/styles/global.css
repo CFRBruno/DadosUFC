@@ -689,3 +689,4 @@ a.belt-w:hover, a.belt-l:hover { text-decoration: underline; }
 .country-menu label b { color: var(--text-2); font-family: var(--font-mono); font-size: 12px; }
 .country-menu img, .country-noflag { width: 20px; height: 14px; object-fit: cover; border-radius: 2px; flex: none; }
 .country-clear { width: 100%; margin-bottom: 4px; padding: 7px; background: none; border: 1px dashed var(--border-strong); border-radius: 8px; color: var(--brand); cursor: pointer; }
+.country-search { width: 100%; height: 38px; margin-bottom: 6px; }
