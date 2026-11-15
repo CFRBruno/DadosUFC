@@ -81,7 +81,7 @@ export default function Home() {
             {meta && (
               <div className="hero-stats">
                 <div><b>{meta.fighterCount}</b><span>Lutadores</span></div>
-                <div><b>{fmtPct(meta.model.accuracy)}</b><span>Acerto do modelo</span></div>
+                <div><b>{fmtPct(meta.model.accuracy)}</b><span>Acerto em lutas marcadas</span></div>
                 <div><b>{meta.fightCount.toLocaleString('pt-BR')}</b><span>Lutas na base</span></div>
               </div>
             )}

@@ -1,7 +1,8 @@
 // Análise de confronto: previsão + explicações em português.
 
-import { DIVISION_BY_KEY, type DivisionKey } from '../shared/divisions';
-import { blendPriors, FEATURES, methodPrior, outcomes, predict, type OutcomeTable } from '../shared/model';
+import { DIVISION_BY_KEY, divisionLbs, type DivisionKey } from '../shared/divisions';
+import { blendPriors, FEATURES, featureValues, methodPrior, outcomes, type OutcomeTable } from '../shared/model';
+import { atDate, FACTOR_LABEL, predictStats, withMarket } from '../shared/model2';
 import type { FightEntry, FighterDetail, ModelParams, Priors } from '../shared/types';
 import { fmtNum, fmtPct } from './format';
 
@@ -27,6 +28,10 @@ export interface Factor {
 
 export interface Analysis {
   pA: number;
+  /** chance de A só pelas estatísticas (igual a pA quando não há sinal de mercado) */
+  pStats: number;
+  /** a previsão inclui o sinal de mercado (luta marcada)? */
+  usesMarket: boolean;
   table: OutcomeTable;
   mostLikely: { side: 'A' | 'B'; method: 'KO' | 'SUB' | 'DEC'; p: number };
   methodGivenWin: { A: Record<'KO' | 'SUB' | 'DEC', number>; B: Record<'KO' | 'SUB' | 'DEC', number> };
@@ -43,11 +48,17 @@ export interface Analysis {
 
 const METHOD_PT = { KO: 'nocaute', SUB: 'finalização', DEC: 'decisão' } as const;
 
-export function analyze(A: FighterDetail, B: FighterDetail, model: ModelParams, opts: { rounds: number; division?: DivisionKey | null; date: string }): Analysis {
+export function analyze(A: FighterDetail, B: FighterDetail, model: ModelParams, opts: { rounds: number; division?: DivisionKey | null; date: string; market?: number | null }): Analysis {
   const division: DivisionKey =
     opts.division && opts.division !== 'OPEN' ? opts.division : A.division === B.division ? A.division : A.division;
   const pa = A.division === B.division || (opts.division && opts.division !== 'OPEN') ? priorsFor(model, division) : blendPriors(priorsFor(model, A.division), priorsFor(model, B.division));
-  const pred = predict(model, A.totals, B.totals, pa, pa, opts.date);
+  const va = featureValues(A.totals, pa, opts.date);
+  const vb = featureValues(B.totals, pa, opts.date);
+  const when = Date.parse(opts.date);
+  const lbs = divisionLbs(division);
+  const stats = predictStats(model.v2, atDate(A.fv, when, lbs), atDate(B.fv, when, lbs));
+  const usesMarket = opts.market != null && !!model.v2.market;
+  const pred = { pA: withMarket(model.v2, stats.z, opts.market), rawA: va.raw, rawB: vb.raw, valuesA: va.v, valuesB: vb.v };
   const prior = methodPrior(pa, opts.rounds, model.fiveRoundDecFactor);
   const table = outcomes(pred.pA, A.totals, B.totals, prior);
   const nA = shortName(A.name);
@@ -71,10 +82,11 @@ export function analyze(A: FighterDetail, B: FighterDetail, model: ModelParams, 
   const rawB = pred.rawB;
   const vA = pred.valuesA as number[];
   const vB = pred.valuesB as number[];
-  const factors: Factor[] = pred.contributions
-    .map((c, i) => {
-      const favored: Factor['favored'] = Math.abs(c.value) < 0.015 ? null : c.value > 0 ? 'A' : 'B';
-      return { key: c.key, label: c.label, value: c.value, favored, text: factorText(i, favored, nA, nB, rawA, rawB, A, B) };
+  const factors: Factor[] = FEATURES
+    .map((ft, i) => {
+      const value = stats.groups[ft.key] ?? 0;
+      const favored: Factor['favored'] = Math.abs(value) < 0.015 ? null : value > 0 ? 'A' : 'B';
+      return { key: ft.key, label: FACTOR_LABEL[ft.key] ?? ft.label, value, favored, text: factorText(i, favored, nA, nB, rawA, rawB, A, B) };
     })
     .filter((f) => f.text)
     .sort((x, y) => Math.abs(y.value) - Math.abs(x.value));
@@ -120,6 +132,20 @@ export function analyze(A: FighterDetail, B: FighterDetail, model: ModelParams, 
       ? `O modelo vê **${level}**: ${nA} tem ${fmtPct(pred.pA)} de chance e ${nB}, ${fmtPct(pB)}. O resultado isolado mais provável é **${mostLikely.side === 'A' ? nA : nB} por ${METHOD_PT[mostLikely.method]}** (${fmtPct(mostLikely.p)}).`
       : `**${fav}** chega com ${level} — ${fmtPct(favP)} de chance de vitória segundo o modelo. O resultado isolado mais provável é **${mostLikely.side === 'A' ? nA : nB} por ${METHOD_PT[mostLikely.method]}** (${fmtPct(mostLikely.p)}).`,
   );
+  if (usesMarket) {
+    const sA = stats.p;
+    const sFav = sA >= 0.5 ? nA : nB;
+    const same = (sA >= 0.5) === (pred.pA >= 0.5);
+    const diff = Math.abs(pred.pA - sA);
+    narrative.push(
+      `**Estatísticas × mercado:** como a luta está marcada, a previsão combina as estatísticas com o consenso do mercado (usado só no cálculo). Só pelas estatísticas, ${sFav} teria ${fmtPct(Math.max(sA, 1 - sA))}. ` +
+        (!same
+          ? `O mercado **inverte** esse favoritismo — sinal de que há informação fora dos números do UFC (lesões, camp, carreira anterior, estilo).`
+          : diff < 0.04
+            ? 'O mercado praticamente concorda com os números.'
+            : (Math.max(pred.pA, pB) > Math.max(sA, 1 - sA) ? 'O mercado **reforça** esse favoritismo.' : 'O mercado vê uma luta **mais equilibrada** do que os números sugerem.')),
+    );
+  }
   const strEdge = strA - strB;
   narrative.push(
     `**Em pé:** cruzando o volume de cada um com a defesa do outro, a projeção é de ${nA} conectar cerca de **[a:${fmtNum(strA, 1)} golpes significativos por minuto]** e ${nB}, **[b:${fmtNum(strB, 1)}]**. ` +
@@ -176,6 +202,8 @@ export function analyze(A: FighterDetail, B: FighterDetail, model: ModelParams, 
 
   return {
     pA: pred.pA,
+    pStats: stats.p,
+    usesMarket,
     table,
     mostLikely,
     methodGivenWin,
@@ -213,6 +241,35 @@ function factorText(
   const W = favored === 'A' ? A : B;
   const L = favored === 'A' ? B : A;
   const has = wv != null && lv != null;
+  // O fator soma várias variáveis (carreira, lutas recentes, ajuste pelo adversário). Quando o
+  // número de carreira aponta para o outro lado, usamos um texto que não cita esse número.
+  const lowerBetter = key === 'sapm' || key === 'kdAbs' || key === 'age' || key === 'layoff' || key === 'koLoss';
+  let agrees = has ? ((wv as number) - (lv as number)) * (lowerBetter ? -1 : 1) > 0 : false;
+  if (key === 'elo') agrees = W.elo > L.elo;
+  if (key === 'form') {
+    const wins = (f: FighterDetail) => f.totals.recent.slice(-3).filter((r) => r === 'W').length;
+    agrees = wins(W) > wins(L);
+  }
+  if (key === 'koLoss') agrees = L.totals.koL > 0 && L.totals.koL * Math.max(1, W.totals.fights) > W.totals.koL * Math.max(1, L.totals.fights);
+  if (!agrees) {
+    const generic: Record<string, string> = {
+      elo: `${w} leva vantagem no conjunto dos ratings — resultados, momento e nível dos adversários que enfrentou no UFC.`,
+      slpm: `${w} leva vantagem no volume de golpes quando se olha para as lutas mais recentes e para o nível dos adversários.`,
+      sapm: `${w} tem absorvido menos golpes nas lutas mais recentes, considerando quem enfrentou.`,
+      acc: `${w} tem sido mais preciso(a) em pé nas lutas mais recentes, considerando quem enfrentou.`,
+      def: `${w} tem se defendido melhor em pé nas lutas mais recentes, considerando quem enfrentou.`,
+      td: `${w} leva vantagem no jogo de quedas quando se cruza o ataque de um com a defesa do outro.`,
+      tdAcc: `${w} tem aproveitado melhor as quedas nas lutas mais recentes, considerando quem enfrentou.`,
+      tdDef: `${w} tem defendido melhor as quedas nas lutas mais recentes, considerando quem enfrentou.`,
+      sub: `${w} leva vantagem no jogo de finalização — a ameaça de um contra a vulnerabilidade do outro.`,
+      kd: `${w} leva vantagem no poder de nocaute quando se cruza a mão de um com o queixo do outro.`,
+      kdAbs: `${w} tem ido menos ao chão por golpes nas lutas mais recentes.`,
+      ctrl: `${w} leva vantagem no controle e no jogo de chão nas lutas mais recentes.`,
+      form: `${w} vem em melhor momento — sequência, tendência do rating e resultados recentes.`,
+      koLoss: `${w} leva vantagem no quesito queixo: histórico e proximidade de derrotas por nocaute.`,
+    };
+    return generic[key] ?? '';
+  }
   switch (key) {
     case 'elo':
       return `${w} tem rating Elo mais alto (${Math.round(W.elo)} × ${Math.round(L.elo)}): resultados melhores e contra adversários mais fortes no UFC.`;

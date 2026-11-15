@@ -11,7 +11,11 @@ import type {
 } from '../../src/shared/types';
 import { S } from '../../src/shared/types';
 import { emptyState } from '../../src/shared/model';
-import { computePriors, processChronologically, trainModel } from './build';
+import type { ModelParams } from '../../src/shared/types';
+import { computePriors, priorsFor, processChronologically } from './build';
+import { buildFeatures, currentSnapshot } from './features';
+import { loadOdds, marketLookup, updateOdds } from './odds';
+import { trainModel2, type MethodInfo } from './train';
 import { fetchMirror, fetchUpcoming, rawExists, RAW_DIR, type ScrapedEvent } from './fetch';
 import { classifyStyle, computePercentiles, computeRates, recentStreak, strengthsWeaknesses } from './insights';
 import { loadDataset, type RawFight } from './load';
@@ -56,6 +60,10 @@ async function main() {
   }
   console.log('• Buscando calendário, fotos e países na ESPN…');
   const espn = await fetchEspn(offline, Number(SCOPE_FROM.slice(0, 4)));
+  // linhas de mercado: insumo interno do modelo (o site não mostra odds)
+  const oddsArchive = await loadOdds();
+  await updateOdds(oddsArchive, espn, offline);
+  const marketOf = marketLookup(oddsArchive);
   if (!upcoming.length) {
     upcoming = espnUpcoming(espn, today);
     if (upcoming.length) upcomingSource = 'ESPN';
@@ -84,13 +92,19 @@ async function main() {
   const { priors, fiveRoundDecFactor } = computePriors(fights);
   console.log('• Calculando Elo e estados pré-luta…');
   const proc = processChronologically(fights, bios, priors, fiveRoundDecFactor);
-  console.log(`• Treinando modelo (${proc.samples.length} lutas)…`);
-  const model = trainModel(proc.samples, priors, fiveRoundDecFactor);
+  console.log('• Gerando variáveis pré-luta e treinando o modelo…');
+  const feat = buildFeatures(fights, bios, priors);
+  const methodInfo = new Map<string, MethodInfo>(proc.samples.map((x) => [x.id, x]));
+  const trained = trainModel2(feat.samples, feat.samples.map((x) => marketOf(x.date, x.an, x.bn)), methodInfo);
+  const model: ModelParams = { version: 2, v2: trained.v2, priors, fiveRoundDecFactor, metrics: trained.metrics };
   const m = model.metrics;
+  const pc = (x: number) => (x * 100).toFixed(1) + '%';
   console.log(
-    `  Teste (${m.testN} lutas desde ${m.testFrom}): acerto ${(m.accuracy * 100).toFixed(1)}% ` +
-      `(só Elo ${(m.eloOnlyAccuracy * 100).toFixed(1)}%), log-loss ${m.logLoss.toFixed(3)}, ` +
-      `método ${(m.methodAccuracy * 100).toFixed(1)}%, exato ${(m.exactAccuracy * 100).toFixed(1)}%`,
+    `  Avaliação ano a ano — só estatísticas desde ${m.stats.from.slice(0, 4)} (${m.stats.n} lutas): ${pc(m.stats.accuracy)}, log-loss ${m.stats.logLoss.toFixed(4)}\n` +
+      `  ${m.usesMarket ? 'Com mercado' : 'Principal'} desde ${m.testFrom.slice(0, 4)} (${m.testN} lutas): ${pc(m.accuracy)}, log-loss ${m.logLoss.toFixed(4)}` +
+      ` · só estatísticas nas mesmas lutas ${pc(m.statsSame.accuracy)}` + (m.marketOnly ? ` · mercado sozinho ${pc(m.marketOnly.accuracy)} (${m.marketOnly.logLoss.toFixed(4)})` : '') + '\n' +
+      `  Desde ${m.recent.from.slice(0, 4)} (${m.recent.n} lutas): ${pc(m.recent.accuracy)} (só estatísticas ${pc(m.recent.statsAccuracy)}) · só Elo ${pc(m.eloOnlyAccuracy)} · ` +
+      `método ${pc(m.methodAccuracy)} · exato ${pc(m.exactAccuracy)} · pesos mercado/estatísticas ${model.v2.market ? model.v2.market.a.toFixed(3) + ' / ' + model.v2.market.b.toFixed(3) : '—'}`,
   );
 
   // 3. Escopo ------------------------------------------------------------------------
@@ -153,6 +167,8 @@ async function main() {
         a: { id: ia, name: bt.a.name, slug: null },
         b: { id: ib, name: bt.b.name, slug: null },
       };
+      const mk = marketOf(ev.date, bt.a.name, bt.b.name);
+      if (mk != null) bout.mk = mk;
       bouts.push(bout);
       if (!nextBout.has(ia)) nextBout.set(ia, bout);
       if (!nextBout.has(ib)) nextBout.set(ib, bout);
@@ -281,6 +297,7 @@ async function main() {
       titleFights: entries.filter((e) => e.title).length,
       fights: entries,
       next: nextBout.get(id) ?? null,
+      fv: currentSnapshot(feat.states, id, bio, priorsFor(priors, division)),
     });
   }
 

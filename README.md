@@ -22,12 +22,25 @@ Site pessoal de estatísticas do UFC. Traz histórico, estilo de luta, pontos fo
 
 ## Como a previsão funciona
 
-1. **Elo:** todas as ~9.000 lutas do UFC são processadas em ordem cronológica. Cada lutador começa com 1500 pontos, e vitórias por nocaute ou finalização valem mais.
-2. **Estatísticas suavizadas:** taxas como golpes/min e defesa de quedas são "puxadas" para a média da categoria quando o lutador tem poucas lutas.
-3. **Regressão logística:** treinada com ~7.000 lutas (2008–2024), usando as estatísticas que cada lutador tinha *antes* de cada luta. São 18 fatores: Elo, volume, precisão, defesa, quedas, finalizações, knockdowns, controle, idade, envergadura, experiência, forma recente, tempo parado e derrotas por KO.
-4. **Método:** cruza como o favorito costuma vencer com como o adversário costuma perder, partindo da média da categoria (lutas de 5 rounds têm menos decisões).
+1. **Retrato pré-luta:** todas as ~9.000 lutas do UFC são processadas em ordem cronológica. Antes de cada luta, cada lutador ganha um retrato com cerca de 140 medidas: ratings (Elo e Glicko), nível dos adversários, estatísticas da carreira, das lutas mais recentes e ajustadas por quem enfrentou, idade, envergadura, tempo parado e momento.
+2. **Estatísticas suavizadas:** com poucas lutas, as taxas são "puxadas" para a média da categoria.
+3. **Regressão logística regularizada:** aprende quanto cada diferença entre os dois lutadores pesa no resultado, usando as lutas desde 2005 e sempre os números que cada um tinha *antes* da luta.
+4. **Sinal de mercado:** em lutas marcadas, o consenso do mercado de apostas entra como mais um insumo do cálculo. Ele resume o que as estatísticas do UFC não enxergam (lesões, camp, carreira fora do UFC). **O site não mostra odds**; elas só entram na conta. No comparador livre (lutas hipotéticas), vale apenas a parte estatística.
+5. **Método:** cruza como o favorito costuma vencer com como o adversário costuma perder, partindo da média da categoria (lutas de 5 rounds têm menos decisões).
 
-**Backtest (lutas de 2025–2026 que o modelo não viu no treino):** 63,8% de acerto do vencedor, contra 55,9% usando só o Elo. O número é recalculado a cada atualização e aparece em `/modelo`.
+**Avaliação (sempre "para a frente": para prever um ano, o modelo só conhece os anos anteriores):**
+
+| Modo | Acerto do vencedor |
+|---|---|
+| Lutas marcadas, estatísticas + mercado (2021 em diante) | ~68% |
+| Só estatísticas (2015 em diante) | ~62% |
+| Só rating Elo | ~56% |
+
+Os números são recalculados a cada atualização e aparecem em `/modelo`.
+
+### Linhas de mercado
+
+A ESPN só publica as linhas perto da data da luta e depois as retira. Por isso, cada execução do pipeline guarda o que encontrar em `data/odds/archive.json`, e o GitHub Actions grava esse arquivo de volta no repositório (commit automático "Atualiza arquivo de linhas de mercado"). Se você trabalha no repositório localmente, faça `git pull` antes de enviar alterações.
 
 ## Rodando no seu computador
 
@@ -92,7 +105,10 @@ scripts/pipeline/   coleta e processamento (Node + TypeScript)
   espn.ts           calendário, fotos e países (ESPN)
   photos.ts         fotos com licença livre (Wikidata/Wikimedia Commons)
   load.ts           normalização, desambiguação de homônimos
-  build.ts          médias por categoria, Elo, treino e backtest do modelo
+  build.ts          médias por categoria, Elo e estados de carreira
+  features.ts       retrato pré-luta de cada lutador (variáveis do modelo)
+  odds.ts           linhas de mercado da ESPN (insumo interno do modelo)
+  train.ts          treino e avaliação ano a ano do modelo
   insights.ts       taxas, percentis, estilo, pontos fortes e fracos
   index.ts          orquestra e grava public/data/*.json
 src/shared/         código usado pelo pipeline E pelo site (modelo, tipos, traduções)
@@ -103,6 +119,7 @@ data/manual/        dados curados à mão:
   upcoming.json       lutas futuras (quando nenhuma fonte trouxer)
   title-notes.json    vacâncias, promoções, motivos dos interinos e histórico do BMF (fonte: Wikipedia)
   photos.json         fotos manuais (nome → URL), com prioridade sobre ESPN/Wikimedia
+data/odds/          arquivo histórico das linhas de mercado (atualizado pelo pipeline)
 ```
 
 ### Linha do tempo dos cinturões
@@ -113,4 +130,4 @@ As lutas vêm da base. Os motivos de vacância e de interinos, as promoções se
 
 - Fotos: vêm da ESPN, por uma API pública mas não oficial, e são protegidas por direitos autorais. Servem para uso pessoal; não publique o site. Quem não tem foto aparece com as iniciais. O UFC.com bloqueia acesso automatizado e não é usado.
 - Estreantes e lutadores com poucas lutas no UFC têm previsões menos confiáveis.
-- O modelo não sabe de lesões, corte de peso, troca de equipe ou mudança de categoria.
+- A parte estatística do modelo não sabe de lesões, corte de peso ou troca de equipe; o sinal de mercado cobre parte disso, mas só existe perto da luta.

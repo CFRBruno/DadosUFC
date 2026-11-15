@@ -10,7 +10,7 @@ const SB_CACHE = path.join(RAW_DIR, 'espn-scoreboard.json');
 const HS_CACHE = path.join(RAW_DIR, 'espn-headshots.json');
 
 interface EspnCompetitor { id: string; winner?: boolean; athlete: { displayName: string; flag?: { href: string; alt: string } } }
-interface EspnCompetition { date: string; type?: { abbreviation: string }; format?: { regulation?: { periods?: number } }; competitors: EspnCompetitor[] }
+interface EspnCompetition { id?: string; date: string; type?: { abbreviation: string }; format?: { regulation?: { periods?: number } }; competitors: EspnCompetitor[] }
 interface EspnEvent {
   id: string; name: string; date: string;
   status: { type: { name: string } };

@@ -355,6 +355,7 @@ main { min-height: 70vh; padding-bottom: 96px; }
 .diverge { position: relative; height: 10px; background: #1e1e1e; border-radius: 5px; }
 .diverge::after { content: ''; position: absolute; left: 50%; top: -3px; bottom: -3px; width: 1px; background: #555; }
 .diverge i { position: absolute; top: 0; bottom: 0; border-radius: 5px; }
+.diverge.plain::after { display: none; }
 .factor-row p { color: var(--text-2); font-size: 13.5px; }
 
 .reason-col h3 { font-family: var(--font-display); font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; font-size: 17px; margin-bottom: 10px; }

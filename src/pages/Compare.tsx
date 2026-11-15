@@ -41,9 +41,19 @@ export default function Compare() {
   );
 
   const ready = A.data && B.data && model;
+  // se os dois têm luta marcada entre si, a previsão usa a data real e o sinal de mercado (interno)
+  const scheduled = useMemo(() => {
+    for (const e of events?.upcoming ?? []) {
+      for (const b of e.bouts) {
+        if (b.a.slug === slugA && b.b.slug === slugB) return { date: b.date, market: b.mk ?? null };
+        if (b.a.slug === slugB && b.b.slug === slugA) return { date: b.date, market: b.mk != null ? 1 - b.mk : null };
+      }
+    }
+    return null;
+  }, [events, slugA, slugB]);
   const analysis = useMemo(
-    () => (ready ? analyze(A.data!, B.data!, model!, { rounds, division, date: todayIso() }) : null),
-    [ready, A.data, B.data, model, rounds, division],
+    () => (ready ? analyze(A.data!, B.data!, model!, { rounds, division, date: scheduled?.date && scheduled.date > todayIso() ? scheduled.date : todayIso(), market: scheduled?.market }) : null),
+    [ready, A.data, B.data, model, rounds, division, scheduled],
   );
 
   return (
@@ -186,13 +196,16 @@ function AnalysisView({ A, B, an, model }: { A: FighterDetail; B: FighterDetail;
           Resultado mais provável: <b className={an.mostLikely.side === 'A' ? 'fa' : 'fb'}>{an.mostLikely.side === 'A' ? A.name : B.name} por {M[an.mostLikely.method].toLowerCase()}</b> ({fmtPct(an.mostLikely.p)}).
         </div>
         <p className="note" style={{ marginTop: 12 }}>
-          Modelo de regressão logística treinado com {model.metrics.trainN.toLocaleString('pt-BR')} lutas do UFC; acertou {fmtPct(model.metrics.accuracy, 1)} dos vencedores em {model.metrics.testN.toLocaleString('pt-BR')} lutas desde {model.metrics.testFrom.slice(0, 4)} que ele não viu no treino. <Link to="/modelo" style={{ color: 'var(--brand)' }}>Como funciona →</Link>
+          {an.usesMarket
+            ? <>Luta marcada: a previsão combina as estatísticas do UFC com o consenso do mercado (só pelas estatísticas: {nA} {fmtPct(an.pStats)} × {fmtPct(1 - an.pStats)} {nB}). Nesse modo o modelo acertou {fmtPct(model.metrics.accuracy, 1)} dos vencedores em {model.metrics.testN.toLocaleString('pt-BR')} lutas desde {model.metrics.testFrom.slice(0, 4)}, sempre prevendo lutas que ainda não conhecia. </>
+            : <>Previsão só com estatísticas do UFC ({model.metrics.trainN.toLocaleString('pt-BR')} lutas no treino): acerta {fmtPct(model.metrics.stats.accuracy, 1)} dos vencedores no longo prazo ({model.metrics.stats.n.toLocaleString('pt-BR')} lutas desde {model.metrics.stats.from.slice(0, 4)}, sempre prevendo lutas que ainda não conhecia). Lutas marcadas ganham também o sinal do mercado e chegam a {fmtPct(model.metrics.accuracy, 1)}. </>}
+          <Link to="/modelo" style={{ color: 'var(--brand)' }}>Como funciona →</Link>
         </p>
       </div>
 
       {/* Fatores */}
       <div className="panel">
-        <div className="panel-title">O que mais pesa na previsão</div>
+        <div className="panel-title">{an.usesMarket ? 'O que as estatísticas dizem' : 'O que mais pesa na previsão'}</div>
         <div className="legend" style={{ justifyContent: 'center', marginBottom: 8 }}>
           <span><i style={{ background: 'var(--a)' }} />favorece <b className="fa">{nA}</b></span>
           <span><i style={{ background: 'var(--b)' }} />favorece <b className="fb">{nB}</b></span>

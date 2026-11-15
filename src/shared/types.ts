@@ -1,4 +1,5 @@
 import type { DivisionKey } from './divisions';
+import type { FeatureVec, Model2 } from './model2';
 import type { DecisionKind, MethodKey } from './translate';
 
 /**
@@ -47,20 +48,34 @@ export interface Priors {
   method: { KO: number; SUB: number; DEC: number };
 }
 
+export interface ModelMetrics {
+  /** lutas usadas no treino final */
+  trainN: number;
+  /** avaliação principal (ano a ano, sempre em lutas que o modelo ainda não tinha visto) */
+  testN: number; testFrom: string;
+  accuracy: number; logLoss: number;
+  /** a avaliação principal inclui o sinal de mercado? */
+  usesMarket: boolean;
+  eloOnlyAccuracy: number;
+  methodAccuracy: number; exactAccuracy: number;
+  /** o mercado sozinho, nas mesmas lutas */
+  marketOnly: { n: number; accuracy: number; logLoss: number } | null;
+  /** só estatísticas, nas mesmas lutas da avaliação principal */
+  statsSame: { n: number; accuracy: number; logLoss: number };
+  /** só estatísticas, no período longo */
+  stats: { from: string; n: number; accuracy: number; logLoss: number };
+  /** período recente (modelo completo e só estatísticas) */
+  recent: { from: string; n: number; accuracy: number; logLoss: number; statsAccuracy: number };
+  /** lutas com linha de mercado no histórico */
+  marketFights: number;
+}
+
 export interface ModelParams {
   version: number;
-  features: string[];
-  mean: number[];
-  std: number[];
-  coef: number[];
+  v2: Model2;
   priors: Record<string, Priors>; // por divisão + 'ALL'
   fiveRoundDecFactor: number;
-  metrics: {
-    trainN: number; testN: number; testFrom: string;
-    accuracy: number; logLoss: number;
-    eloOnlyAccuracy: number; baselineFavAccuracy: number;
-    methodAccuracy: number; exactAccuracy: number;
-  };
+  metrics: ModelMetrics;
 }
 
 export interface FightSide {
@@ -164,6 +179,8 @@ export interface FighterDetail extends FighterSummary {
   titleFights: number;
   fights: FightEntry[];
   next: UpcomingBout | null;
+  /** retrato estatístico atual usado pelo modelo de previsão */
+  fv: FeatureVec;
 }
 
 export interface UpcomingBout {
@@ -178,6 +195,8 @@ export interface UpcomingBout {
   order: number;
   a: { id: string | null; name: string; slug: string | null };
   b: { id: string | null; name: string; slug: string | null };
+  /** sinal de mercado para o lutador `a` (insumo interno do modelo; não é exibido) */
+  mk?: number;
 }
 
 export interface EventFight {
@@ -213,7 +232,7 @@ export interface Meta {
   scopeFrom: string;
   fighterCount: number;
   fightCount: number;
-  model: ModelParams['metrics'];
+  model: ModelMetrics;
   upcomingSource: string;
 }
 

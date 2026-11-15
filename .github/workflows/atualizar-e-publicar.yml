@@ -12,6 +12,12 @@ concurrency:
   group: publicar
   cancel-in-progress: true
 
+# contents: gravar o arquivo de linhas de mercado; os demais são usados pela ação de deploy
+permissions:
+  contents: write
+  checks: write
+  pull-requests: write
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -40,6 +46,18 @@ jobs:
 
       - name: Gerar dados (UFCStats)
         run: npm run data
+
+      # a ESPN retira as linhas depois da luta: o que foi coletado hoje fica guardado no repositório
+      - name: Guardar linhas de mercado
+        if: ${{ github.ref_name == github.event.repository.default_branch }}
+        run: |
+          if [ -n "$(git status --porcelain data/odds)" ]; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add data/odds
+            git commit -m "Atualiza arquivo de linhas de mercado"
+            git push || echo "::warning::Não foi possível gravar o arquivo de mercado agora; a próxima execução tenta de novo."
+          fi
 
       - name: Build do site
         run: npm run build

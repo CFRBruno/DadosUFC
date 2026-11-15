@@ -1,13 +1,12 @@
 // Processamento cronológico: priors por categoria, Elo, estados pré-luta e treino.
 
 import type { DivisionKey } from '../../src/shared/divisions';
-import { addFight, emptyState, featureDiff, featureValues, FEATURES, methodPrior, methodShares, sigmoid, type MethodShares } from '../../src/shared/model';
-import type { ModelParams, ModelState, Priors, Result } from '../../src/shared/types';
+import { addFight, emptyState, featureDiff, featureValues, methodPrior, methodShares, type MethodShares } from '../../src/shared/model';
+import type { ModelState, Priors, Result } from '../../src/shared/types';
 import { S } from '../../src/shared/types';
 import type { Bio, RawFight } from './load';
 
 export const TRAIN_FROM = '2008-01-01';
-export const TEST_FROM = '2025-01-01';
 
 // --- Priors -------------------------------------------------------------------
 
@@ -84,6 +83,7 @@ export function eloExpected(ra: number, rb: number) {
 // --- Processamento cronológico ---------------------------------------------------
 
 export interface Sample {
+  id: string;
   date: string;
   x: number[];
   y: number;             // 1 se A venceu
@@ -146,6 +146,7 @@ export function processChronologically(
       const fb = featureValues(b, p, f.date).v;
       const prior = methodPrior(p, f.scheduledRounds, fiveRoundDecFactor);
       samples.push({
+        id: f.id,
         date: f.date,
         x: featureDiff(fa, fb),
         y: f.winner === 0 ? 1 : 0,
@@ -184,100 +185,4 @@ export function processChronologically(
     addFight(b, { me: f.stats?.[1] ?? null, opp: f.stats?.[0] ?? null, result: resB, method: f.method, durationSec: f.durationSec, date: f.date });
   }
   return { states, snapshots, eloHistory, samples };
-}
-
-// --- Regressão logística ------------------------------------------------------------
-
-function fitLogistic(X: number[][], y: number[], std: number[], l2 = 0.02, iters = 600, lr = 0.5): number[] {
-  const d = X[0].length;
-  const w = new Array(d).fill(0);
-  const n = X.length;
-  // dados simétricos: (x, y) e (-x, 1-y) → sem intercepto
-  for (let it = 0; it < iters; it++) {
-    const g = new Array(d).fill(0);
-    for (let i = 0; i < n; i++) {
-      const xi = X[i];
-      let z = 0;
-      for (let j = 0; j < d; j++) z += (w[j] * xi[j]) / std[j];
-      const p = sigmoid(z);
-      const pn = sigmoid(-z);
-      const e1 = p - y[i];
-      const e2 = pn - (1 - y[i]);
-      for (let j = 0; j < d; j++) g[j] += ((e1 - e2) * xi[j]) / std[j];
-    }
-    for (let j = 0; j < d; j++) w[j] -= lr * (g[j] / (2 * n) + l2 * w[j]);
-  }
-  return w;
-}
-
-export function trainModel(samples: Sample[], priors: Record<string, Priors>, fiveRoundDecFactor: number): ModelParams {
-  const d = FEATURES.length;
-  const train = samples.filter((s) => s.date < TEST_FROM);
-  const test = samples.filter((s) => s.date >= TEST_FROM);
-  const std = Array.from({ length: d }, (_, j) => {
-    const v = train.map((s) => s.x[j]).filter((x) => x !== 0);
-    const m2 = v.reduce((t, x) => t + x * x, 0) / Math.max(1, v.length);
-    return Math.sqrt(m2) || 1;
-  });
-  const mean = new Array(d).fill(0);
-
-  const evaluate = (w: number[], set: Sample[]) => {
-    let correct = 0, ll = 0, eloCorrect = 0, methodHit = 0, methodN = 0, exact = 0;
-    for (const s of set) {
-      let z = 0;
-      for (let j = 0; j < d; j++) z += (w[j] * s.x[j]) / std[j];
-      const p = Math.min(1 - 1e-6, Math.max(1e-6, sigmoid(z)));
-      ll += -(s.y * Math.log(p) + (1 - s.y) * Math.log(1 - p));
-      const predA = p >= 0.5;
-      if (predA === (s.y === 1)) correct++;
-      eloCorrect += s.eloA === s.eloB ? 0.5 : (s.eloA > s.eloB) === (s.y === 1) ? 1 : 0;
-      // método (quando o vencedor foi acertado)
-      const shares = s.y === 1 ? s.sharesA : s.sharesB;
-      const top = (Object.entries(shares) as [string, number][]).sort((x, y) => y[1] - x[1])[0][0];
-      if (predA === (s.y === 1) && s.method !== 'OTHER') {
-        methodN++;
-        if (top === s.method) methodHit++;
-      }
-      // resultado exato (vencedor + método) entre 6 opções
-      const outs: [string, number][] = [
-        ...(['KO', 'SUB', 'DEC'] as const).map((m) => ['A' + m, p * s.sharesA[m]] as [string, number]),
-        ...(['KO', 'SUB', 'DEC'] as const).map((m) => ['B' + m, (1 - p) * s.sharesB[m]] as [string, number]),
-      ];
-      const best = outs.sort((x, y) => y[1] - x[1])[0][0];
-      if (best === (s.y === 1 ? 'A' : 'B') + s.method) exact++;
-    }
-    return {
-      accuracy: correct / set.length,
-      logLoss: ll / set.length,
-      eloOnlyAccuracy: eloCorrect / set.length,
-      methodAccuracy: methodN ? methodHit / methodN : 0,
-      exactAccuracy: exact / set.length,
-    };
-  };
-
-  const wTrain = fitLogistic(train.map((s) => s.x), train.map((s) => s.y), std);
-  const m = evaluate(wTrain, test);
-  // modelo final: treinado com tudo
-  const wAll = fitLogistic(samples.map((s) => s.x), samples.map((s) => s.y), std);
-
-  return {
-    version: 1,
-    features: FEATURES.map((f) => f.key),
-    mean,
-    std,
-    coef: wAll,
-    priors,
-    fiveRoundDecFactor,
-    metrics: {
-      trainN: train.length,
-      testN: test.length,
-      testFrom: TEST_FROM,
-      accuracy: m.accuracy,
-      logLoss: m.logLoss,
-      eloOnlyAccuracy: m.eloOnlyAccuracy,
-      baselineFavAccuracy: m.eloOnlyAccuracy,
-      methodAccuracy: m.methodAccuracy,
-      exactAccuracy: m.exactAccuracy,
-    },
-  };
 }

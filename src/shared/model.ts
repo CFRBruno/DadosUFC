@@ -1,7 +1,7 @@
 // Núcleo estatístico: estado de carreira, features, previsão de vencedor e método.
 // Usado tanto pelo pipeline (treino/backtest) quanto pelo site (comparador).
 
-import type { ModelParams, ModelState, Priors, Result, StatLine } from './types';
+import type { ModelState, Priors, Result, StatLine } from './types';
 import { S } from './types';
 import type { MethodKey } from './translate';
 
@@ -147,28 +147,6 @@ export function featureDiff(a: (number | null)[], b: (number | null)[]): number[
 }
 
 export const sigmoid = (z: number) => 1 / (1 + Math.exp(-z));
-
-export interface Prediction {
-  pA: number;
-  contributions: { key: string; label: string; value: number }[]; // logit, + favorece A
-  valuesA: (number | null)[];
-  valuesB: (number | null)[];
-  rawA: (number | null)[];
-  rawB: (number | null)[];
-}
-
-export function predict(model: ModelParams, a: ModelState, b: ModelState, pa: Priors, pb: Priors, refDate: string): Prediction {
-  const fa = featureValues(a, pa, refDate);
-  const fb = featureValues(b, pb, refDate);
-  const d = featureDiff(fa.v, fb.v);
-  let z = 0;
-  const contributions = d.map((x, i) => {
-    const c = (model.coef[i] * (x - model.mean[i])) / model.std[i];
-    z += c;
-    return { key: FEATURES[i].key, label: FEATURES[i].label, value: c };
-  });
-  return { pA: sigmoid(z), contributions, valuesA: fa.v, valuesB: fb.v, rawA: fa.raw, rawB: fb.raw };
-}
 
 // --- Método provável ---------------------------------------------------------
 
