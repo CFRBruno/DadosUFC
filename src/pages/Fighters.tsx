@@ -10,7 +10,6 @@ const SORTS = {
   elo: 'Rating Elo',
   vitorias: 'Vitórias no UFC',
   recente: 'Luta mais recente',
-  forma: 'Forma recente',
   oficial: 'Ranking oficial',
 } as const;
 
@@ -87,7 +86,6 @@ export default function Fighters() {
     l = [...l];
     if (sort === 'elo') l.sort((a, b) => b.elo - a.elo);
     else if (sort === 'vitorias') l.sort((a, b) => b.record.w - a.record.w || b.elo - a.elo);
-    else if (sort === 'forma') l.sort((a, b) => (b.form?.score ?? -1) - (a.form?.score ?? -1) || b.elo - a.elo);
     else if (sort === 'oficial') l.sort((a, b) => (a.official?.pos ?? 99) - (b.official?.pos ?? 99) || b.elo - a.elo);
     else if (sort === 'recente') l.sort((a, b) => (b.lastFight ?? '').localeCompare(a.lastFight ?? ''));
     return l;

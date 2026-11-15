@@ -296,7 +296,6 @@ async function main() {
       form: computeForm(entries),
       official: null,
       champ: null,
-      bestStats: [],
       eloRank: null,
       totals: st,
       wins, losses, target, targetAbs, position,
@@ -313,12 +312,9 @@ async function main() {
   // percentis, estilo, pontos fortes/fracos, ranking Elo
   const ranksOut = new Map<string, Partial<Record<keyof FighterDetail['rates'], StatRank>>>();
   const pcts = computePercentiles(details.map((d) => ({ id: d.id, group: d.division, women: d.women, rates: d.rates, st: d.totals })), ranksOut);
-  const BEST: [keyof FighterDetail['rates'], string][] = [['slpm', 'Golpes/min'], ['acc', 'Precisão'], ['def', 'Defesa de golpes'], ['td', 'Quedas'], ['tdAcc', 'Precisão de quedas'], ['tdDef', 'Defesa de quedas'], ['sub', 'Finalizações'], ['kd', 'Knockdowns'], ['ctrl', 'Controle'], ['finishRate', 'Vitórias antes do fim']];
   for (const d of details) {
     d.percentiles = pcts.get(d.id) ?? {};
     d.statRanks = ranksOut.get(d.id) ?? {};
-    d.bestStats = BEST.flatMap(([k, label]) => { const r = d.statRanks[k]; return r && r.scope === 'cat' && r.of >= 8 ? [{ key: k as string, label, pos: r.pos, of: r.of }] : []; })
-      .sort((a, b) => a.pos / a.of - b.pos / b.of).slice(0, 2);
     const s = classifyStyle(d.totals, d.rates, d.percentiles, d.target, d.position);
     d.style = s.style;
     d.styleTags = s.tags;
@@ -432,8 +428,8 @@ async function main() {
   }
 
   const summaries: FighterSummary[] = details
-    .map(({ id, slug, name, nickname, division, women, record, elo, lastFight, age, style, streak, upcoming, photo, photoPage, country, flag, form, official, champ, bestStats, eloRank }) => ({
-      id, slug, name, nickname, division, women, record, elo, lastFight, age, style, streak, upcoming, photo, photoPage, country, flag, form, official, champ, bestStats, eloRank,
+    .map(({ id, slug, name, nickname, division, women, record, elo, lastFight, age, style, streak, upcoming, photo, photoPage, country, flag, official, champ }) => ({
+      id, slug, name, nickname, division, women, record, elo, lastFight, age, style, streak, upcoming, photo, photoPage, country, flag, official, champ,
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
   await writeFile(path.join(OUT, 'fighters.json'), JSON.stringify(summaries));

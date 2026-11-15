@@ -176,13 +176,9 @@ export interface FighterSummary {
   /** país (pt-BR) e bandeira, via ESPN */
   country: string;
   flag: string;
-  form: FormInfo | null;
   official: OfficialRank | null;
   /** campeão atual / ex-campeão do UFC (cinturão linear; o BMF não conta) */
   champ: 'atual' | 'ex' | null;
-  /** as estatísticas em que ele está mais bem colocado na categoria (até 2) */
-  bestStats: { key: string; label: string; pos: number; of: number }[];
-  eloRank: { division: number; of: number } | null;
 }
 
 export interface FighterDetail extends FighterSummary {
@@ -194,6 +190,8 @@ export interface FighterDetail extends FighterSummary {
   firstFight: string | null;
   eloPeak: number;
   eloHistory: [string, number][];
+  eloRank: { division: number; of: number } | null;
+  form: FormInfo | null;
   rates: Rates;
   percentiles: Partial<Record<keyof Rates, number>>;
   statRanks: Partial<Record<keyof Rates, StatRank>>;
