@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { FighterCard, searchFighters } from '../components/fighters';
 import { ErrorBox, Loading } from '../components/ui';
@@ -14,6 +14,19 @@ const SORTS = {
 
 export default function Fighters() {
   const { data, error } = useFighters();
+
+  // clicar fora (ou abrir outro menu) fecha os menus de filtro; as seleções ficam na URL
+  useEffect(() => {
+    const close = (e: Event) => {
+      document.querySelectorAll<HTMLDetailsElement>('details.country-filter[open]').forEach((d) => {
+        if (!(e.target instanceof Node) || !d.contains(e.target)) d.open = false;
+      });
+    };
+    const esc = (e: KeyboardEvent) => e.key === 'Escape' && close(e);
+    document.addEventListener('pointerdown', close);
+    document.addEventListener('keydown', esc);
+    return () => { document.removeEventListener('pointerdown', close); document.removeEventListener('keydown', esc); };
+  }, []);
   const [params, setParams] = useSearchParams();
   const q = params.get('q') ?? '';
   const div = params.get('cat') ?? '';
