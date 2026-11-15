@@ -584,3 +584,12 @@ main { min-height: 70vh; padding-bottom: 96px; }
   .quick-picks { flex-wrap: nowrap; overflow-x: auto; padding: 4px 4px 12px; margin: 0 -4px; scroll-snap-type: x proximity; -webkit-overflow-scrolling: touch; }
   .quick-pick { flex: none; scroll-snap-align: start; }
 }
+
+/* silhueta muscular da distribuição de golpes */
+.body-map { grid-template-columns: 130px 1fr; gap: 22px; }
+.body-map svg { width: 130px; height: auto; filter: drop-shadow(0 0 14px rgba(0, 0, 0, 0.6)); }
+.body-map ul { gap: 22px; }
+.intensity { display: flex; align-items: center; gap: 4px; margin-top: 22px; font-size: 10.5px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.intensity span { margin-right: 6px; }
+.intensity i { width: 16px; height: 6px; border-radius: 2px; display: inline-block; }
+@media (max-width: 420px) { .body-map { grid-template-columns: 104px 1fr; gap: 14px; } .body-map svg { width: 104px; } }

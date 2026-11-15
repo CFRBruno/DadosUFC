@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import type { FightEntry, MethodBreakdown } from '../shared/types';
 import { fmtDate, fmtPct } from '../lib/format';
 import { Icon } from './ui';
+import { BODY_BODY, BODY_HEAD, BODY_LEG, BODY_NEUTRAL } from './bodyShape';
 
 // ---------------------------------------------------------------------------
 // Barra de comparação A × B (estilo "cartel" da referência)
@@ -56,29 +57,31 @@ export function BodyMap({
   const t = head + body + leg;
   const s = t ? { head: head / t, body: body / t, leg: leg / t } : { head: 0, body: 0, leg: 0 };
   const max = Math.max(s.head, s.body, s.leg) || 1;
-  const op = (v: number) => 0.18 + 0.82 * (v / max);
+  // intensidade em 5 níveis, relativa à região mais atingida
+  const LEVELS = [0.18, 0.32, 0.5, 0.72, 1];
+  const level = (v: number) => (t ? Math.max(0, Math.ceil((v / max) * 5) - 1) : 0);
+  const op = (v: number) => LEVELS[level(v)];
+  const region = (pts: string[], v: number) =>
+    pts.map((p, i) => <polygon key={i} points={p} style={{ fill: color, fillOpacity: op(v) }} />);
   return (
     <div className="body-map">
-      <svg viewBox="0 0 100 220" role="img" aria-label={title ?? 'Distribuição de golpes'}>
-        {/* cabeça */}
-        <ellipse cx="50" cy="20" rx="13" ry="16" fill={color} opacity={op(s.head)} />
-        {/* tronco e braços */}
-        <g fill={color} opacity={op(s.body)}>
-          <path d="M33 40 Q50 34 67 40 L72 60 L70 100 Q50 106 30 100 L28 60 Z" />
-          <path d="M31 42 L22 48 L16 92 L22 118 L28 116 L26 92 L30 66 Z" />
-          <path d="M69 42 L78 48 L84 92 L78 118 L72 116 L74 92 L70 66 Z" />
-        </g>
-        {/* pernas */}
-        <g fill={color} opacity={op(s.leg)}>
-          <path d="M31 104 Q40 108 49 106 L47 160 L45 212 L34 212 L33 160 Z" />
-          <path d="M69 104 Q60 108 51 106 L53 160 L55 212 L66 212 L67 160 Z" />
-        </g>
+      <svg viewBox="0 0 100 200" role="img" aria-label={`${title ?? 'Distribuição de golpes'}: cabeça ${fmtPct(s.head)}, corpo ${fmtPct(s.body)}, pernas ${fmtPct(s.leg)}`}>
+        {BODY_NEUTRAL.map((p, i) => <polygon key={i} points={p} fill="#1c1c20" />)}
+        {region(BODY_HEAD, s.head)}
+        {region(BODY_BODY, s.body)}
+        {region(BODY_LEG, s.leg)}
       </svg>
-      <ul>
-        <li><i style={{ background: color, opacity: op(s.head) }} /><b>{fmtPct(s.head)}</b> cabeça</li>
-        <li><i style={{ background: color, opacity: op(s.body) }} /><b>{fmtPct(s.body)}</b> corpo</li>
-        <li><i style={{ background: color, opacity: op(s.leg) }} /><b>{fmtPct(s.leg)}</b> pernas</li>
-      </ul>
+      <div>
+        <ul>
+          <li><i style={{ background: color, opacity: op(s.head) }} /><b>{fmtPct(s.head)}</b> cabeça</li>
+          <li><i style={{ background: color, opacity: op(s.body) }} /><b>{fmtPct(s.body)}</b> corpo</li>
+          <li><i style={{ background: color, opacity: op(s.leg) }} /><b>{fmtPct(s.leg)}</b> pernas</li>
+        </ul>
+        <div className="intensity" aria-hidden="true">
+          <span>Intensidade</span>
+          {LEVELS.map((o) => <i key={o} style={{ background: color, opacity: o }} />)}
+        </div>
+      </div>
     </div>
   );
 }
