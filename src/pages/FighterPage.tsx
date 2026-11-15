@@ -269,8 +269,13 @@ function TitlePanel({ f }: { f: FighterDetail }) {
   const divs = [...new Set(champs.map((t) => t.divisionName))];
   const interim = f.titleReigns.filter((t) => t.kind === 'interim');
   const bmf = f.titleReigns.filter((t) => t.division === 'BMF');
+  // conta divisões (não reinados): "3 vezes" daria a impressão de 3 categorias diferentes
+  const per = divs.map((d) => ({ d, n: champs.filter((t) => t.divisionName === d).length }));
+  const reignTxt = (n: number) => (n > 1 ? ` (${n} reinados)` : '');
   const summary = champs.length
-    ? `${champs.length === 1 ? 'Campeão uma vez' : `Campeão ${champs.length} vezes`} · ${divs.join(' e ')}`
+    ? divs.length === 1
+      ? `Campeão do ${divs[0]}${reignTxt(champs.length)}`
+      : `Campeão em ${divs.length} divisões · ${per.map((x) => x.d + reignTxt(x.n)).join(' e ')}`
     : interim.length ? 'Já foi campeão interino' : 'Passou pelo cinturão BMF';
   return (
     <div className="panel" style={{ marginTop: 16 }}>
