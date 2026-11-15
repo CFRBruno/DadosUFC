@@ -20,6 +20,7 @@ export default function Fighters() {
   const gender = params.get('genero') ?? '';
   const sort = (params.get('ordem') ?? 'nome') as keyof typeof SORTS;
   const onlyUpcoming = params.get('marcada') === '1';
+  const countries = useMemo(() => (params.get('pais') ?? '').split('|').filter(Boolean), [params]);
   const [limit, setLimit] = useState(60);
 
   const setMany = (changes: Record<string, string>) => {
@@ -33,21 +34,34 @@ export default function Fighters() {
   };
   const set = (k: string, v: string) => setMany({ [k]: v });
 
+  // base sem o filtro de país: dela saem as opções do filtro e as contagens
+  const base = useMemo(
+    () => (data ?? []).filter((f) => (!div || f.division === div) && (!gender || (gender === 'f' ? f.women : !f.women)) && (!onlyUpcoming || f.upcoming)),
+    [data, div, gender, onlyUpcoming],
+  );
+  const countryOptions = useMemo(() => {
+    const m = new Map<string, { n: number; flag: string }>();
+    for (const f of base) {
+      if (!f.country) continue;
+      const c = m.get(f.country) ?? { n: 0, flag: f.flag };
+      c.n++;
+      m.set(f.country, c);
+    }
+    for (const c of countries) if (!m.has(c)) m.set(c, { n: 0, flag: '' }); // mantém marcado mesmo sem lutadores
+    return [...m.entries()].sort((a, b) => b[1].n - a[1].n || a[0].localeCompare(b[0], 'pt-BR'));
+  }, [base, countries]);
+  const toggleCountry = (c: string) => set('pais', (countries.includes(c) ? countries.filter((x) => x !== c) : [...countries, c]).join('|'));
+
   const list = useMemo(() => {
     if (!data) return [];
-    let l = data.filter(
-      (f) =>
-        (!div || f.division === div) &&
-        (!gender || (gender === 'f' ? f.women : !f.women)) &&
-        (!onlyUpcoming || f.upcoming),
-    );
+    let l = countries.length ? base.filter((f) => countries.includes(f.country)) : base;
     if (q) return searchFighters(l, q);
     l = [...l];
     if (sort === 'elo') l.sort((a, b) => b.elo - a.elo);
     else if (sort === 'vitorias') l.sort((a, b) => b.record.w - a.record.w || b.elo - a.elo);
     else if (sort === 'recente') l.sort((a, b) => (b.lastFight ?? '').localeCompare(a.lastFight ?? ''));
     return l;
-  }, [data, q, div, gender, sort, onlyUpcoming]);
+  }, [data, base, countries, q, sort]);
 
   const divisions = MAIN_DIVISIONS.filter((d) => !gender || (gender === 'f' ? d.women : !d.women));
 
@@ -69,6 +83,22 @@ export default function Fighters() {
           <option value="">Todas as categorias</option>
           {divisions.map((d) => <option key={d.key} value={d.key}>{d.name}</option>)}
         </select>
+        <details className="country-filter">
+          <summary className="select">
+            {countries.length === 0 ? 'Todas as nacionalidades' : countries.length === 1 ? countries[0] : `${countries.length} nacionalidades`}
+          </summary>
+          <div className="country-menu">
+            {countries.length > 0 && <button className="country-clear" onClick={() => set('pais', '')}>Limpar seleção</button>}
+            {countryOptions.map(([c, o]) => (
+              <label key={c}>
+                <input type="checkbox" checked={countries.includes(c)} onChange={() => toggleCountry(c)} />
+                {o.flag ? <img src={o.flag} alt="" loading="lazy" /> : <span className="country-noflag" />}
+                <span>{c}</span>
+                <b>{o.n}</b>
+              </label>
+            ))}
+          </div>
+        </details>
         <select className="select" value={sort} onChange={(e) => set('ordem', e.target.value)} aria-label="Ordenar" disabled={!!q}>
           {Object.entries(SORTS).map(([k, l]) => <option key={k} value={k}>Ordenar: {l}</option>)}
         </select>
