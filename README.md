@@ -15,6 +15,8 @@ Site pessoal de estatísticas do UFC. Traz histórico, estilo de luta, pontos fo
 | `/lutador/:slug` | Bio, estilo de luta, pontos fortes e fracos, estatísticas com percentil na categoria, métodos de vitória e derrota por round, alvos e posições dos golpes, gráfico do Elo e histórico completo no UFC |
 | `/lutador/:slug/luta/:id` | Estatísticas da luta, total e round a round |
 | `/comparar?a=…&b=…` | Previsão (% de vitória e 6 resultados possíveis), fatores que mais pesam, por que cada um pode vencer, como a luta deve se desenrolar, números lado a lado, últimas 5 lutas e adversários em comum |
+| `/ranking` | Ranking por qualquer estatística física, de cartel ou de desempenho, por categoria ou peso absoluto (com filtro de gênero e mínimo de lutas) |
+| `/cinturoes` | Todas as disputas de cinturão do UFC desde 1993 (linear e interino), última disputa por categoria e, como opção, as finais de torneio |
 | `/eventos`, `/evento/:id` | Linha do tempo de todos os eventos desde 2026, em ordem cronológica, com o card aberto ao clicar |
 | `/modelo` | Como a previsão funciona e quanto ela acerta |
 

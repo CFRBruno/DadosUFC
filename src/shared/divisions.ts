@@ -41,7 +41,10 @@ export const MAIN_DIVISIONS = DIVISIONS.filter((d) => d.key !== 'CW' && d.key !=
 
 export interface ParsedWeightClass {
   division: DivisionKey;
+  /** disputa de cinturão do UFC (não inclui finais de torneio) */
   title: boolean;
+  /** final de torneio (TUF, Road to UFC, torneios dos primeiros UFCs) */
+  tournament: boolean;
   interim: boolean;
   women: boolean;
 }
@@ -50,7 +53,8 @@ export interface ParsedWeightClass {
 export function parseWeightClass(raw: string): ParsedWeightClass {
   const s = raw.toLowerCase();
   const women = s.includes('women');
-  const title = s.includes('title');
+  const tournament = s.includes('tournament');
+  const title = s.includes('title') && !tournament;
   const interim = s.includes('interim');
   let division: DivisionKey = 'OPEN';
   if (s.includes('catch')) division = 'CW';
@@ -63,7 +67,7 @@ export function parseWeightClass(raw: string): ParsedWeightClass {
   else if (s.includes('bantamweight')) division = women ? 'WBW' : 'BW';
   else if (s.includes('flyweight')) division = women ? 'WFLW' : 'FLW';
   else if (s.includes('strawweight')) division = 'WSW';
-  return { division, title, interim, women };
+  return { division, title, tournament, interim, women };
 }
 
 /** Limite de peso em libras usado para desambiguar homônimos. */

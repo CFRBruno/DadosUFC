@@ -183,7 +183,7 @@ function AnalysisView({ A, B, an, model }: { A: FighterDetail; B: FighterDetail;
           ))}
         </div>
         <div className="most-likely">
-          Resultado mais provável: <b>{an.mostLikely.side === 'A' ? A.name : B.name} por {M[an.mostLikely.method].toLowerCase()}</b> ({fmtPct(an.mostLikely.p)}).
+          Resultado mais provável: <b className={an.mostLikely.side === 'A' ? 'fa' : 'fb'}>{an.mostLikely.side === 'A' ? A.name : B.name} por {M[an.mostLikely.method].toLowerCase()}</b> ({fmtPct(an.mostLikely.p)}).
         </div>
         <p className="note" style={{ marginTop: 12 }}>
           Modelo de regressão logística treinado com {model.metrics.trainN.toLocaleString('pt-BR')} lutas do UFC; acertou {fmtPct(model.metrics.accuracy, 1)} dos vencedores em {model.metrics.testN.toLocaleString('pt-BR')} lutas desde {model.metrics.testFrom.slice(0, 4)} que ele não viu no treino. <Link to="/modelo" style={{ color: 'var(--brand)' }}>Como funciona →</Link>
@@ -194,8 +194,8 @@ function AnalysisView({ A, B, an, model }: { A: FighterDetail; B: FighterDetail;
       <div className="panel">
         <div className="panel-title">O que mais pesa na previsão</div>
         <div className="legend" style={{ justifyContent: 'center', marginBottom: 8 }}>
-          <span><i style={{ background: 'var(--a)' }} />favorece {nA}</span>
-          <span><i style={{ background: 'var(--b)' }} />favorece {nB}</span>
+          <span><i style={{ background: 'var(--a)' }} />favorece <b className="fa">{nA}</b></span>
+          <span><i style={{ background: 'var(--b)' }} />favorece <b className="fb">{nB}</b></span>
         </div>
         {shown.map((f) => (
           <div className="factor-row" key={f.key}>
@@ -209,7 +209,7 @@ function AnalysisView({ A, B, an, model }: { A: FighterDetail; B: FighterDetail;
                 } />
               </div>
             </div>
-            <p>{f.text}</p>
+            <p><Rich text={f.text} a={nA} b={nB} /></p>
           </div>
         ))}
       </div>
@@ -218,16 +218,16 @@ function AnalysisView({ A, B, an, model }: { A: FighterDetail; B: FighterDetail;
       <div className="grid-2" style={{ marginTop: 16 }}>
         <div className="panel reason-col a">
           <h3>Por que {nA} pode vencer</h3>
-          {an.reasonsA.length ? <ul>{an.reasonsA.map((r, i) => <li key={i}>{r}</li>)}</ul> : <p className="note">Nenhuma vantagem estatística clara.</p>}
+          {an.reasonsA.length ? <ul>{an.reasonsA.map((r, i) => <li key={i}><Rich text={r} a={nA} b={nB} /></li>)}</ul> : <p className="note">Nenhuma vantagem estatística clara.</p>}
         </div>
         <div className="panel reason-col b">
           <h3>Por que {nB} pode vencer</h3>
-          {an.reasonsB.length ? <ul>{an.reasonsB.map((r, i) => <li key={i}>{r}</li>)}</ul> : <p className="note">Nenhuma vantagem estatística clara.</p>}
+          {an.reasonsB.length ? <ul>{an.reasonsB.map((r, i) => <li key={i}><Rich text={r} a={nA} b={nB} /></li>)}</ul> : <p className="note">Nenhuma vantagem estatística clara.</p>}
         </div>
       </div>
       <div className="panel narrative">
         <div className="panel-title">Como a luta deve se desenrolar</div>
-        {an.narrative.map((p, i) => <p key={i}><Rich text={p} /></p>)}
+        {an.narrative.map((p, i) => <p key={i}><Rich text={p} a={nA} b={nB} /></p>)}
       </div>
 
       {/* Números lado a lado */}
@@ -250,7 +250,7 @@ function AnalysisView({ A, B, an, model }: { A: FighterDetail; B: FighterDetail;
           <CmpBar label="Rating Elo" a={A.elo} b={B.elo} fmt={fmtInt} hint="Rating calculado com todas as lutas do UFC: sobe ao vencer, mais ainda contra adversários fortes" />
           <CmpBar label="Lutas de 5 rounds" a={A.fiveRoundFights} b={B.fiveRoundFights} fmt={fmtInt} />
           <CmpBar label="Disputas de cinturão" a={A.titleFights} b={B.titleFights} fmt={fmtInt} />
-          <div className="note" style={{ marginTop: 10, textAlign: 'center' }}>Base: {A.stance || '—'} × {B.stance || '—'}</div>
+          <div className="note" style={{ marginTop: 10, textAlign: 'center' }}>Base: <b className="fa">{A.stance || '—'}</b> × <b className="fb">{B.stance || '—'}</b></div>
         </div>
         <div className="panel">
           <div className="panel-title">Em pé</div>
@@ -261,7 +261,7 @@ function AnalysisView({ A, B, an, model }: { A: FighterDetail; B: FighterDetail;
           <CmpBar label="Knockdowns/15 min" a={debutA ? null : ra.kd} b={debutB ? null : rb.kd} fmt={(n) => fmtNum(n, 2)} />
           <CmpBar label="Knockdowns sofridos/15 min" a={debutA ? null : ra.kdAbs} b={debutB ? null : rb.kdAbs} fmt={(n) => fmtNum(n, 2)} higherIsBetter={false} />
           <div className="note" style={{ marginTop: 10, textAlign: 'center' }}>
-            Projeção no confronto: {fmtNum(an.projections.strA, 1)} × {fmtNum(an.projections.strB, 1)} golpes sig./min
+            Projeção no confronto: <b className="fa">{fmtNum(an.projections.strA, 1)}</b> × <b className="fb">{fmtNum(an.projections.strB, 1)}</b> golpes sig./min
           </div>
         </div>
         <div className="panel">
@@ -272,7 +272,7 @@ function AnalysisView({ A, B, an, model }: { A: FighterDetail; B: FighterDetail;
           <CmpBar label="Finalizações tentadas/15 min" a={debutA ? null : ra.sub} b={debutB ? null : rb.sub} fmt={(n) => fmtNum(n, 2)} />
           <CmpBar label="Tempo em controle" a={debutA ? null : ra.ctrl} b={debutB ? null : rb.ctrl} fmt={(n) => fmtPct(n)} />
           <div className="note" style={{ marginTop: 10, textAlign: 'center' }}>
-            Projeção no confronto: {fmtNum(an.projections.tdA, 1)} × {fmtNum(an.projections.tdB, 1)} quedas a cada 15 min
+            Projeção no confronto: <b className="fa">{fmtNum(an.projections.tdA, 1)}</b> × <b className="fb">{fmtNum(an.projections.tdB, 1)}</b> quedas a cada 15 min
           </div>
         </div>
       </div>

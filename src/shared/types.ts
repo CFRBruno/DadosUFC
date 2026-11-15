@@ -216,3 +216,34 @@ export interface Meta {
   model: ModelParams['metrics'];
   upcomingSource: string;
 }
+
+/** Disputa de cinturão (ou final de torneio) do histórico completo do UFC. */
+export interface TitleFight {
+  id: string;
+  date: string;
+  event: string;
+  eventId: string;
+  division: DivisionKey;
+  interim: boolean;
+  tournament: boolean;
+  /** rótulo do torneio (ex.: "TUF 33"), vazio para disputas de cinturão */
+  label: string;
+  a: { id: string; name: string; slug: string | null };
+  b: { id: string; name: string; slug: string | null };
+  winner: 0 | 1 | null;
+  result: 'W' | 'D' | 'NC';
+  method: MethodKey;
+  decision: DecisionKind;
+  detail: string;
+  endRound: number;
+  endTime: string;
+  scheduledRounds: number;
+  /** slug de um lutador do site que lutou essa luta (para abrir as estatísticas) */
+  statsSlug: string | null;
+}
+
+/** Linha do ranking: valores brutos por chave de estatística. */
+export interface RankingRow {
+  id: string;
+  s: Record<string, number | null>;
+}

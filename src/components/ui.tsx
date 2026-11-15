@@ -2,7 +2,7 @@ import { Fragment, useState, type ReactNode } from 'react';
 import { useFighters } from '../lib/data';
 import { initials } from '../lib/format';
 
-type IconName = 'home' | 'users' | 'swords' | 'calendar' | 'chart' | 'x' | 'up' | 'down' | 'chev' | 'info';
+type IconName = 'home' | 'users' | 'swords' | 'calendar' | 'chart' | 'x' | 'up' | 'down' | 'chev' | 'info' | 'trophy' | 'belt' | 'more';
 
 export function Icon({ name, className }: { name: IconName; className?: string }) {
   const p = { fill: 'none', stroke: 'currentColor', strokeWidth: 2, strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
@@ -17,6 +17,9 @@ export function Icon({ name, className }: { name: IconName; className?: string }
     down: <path {...p} d="M12 5v14M6 13l6 6 6-6" />,
     chev: <path {...p} d="m6 9 6 6 6-6" />,
     info: <><circle {...p} cx="12" cy="12" r="9" /><path {...p} d="M12 11v6M12 7.5v.5" /></>,
+    trophy: <path {...p} d="M8 4h8v5a4 4 0 0 1-8 0V4ZM8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4M12 13v4M8 20h8M9.5 17h5" />,
+    belt: <><rect {...p} x="2" y="9" width="20" height="6" rx="1.5" /><rect {...p} x="8.5" y="7" width="7" height="10" rx="2" /><circle {...p} cx="12" cy="12" r="1.6" /></>,
+    more: <><circle cx="5" cy="12" r="1.8" fill="currentColor" /><circle cx="12" cy="12" r="1.8" fill="currentColor" /><circle cx="19" cy="12" r="1.8" fill="currentColor" /></>,
   };
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden="true" width="20" height="20">
@@ -85,12 +88,51 @@ export function ErrorBox({ message }: { message: string }) {
   );
 }
 
-/** Texto com **negrito** simples. */
-export function Rich({ text }: { text: string }) {
+const esc = (x: string) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+
+/**
+ * Texto com marcações simples:
+ *   **negrito**, [a:texto] / [b:texto] (cor do lutador A/B).
+ * Com `a` e `b`, os nomes dos lutadores são coloridos automaticamente; um trecho
+ * em negrito que cita só um dos lutadores fica inteiro na cor dele.
+ */
+export function Rich({ text, a, b }: { text: string; a?: string; b?: string }) {
+  const names = [a, b].filter((n): n is string => !!n).sort((x, y) => y.length - x.length);
+  const nameRe = names.length ? new RegExp(`(${names.map(esc).join('|')})`, 'g') : null;
+  const sideOf = (n: string) => (n === a ? 'fa' : n === b ? 'fb' : '');
+  let k = 0;
+
+  const plain = (str: string, bold: boolean) => {
+    const out: ReactNode[] = [];
+    for (const part of str.split(/(\[[ab]:[^\]]+\])/g)) {
+      const m = part.match(/^\[([ab]):([^\]]+)\]$/);
+      if (m) {
+        out.push(bold ? <b key={k++} className={`f${m[1]}`}>{m[2]}</b> : <span key={k++} className={`f${m[1]}`}>{m[2]}</span>);
+        continue;
+      }
+      const pieces = nameRe ? part.split(nameRe) : [part];
+      for (const p of pieces) {
+        if (!p) continue;
+        const cls = names.includes(p) ? sideOf(p) : '';
+        if (cls) out.push(bold ? <b key={k++} className={cls}>{p}</b> : <span key={k++} className={cls}>{p}</span>);
+        else out.push(bold ? <b key={k++}>{p}</b> : <Fragment key={k++}>{p}</Fragment>);
+      }
+    }
+    return out;
+  };
+
   const parts = text.split(/\*\*(.+?)\*\*/g);
   return (
     <>
-      {parts.map((p, i) => (i % 2 ? <b key={i}>{p}</b> : <Fragment key={i}>{p}</Fragment>))}
+      {parts.map((p, i) => {
+        if (i % 2 === 0) return <Fragment key={i}>{plain(p, false)}</Fragment>;
+        // negrito: se cita só um lutador (e não tem marcação própria), pinta o trecho todo
+        if (!/\[[ab]:/.test(p) && a && b) {
+          const hasA = p.includes(a), hasB = p.includes(b);
+          if (hasA !== hasB) return <b key={i} className={hasA ? 'fa' : 'fb'}>{p}</b>;
+        }
+        return <Fragment key={i}>{plain(p, true)}</Fragment>;
+      })}
     </>
   );
 }

@@ -139,7 +139,7 @@ export default function Home() {
           <>
             <div className="section-title">
               <h2>Melhor Elo por categoria</h2>
-              <Link to="/lutadores?ordem=elo">Ranking completo →</Link>
+              <Link to="/ranking">Ranking completo →</Link>
             </div>
             <div className="grid-3">
               {topByDivision.map(({ name, f }) => (

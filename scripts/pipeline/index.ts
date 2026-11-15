@@ -6,6 +6,7 @@ import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { DIVISION_BY_KEY, parseWeightClass, type DivisionKey } from '../../src/shared/divisions';
 import type {
+  RankingRow, TitleFight,
   EventInfo, FightEntry, FighterDetail, FighterSummary, MethodBreakdown, Meta, UpcomingBout,
 } from '../../src/shared/types';
 import { S } from '../../src/shared/types';
@@ -345,6 +346,57 @@ async function main() {
   for (const d of details) await writeFile(path.join(OUT, 'fighters', `${d.slug}.json`), JSON.stringify(d));
   await writeFile(path.join(OUT, 'model.json'), JSON.stringify(model));
   await writeFile(path.join(OUT, 'events.json'), JSON.stringify({ upcoming: upcomingEvents, past }));
+
+  // disputas de cinturão + finais de torneio (histórico completo)
+  const titles: TitleFight[] = fights
+    .filter((f) => f.title || f.tournament)
+    .map((f) => ({
+      id: f.id, date: f.date, event: f.event, eventId: f.eventId, division: f.division,
+      interim: f.interim, tournament: f.tournament,
+      label: f.tournament ? f.weightClassRaw.replace(/\s*tournament\s*title\s*bout/i, '').replace(/^the ultimate fighter|^ultimate fighter/i, 'TUF').replace(/^tuf nations/i, 'TUF Nations')
+        .replace(/\s*(women's\s+)?(light heavyweight|heavyweight|middleweight|welterweight|lightweight|featherweight|bantamweight|flyweight|strawweight)\s*$/i, '').trim() : '',
+      a: ref(f.fighters[0].id, f.fighters[0].name),
+      b: ref(f.fighters[1].id, f.fighters[1].name),
+      winner: f.winner, result: f.outcome, method: f.method, decision: f.decision, detail: f.detail,
+      endRound: f.endRound, endTime: f.endTime, scheduledRounds: f.scheduledRounds,
+      statsSlug: f.stats ? (slugOf.get(f.fighters[0].id) ?? slugOf.get(f.fighters[1].id) ?? null) : null,
+    }))
+    .reverse();
+  await writeFile(path.join(OUT, 'titles.json'), JSON.stringify(titles));
+
+  // ranking: valores por lutador (só quem já lutou no UFC)
+  const rankings: RankingRow[] = details
+    .filter((d) => d.fights.length)
+    .map((d) => {
+      const t = d.totals;
+      const r = d.rates;
+      const decisive = t.wins + t.losses;
+      const firstStreak = d.streak.startsWith('V') ? Number(d.streak.slice(1)) : 0;
+      return {
+        id: d.id,
+        s: {
+          age: d.dob ? years(d.dob, today) : null,
+          height: d.heightCm, reach: d.reachCm,
+          ape: d.heightCm && d.reachCm ? d.reachCm - d.heightCm : null,
+          elo: d.elo, eloPeak: d.eloPeak,
+          tenure: d.firstFight ? years(d.firstFight, today) : null,
+          avgMin: r.avgFightMin || null,
+          five: d.fiveRoundFights, titleFights: d.titleFights,
+          titleWins: d.fights.filter((f) => f.title && f.result === 'W').length,
+          fights: t.fights, wins: t.wins, losses: t.losses,
+          koW: t.koW, subW: t.subW, decW: t.decW, fin: t.koW + t.subW,
+          winPct: decisive ? t.wins / decisive : null,
+          streak: firstStreak,
+          slpm: r.slpm, acc: t.sigA ? r.acc : null, sapm: r.sapm, def: t.sigOppA ? r.def : null,
+          td: r.td, tdAcc: t.tdA ? r.tdAcc : null, tdDef: t.tdOppA ? r.tdDef : null,
+          sub: r.sub, kd: r.kd, kdAbs: r.kdAbs, ctrl: r.ctrl,
+          finishRate: t.wins ? r.finishRate : null,
+          minutes: t.time / 60,
+        },
+      };
+    });
+  const round4 = (_k: string, v: unknown) => (typeof v === 'number' && !Number.isInteger(v) ? Math.round(v * 1e4) / 1e4 : v);
+  await writeFile(path.join(OUT, 'rankings.json'), JSON.stringify(rankings, round4));
   const latest = fights[fights.length - 1];
   const meta: Meta = {
     generatedAt: new Date().toISOString(),
@@ -356,7 +408,7 @@ async function main() {
     upcomingSource,
   };
   await writeFile(path.join(OUT, 'meta.json'), JSON.stringify(meta, null, 1));
-  console.log(`  ${details.filter((d) => d.photo).length} lutadores com foto`);
+  console.log(`  ${details.filter((d) => d.photo).length} lutadores com foto · ${titles.filter((t) => !t.tournament).length} disputas de cinturão`);
   console.log(`✔ Pronto: ${details.length} lutadores, ${past.length} eventos em ${SCOPE_FROM.slice(0, 4)}, ${upcomingEvents.length} eventos futuros (${upcomingSource}).`);
 }
 

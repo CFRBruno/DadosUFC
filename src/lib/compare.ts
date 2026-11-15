@@ -122,7 +122,7 @@ export function analyze(A: FighterDetail, B: FighterDetail, model: ModelParams, 
   );
   const strEdge = strA - strB;
   narrative.push(
-    `**Em pé:** cruzando o volume de cada um com a defesa do outro, a projeção é de ${nA} conectar cerca de **${fmtNum(strA, 1)} golpes significativos por minuto** e ${nB}, **${fmtNum(strB, 1)}**. ` +
+    `**Em pé:** cruzando o volume de cada um com a defesa do outro, a projeção é de ${nA} conectar cerca de **[a:${fmtNum(strA, 1)} golpes significativos por minuto]** e ${nB}, **[b:${fmtNum(strB, 1)}]**. ` +
       (Math.abs(strEdge) < 0.4
         ? 'Na trocação, a disputa tende a ser equilibrada.'
         : `${strEdge > 0 ? nA : nB} deve levar vantagem na trocação.`) +
@@ -132,11 +132,12 @@ export function analyze(A: FighterDetail, B: FighterDetail, model: ModelParams, 
     narrative.push(`**No chão:** nenhum dos dois deve buscar muitas quedas (projeção de ${fmtNum(tdA, 1)} × ${fmtNum(tdB, 1)} a cada 15 min). A tendência é a luta acontecer em pé.`);
   } else {
     const g = tdA >= tdB ? nA : nB;
+    const gs = tdA >= tdB ? 'a' : 'b';
     const o = tdA >= tdB ? nB : nA;
     const gDef = tdA >= tdB ? B.rates.tdDef : A.rates.tdDef;
     const proj = Math.max(tdA, tdB);
     narrative.push(
-      `**No chão:** ${g} é quem deve buscar a queda — projeção de **${fmtNum(proj, 1)} quedas a cada 15 min** contra uma defesa de ${fmtPct(gDef)} de ${o}. ` +
+      `**No chão:** ${g} é quem deve buscar a queda — projeção de **[${gs}:${fmtNum(proj, 1)} quedas a cada 15 min]** contra uma defesa de ${fmtPct(gDef)} de ${o}. ` +
         (proj >= 1.5 ? `Se conseguir impor esse jogo, ${g} pode controlar boa parte da luta.` : `${o} tem chance real de manter a luta em pé.`),
     );
   }

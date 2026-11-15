@@ -5,6 +5,7 @@ import { compareUrl } from '../components/events';
 import { FightRow } from '../components/fighters';
 import { Avatar, ErrorBox, Flag, Icon, Loading } from '../components/ui';
 import { useFighter } from '../lib/data';
+import { rankingUrl } from '../lib/rankingStats';
 import { cmToFtIn, divisionName, fmtDate, fmtNum, fmtPct, recordStr } from '../lib/format';
 import type { FighterDetail, Rates } from '../shared/types';
 
@@ -79,14 +80,14 @@ function Profile({ f }: { f: FighterDetail }) {
       )}
 
       <div className="bio-grid">
-        <div><span>Idade</span><b>{f.age ?? '—'}</b><small>{f.dob ? fmtDate(f.dob) : ''}</small></div>
-        <div><span>Altura</span><b>{f.heightCm ? `${f.heightCm} cm` : '—'}</b><small>{cmToFtIn(f.heightCm)}</small></div>
-        <div><span>Envergadura</span><b>{f.reachCm ? `${f.reachCm} cm` : '—'}</b><small>{f.reachCm ? `${Math.round(f.reachCm / 2.54)}"` : ''}</small></div>
+        <Link to={rankingUrl('age', f.division)} title="Ver ranking"><span>Idade</span><b>{f.age ?? '—'}</b><small>{f.dob ? fmtDate(f.dob) : ''}</small></Link>
+        <Link to={rankingUrl('height', f.division)} title="Ver ranking"><span>Altura</span><b>{f.heightCm ? `${f.heightCm} cm` : '—'}</b><small>{cmToFtIn(f.heightCm)}</small></Link>
+        <Link to={rankingUrl('reach', f.division)} title="Ver ranking"><span>Envergadura</span><b>{f.reachCm ? `${f.reachCm} cm` : '—'}</b><small>{f.reachCm ? `${Math.round(f.reachCm / 2.54)}"` : ''}</small></Link>
         <div><span>Base</span><b>{f.stance || '—'}</b></div>
-        <div><span>Rating Elo</span><b>{f.elo}</b><small>pico {f.eloPeak}</small></div>
-        <div><span>Estreia no UFC</span><b>{f.firstFight ? f.firstFight.slice(0, 4) : '—'}</b><small>{f.firstFight ? fmtDate(f.firstFight) : ''}</small></div>
-        <div><span>Tempo médio</span><b>{f.rates.avgFightMin ? `${fmtNum(f.rates.avgFightMin, 1)} min` : '—'}</b><small>por luta</small></div>
-        <div><span>5 rounds</span><b>{f.fiveRoundFights}</b><small>{f.titleFights ? `${f.titleFights} por cinturão` : 'lutas'}</small></div>
+        <Link to={rankingUrl('elo', f.division)} title="Ver ranking"><span>Rating Elo</span><b>{f.elo}</b><small>pico {f.eloPeak}</small></Link>
+        <Link to={rankingUrl('tenure', f.division)} title="Ver ranking"><span>Estreia no UFC</span><b>{f.firstFight ? f.firstFight.slice(0, 4) : '—'}</b><small>{f.firstFight ? fmtDate(f.firstFight) : ''}</small></Link>
+        <Link to={rankingUrl('avgMin', f.division)} title="Ver ranking"><span>Tempo médio</span><b>{f.rates.avgFightMin ? `${fmtNum(f.rates.avgFightMin, 1)} min` : '—'}</b><small>por luta</small></Link>
+        <Link to={rankingUrl('five', f.division)} title="Ver ranking"><span>5 rounds</span><b>{f.fiveRoundFights}</b><small>{f.titleFights ? `${f.titleFights} por cinturão` : 'lutas'}</small></Link>
       </div>
 
       {debut ? (
@@ -134,7 +135,7 @@ function Profile({ f }: { f: FighterDetail }) {
               {TILES.map((t) => {
                 const p = f.percentiles[t.key];
                 return (
-                  <div className="stat-tile" key={t.key} title={t.hint}>
+                  <Link to={rankingUrl(t.key, f.division)} className="stat-tile" key={t.key} title={`${t.hint} — clique para ver o ranking`}>
                     <div className="label">{t.label}</div>
                     <div className="value">{t.fmt(f.rates)}</div>
                     {p != null && (
@@ -143,7 +144,7 @@ function Profile({ f }: { f: FighterDetail }) {
                         <div className="pct-label"><span>Percentil</span><span>{p}</span></div>
                       </>
                     )}
-                  </div>
+                  </Link>
                 );
               })}
             </div>

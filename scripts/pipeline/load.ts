@@ -28,6 +28,9 @@ export interface RawFight {
   location: string;
   division: DivisionKey;
   title: boolean;
+  tournament: boolean;
+  /** rótulo original da luta (ex.: "Ultimate Fighter 33 Welterweight Tournament Title Bout") */
+  weightClassRaw: string;
   interim: boolean;
   women: boolean;
   scheduledRounds: number;
@@ -248,6 +251,8 @@ export async function loadDataset(): Promise<Dataset> {
       location: ev.location,
       division: wc.division,
       title: wc.title,
+      tournament: wc.tournament,
+      weightClassRaw: clean(r.WEIGHTCLASS),
       interim: wc.interim,
       women: wc.women,
       scheduledRounds: scheduled,
