@@ -179,6 +179,32 @@ function Story({ k, div, snaps, photos }: { k: string; div: TitleDivision; snaps
     const total = el.offsetHeight - innerHeight;
     scrollTo({ top: el.getBoundingClientRect().top + scrollY + ((j + 0.5) / snaps.length) * total, behavior: 'smooth' });
   };
+  const pending = useRef<number | null>(null);
+  const iRef = useRef(0);
+  iRef.current = i;
+  useEffect(() => { if (pending.current === i) pending.current = null; }, [i]);
+  const step = (d: number) => {
+    const base = pending.current ?? iRef.current;
+    const t = Math.min(snaps.length - 1, Math.max(0, base + d));
+    if (t === base) return;
+    pending.current = t;
+    goTo(t);
+  };
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key !== 'ArrowRight' && e.key !== 'ArrowLeft') return;
+      if (e.altKey || e.ctrlKey || e.metaKey || e.shiftKey) return;
+      const tg = e.target as HTMLElement | null;
+      if (tg && (/^(INPUT|SELECT|TEXTAREA)$/.test(tg.tagName) || tg.isContentEditable)) return;
+      const r = outer.current?.getBoundingClientRect();
+      if (!r || r.bottom < 0 || r.top > innerHeight * 0.6) return;
+      e.preventDefault();
+      step(e.key === 'ArrowRight' ? 1 : -1);
+    };
+    addEventListener('keydown', onKey);
+    return () => removeEventListener('keydown', onKey);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [snaps.length]);
   const s = snaps[i];
   const def = useCount(s.def);
   const days = useCount(s.reignDays);
@@ -190,7 +216,11 @@ function Story({ k, div, snaps, photos }: { k: string; div: TitleDivision; snaps
         <div className="tl-year" aria-hidden="true">{s.date.slice(0, 4)}</div>
         <div className="tl-sthead">
           <h2 className="tl-sttitle">{div.name}</h2>
-          <div className="tl-k">Capítulo {i + 1} de {snaps.length}</div>
+          <div className="tl-nav">
+            <button onClick={() => step(-1)} disabled={i === 0} aria-label="Capítulo anterior">‹</button>
+            <div className="tl-k">Capítulo {i + 1} de {snaps.length}</div>
+            <button onClick={() => step(1)} disabled={i === snaps.length - 1} aria-label="Próximo capítulo">›</button>
+          </div>
         </div>
         <Track snaps={snaps} cur={i} onPick={goTo} />
         <div className="tl-grid">
@@ -231,14 +261,14 @@ function Story({ k, div, snaps, photos }: { k: string; div: TitleDivision; snaps
                 const r = s.rec[d.k];
                 const isNew = s.broken.includes(d.k);
                 const chase = d.k === 'reign' && r && s.champ && r.who !== s.champ && s.reignDays > r.value * 0.6
-                  ? `${sur(s.champ)} está a ${(r.value - s.reignDays).toLocaleString('pt-BR')} dias` : '';
+                  ? `${s.champ} está a ${(r.value - s.reignDays).toLocaleString('pt-BR')} dias` : '';
                 return (
                   <li key={d.k} className={isNew ? 'isnew' : ''}>
                     <div className="tl-rk">{d.label}{isNew && <span className="tl-new">novo</span>}</div>
                     {r ? (
                       <>
                         <div className="tl-rv"><b>{fmtRec(d.k, r.value)}{d.unit ?? ''}</b> <span>{r.who}</span></div>
-                        {r.prev.length > 0 && <div className="tl-old">{r.prev.map((p, j) => <s key={j}>{sur(p.who)} · {fmtRec(d.k, p.value)}{d.unit ?? ''}</s>)}</div>}
+                        {r.prev.length > 0 && <div className="tl-old">{r.prev.map((p, j) => <s key={j}>{p.who} · {fmtRec(d.k, p.value)}{d.unit ?? ''}</s>)}</div>}
                         {chase && <div className="tl-chase">{chase}</div>}
                       </>
                     ) : <div className="tl-rv"><b>—</b></div>}
@@ -248,7 +278,7 @@ function Story({ k, div, snaps, photos }: { k: string; div: TitleDivision; snaps
             </ul>
           </div>
         </div>
-        <div className="tl-hint">↓ role · passe o mouse no trilho · clique numa luta para pular até ela</div>
+        <div className="tl-hint">← → setas do teclado, ou role · passe o mouse no trilho · clique numa luta para pular</div>
       </div>
     </section>
   );
@@ -305,9 +335,9 @@ function Score({ s }: { s: Snap }) {
   return (
     <div className="tl-score in">
       <div className="tl-schead">
-        <span className="a">{c.a.slug ? <Link to={`/lutador/${c.a.slug}`}>{sur(c.a.name)}</Link> : sur(c.a.name)}</span>
+        <span className="a">{c.a.slug ? <Link to={`/lutador/${c.a.slug}`}>{c.a.name}</Link> : c.a.name}</span>
         <span className="tl-lbl">Scorecard</span>
-        <span className="b">{c.b.slug ? <Link to={`/lutador/${c.b.slug}`}>{sur(c.b.name)}</Link> : sur(c.b.name)}</span>
+        <span className="b">{c.b.slug ? <Link to={`/lutador/${c.b.slug}`}>{c.b.name}</Link> : c.b.name}</span>
       </div>
       {rows.map(([lab, a, b, f], j) => {
         const t = a + b || 1;
@@ -354,14 +384,14 @@ function Track({ snaps, cur, onPick }: { snaps: Snap[]; cur: number; onPick: (i:
   });
   // rótulos de campeões (duas linhas para evitar sobreposição)
   const labels: { x: number; row: number; t: string }[] = [];
-  const lastEnd = [-1e9, -1e9];
+  const lastEnd = [-1e9, -1e9, -1e9];
   snaps.forEach((s, i) => {
     const prev = snaps[i - 1];
     if (!s.champ || (prev && prev.champ === s.champ)) return;
-    const t = sur(s.champ);
+    const t = s.champ;
     const x = X(s.date);
-    const w = t.length * 7.4 + 12;
-    const row = x > lastEnd[0] ? 0 : x > lastEnd[1] ? 1 : -1;
+    const w = t.length * 6.6 + 12;
+    const row = x > lastEnd[0] ? 0 : x > lastEnd[1] ? 1 : x > lastEnd[2] ? 2 : -1;
     if (row < 0) return;
     lastEnd[row] = x + w;
     labels.push({ x, row, t });
@@ -371,7 +401,7 @@ function Track({ snaps, cur, onPick }: { snaps: Snap[]; cur: number; onPick: (i:
 
   return (
     <div className="tl-trackwrap">
-      <svg ref={svgRef} viewBox={`0 0 ${W} 124`} className={`tl-track ${focusName ? 'focus' : ''}`} onPointerLeave={() => setHov(null)}>
+      <svg ref={svgRef} viewBox={`0 0 ${W} 138`} className={`tl-track ${focusName ? 'focus' : ''}`} onPointerLeave={() => setHov(null)}>
         {years.map((y) => <text key={y} x={X(`${y}-01-01`)} y={12} className="ty" textAnchor="middle">{y}</text>)}
         <line x1={X0} x2={X1} y1={MAINY} y2={MAINY} className="rail" />
         {vacs.map((v, j) => <line key={j} x1={v.x1} x2={v.x2} y1={MAINY} y2={MAINY} className="vacant" />)}
@@ -390,7 +420,7 @@ function Track({ snaps, cur, onPick }: { snaps: Snap[]; cur: number; onPick: (i:
           const y = s.fight?.interim ? INTY : MAINY;
           return <circle key={j} cx={x} cy={y} r={s.fight?.interim ? 5 : 6.5} className={`${cls} ${s.fight?.interim ? 'int' : ''}`} {...ev} />;
         })}
-        {labels.map((l, j) => <text key={j} x={l.x} y={l.row === 0 ? 106 : 120} className="tlab">{l.t}</text>)}
+        {labels.map((l, j) => <text key={j} x={l.x} y={106 + l.row * 14} className="tlab">{l.t}</text>)}
         <line x1={0} x2={0} y1={24} y2={96} className="cursor" style={{ transform: `translateX(${curX}px)` }} />
       </svg>
       {hov && (

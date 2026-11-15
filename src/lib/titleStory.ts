@@ -130,8 +130,8 @@ export function buildStory(div: TitleDivision, today: string): { snaps: Snap[]; 
       const W = c.a.name, L = c.b.name;
       if (c.result !== 'W') {
         kicker = c.result === 'D' ? 'EMPATE' : 'SEM RESULTADO';
-        const keep = st.champ ? `o cinturão fica com <em>${sur(st.champ)}</em>` : 'o cinturão <em>segue vago</em>';
-        headline = c.result === 'D' ? `${sur(W)} e ${sur(L)} empatam — ${keep}` : `${sur(W)} × ${sur(L)} termina sem resultado — ${keep}`;
+        const keep = st.champ ? `o cinturão fica com <em>${st.champ}</em>` : 'o cinturão <em>segue vago</em>';
+        headline = c.result === 'D' ? `${W} e ${L} empatam — ${keep}` : `${W} × ${L} termina sem resultado — ${keep}`;
       } else {
         const verb = c.method === 'KO' ? 'nocauteia' : c.method === 'SUB' ? 'finaliza' : 'vence';
         const how = c.method === 'DEC' ? ' nos pontos' : c.method === 'DQ' ? ' por desclassificação' : '';
@@ -140,7 +140,7 @@ export function buildStory(div: TitleDivision, today: string): { snaps: Snap[]; 
           const defending = st.interim === W;
           st.interim = W;
           kicker = defending ? 'DEFESA DO INTERINO' : 'CINTURÃO INTERINO';
-          headline = defending ? `${sur(W)} ${verb} ${sur(L)}${how} e mantém o <em>cinturão interino</em>` : `${sur(W)} ${verb} ${sur(L)}${how} e conquista o <em>cinturão interino</em>`;
+          headline = defending ? `${W} ${verb} ${L}${how} e mantém o <em>cinturão interino</em>` : `${W} ${verb} ${L}${how} e conquista o <em>cinturão interino</em>`;
         } else if (st.champ === W) {
           st.def += 1;
           const last = reigns[reigns.length - 1];
@@ -148,7 +148,7 @@ export function buildStory(div: TitleDivision, today: string): { snaps: Snap[]; 
           const unif = st.interim === L;
           if (unif) st.interim = null;
           kicker = unif ? 'UNIFICAÇÃO' : `${ord(st.def)} DEFESA`;
-          headline = unif ? `${sur(W)} ${verb} ${G.theInterim} ${sur(L)}${how} e <em>unifica os cinturões</em>` : `${sur(W)} ${verb} ${sur(L)}${how} e defende o cinturão pela <em>${ord(st.def)} vez</em>`;
+          headline = unif ? `${W} ${verb} ${G.theInterim} ${L}${how} e <em>unifica os cinturões</em>` : `${W} ${verb} ${L}${how} e defende o cinturão pela <em>${ord(st.def)} vez</em>`;
         } else {
           const first = st.first;
           const wasVacant = !st.champ;
@@ -158,12 +158,12 @@ export function buildStory(div: TitleDivision, today: string): { snaps: Snap[]; 
           startReign(W, c.date);
           kicker = first ? (f ? 'A PRIMEIRA CAMPEÃ' : 'O PRIMEIRO CAMPEÃO') : unif ? 'UNIFICAÇÃO' : f ? 'NOVA CAMPEÃ' : 'NOVO CAMPEÃO';
           headline = first
-            ? `${sur(W)} ${verb} ${sur(L)}${how} e se torna ${G.first} da categoria`
+            ? `${W} ${verb} ${L}${how} e se torna ${G.first} da categoria`
             : unif
-              ? `${f ? 'A interina' : 'O interino'} ${sur(W)} ${verb} ${sur(old!)}${how} e <em>unifica os cinturões</em>`
+              ? `${f ? 'A interina' : 'O interino'} ${W} ${verb} ${old!}${how} e <em>unifica os cinturões</em>`
               : wasVacant
-                ? `${sur(W)} ${verb} ${sur(L)}${how} e conquista o <em>cinturão vago</em>`
-                : `${sur(W)} ${verb} ${sur(L)}${how} e é ${G.newChamp}`;
+                ? `${W} ${verb} ${L}${how} e conquista o <em>cinturão vago</em>`
+                : `${W} ${verb} ${L}${how} e é ${G.newChamp}`;
         }
         if (!c.interim && st.champ === W && st.def > 0 && setRec('def', st.def, W, c.date)) broken.push('def');
         if (setRec('wins', st.wins[W], W, c.date)) broken.push('wins');
@@ -188,7 +188,7 @@ export function buildStory(div: TitleDivision, today: string): { snaps: Snap[]; 
     snaps.push({
       idx: snaps.length, kind: 'upcoming', date: today, upcoming: u,
       kicker: 'PRÓXIMO CAPÍTULO',
-      headline: `${sur(u.a)} × ${sur(u.b)} — <em>${u.event}</em>`,
+      headline: `${u.a} × ${u.b} — <em>${u.event}</em>`,
       champ: st.champ, prevChamp: null, def: st.def, reignDays: st.champ && st.since ? daysBetween(st.since, today) : 0,
       interimChamp: st.interim, rec: JSON.parse(JSON.stringify(rec)), broken: [],
     });

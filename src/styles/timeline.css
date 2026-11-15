@@ -220,3 +220,16 @@
   .tl-hint { display: none; }
   .tl-track .tlab { font-size: 15px; }
 }
+
+/* navegação por capítulos (setas) */
+.tl-nav { display: flex; align-items: center; gap: 10px; }
+.tl-nav button {
+  all: unset; box-sizing: border-box; width: 34px; height: 34px; display: grid; place-items: center; cursor: pointer;
+  font: 700 22px/1 var(--serif); color: var(--ink); border: 1px solid var(--ink); background: var(--paper-hi);
+  transition: background 0.15s, color 0.15s, transform 0.15s;
+}
+.tl-nav button:hover:not(:disabled) { background: var(--ink); color: var(--paper); }
+.tl-nav button:active:not(:disabled) { transform: scale(0.94); }
+.tl-nav button:disabled { opacity: 0.3; cursor: default; }
+.tl-nav button:focus-visible { outline: 2px solid var(--red); outline-offset: 2px; }
+@media (max-width: 760px) { .tl-nav .tl-k { font-size: 10px; letter-spacing: 0.14em; } .tl-nav button { width: 30px; height: 30px; } }
