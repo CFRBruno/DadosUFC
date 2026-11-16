@@ -27,7 +27,9 @@ import { loadScorecards, scorecardLookup, updateScorecards } from './scorecards'
 import { buildStory } from '../../src/lib/titleStory';
 
 /** Lutadores que lutaram no UFC a partir desta data entram no site. */
-const SCOPE_FROM = '2026-01-01';
+const SCOPE_FROM = '2016-01-01';
+/** Quem lutou a partir daqui é "ativo" (filtro da lista e fotos guardadas para a imagem de compartilhamento). */
+const ACTIVE_FROM = '2026-01-01';
 const OUT = path.resolve('public/data');
 const offline = process.argv.includes('--offline');
 const today = new Date().toISOString().slice(0, 10);
@@ -139,7 +141,7 @@ async function main() {
     if (!fightsByDate.has(f.date)) fightsByDate.set(f.date, []);
     fightsByDate.get(f.date)!.push([f.fighters[0].id, f.fighters[1].id]);
   }
-  const active = [...fightsBy.entries()].filter(([, fs]) => fs[fs.length - 1].date >= '2024-01-01').map(([id]) => ({ id, name: bios.get(id)?.name ?? id }));
+  const active = [...fightsBy.entries()].filter(([, fs]) => fs[fs.length - 1].date >= SCOPE_FROM).map(([id]) => ({ id, name: bios.get(id)?.name ?? id }));
   const espnOf = matchEspnIds(espn, active, (d) => fightsByDate.get(d) ?? []);
   const ourOfEspn = new Map([...espnOf.entries()].map(([k, v]) => [v, k]));
 
@@ -288,6 +290,7 @@ async function main() {
       style: '',
       streak: lastRes && streakN ? `${lastRes === 'W' ? 'V' : lastRes === 'L' ? 'D' : 'E'}${streakN}` : '',
       upcoming: nextBout.has(id),
+      active: nextBout.has(id) || (entries[0]?.date ?? '') >= ACTIVE_FROM,
       ...(() => {
         const eid = espnOf.get(id);
         const ath = eid ? espn.athletes.get(eid) : undefined;
@@ -387,10 +390,12 @@ async function main() {
   await rm(OUT, { recursive: true, force: true });
   await mkdir(path.join(OUT, 'fighters'), { recursive: true });
   const idOfPhoto = (u: string | null) => (u ? /full\/(\d+)\.png/.exec(u)?.[1] : undefined);
-  const localSet = await localPhotos(details.map((d) => idOfPhoto(d.photo)).filter((x): x is string => !!x), path.join(OUT, 'photos'), offline);
+  const localSet = await localPhotos(details.filter((d) => d.lastFight && d.lastFight >= '2024-01-01').map((d) => idOfPhoto(d.photo)).filter((x): x is string => !!x), path.join(OUT, 'photos'), offline);
   for (const d of details) { const pid = idOfPhoto(d.photo); if (pid && localSet.has(pid)) d.photoLocal = `photos/${pid}.png`; }
   await writeFile(path.join(OUT, 'model.json'), JSON.stringify(model));
   await writeFile(path.join(OUT, 'events.json'), JSON.stringify({ upcoming: upcomingEvents, past }));
+  // versão enxuta (próximos + 2026) para a tela inicial e o comparador, que não precisam de 10 anos de eventos
+  await writeFile(path.join(OUT, 'events-recent.json'), JSON.stringify({ upcoming: upcomingEvents, past: past.filter((e) => (e.date ?? '') >= ACTIVE_FROM) }));
 
   // disputas de cinturão + finais de torneio (histórico completo)
   const titles: TitleFight[] = fights
@@ -476,8 +481,8 @@ async function main() {
   }
 
   const summaries: FighterSummary[] = details
-    .map(({ id, slug, name, nickname, division, women, record, elo, lastFight, age, style, streak, upcoming, photo, photoPage, country, flag, photoLocal, official, champ }) => ({
-      id, slug, name, nickname, division, women, record, elo, lastFight, age, style, streak, upcoming, photo, photoPage, country, flag, photoLocal, official, champ,
+    .map(({ id, slug, name, nickname, division, women, record, elo, lastFight, age, style, streak, upcoming, active, photo, photoPage, country, flag, photoLocal, official, champ }) => ({
+      id, slug, name, nickname, division, women, record, elo, lastFight, age, style, streak, upcoming, active, photo, photoPage, country, flag, photoLocal, official, champ,
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
   await writeFile(path.join(OUT, 'fighters.json'), JSON.stringify(summaries));
@@ -524,6 +529,7 @@ async function main() {
     latestEvent: latest ? { name: latest.event, date: latest.date } : null,
     scopeFrom: SCOPE_FROM,
     fighterCount: details.length,
+    activeCount: details.filter((d) => d.active).length,
     fightCount: fights.length,
     model: model.metrics,
     upcomingSource,

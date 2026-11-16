@@ -39,7 +39,7 @@ export default function About() {
           <div className="panel-title left">Dados</div>
           <p><b>Fonte:</b> UFCStats, a base oficial de estatísticas do UFC, com todas as lutas desde 1993 e estatísticas round a round. Os dados são atualizados automaticamente.</p>
           <p><b>Somente UFC:</b> cartel, taxas e histórico consideram apenas lutas dentro do UFC.</p>
-          <p><b>Lutadores no site:</b> quem lutou no UFC a partir de {meta ? fmtDate(meta.scopeFrom) : 'jan 2026'} ou tem luta marcada ({meta?.fighterCount ?? '—'} atletas). Para eles, mostramos a carreira completa no UFC.</p>
+          <p><b>Lutadores no site:</b> quem lutou no UFC a partir de {meta ? fmtDate(meta.scopeFrom) : 'jan 2016'} ou tem luta marcada ({meta?.fighterCount.toLocaleString('pt-BR') ?? '—'} atletas, {meta?.activeCount ?? '—'} deles ativos em 2026). Para eles, mostramos a carreira completa no UFC.</p>
           {meta && <p><b>Última atualização:</b> {fmtDate(meta.generatedAt.slice(0, 10))} · último evento na base: {meta.latestEvent?.name} ({fmtDate(meta.latestEvent?.date)}).</p>}
         </div>
         <div className="panel prose">

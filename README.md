@@ -2,7 +2,7 @@
 
 Site pessoal de estatísticas do UFC. Traz histórico, estilo de luta, pontos fortes e fracos de cada lutador e um **comparador** que estima a chance de vitória e o método mais provável.
 
-- **Escopo:** todos os lutadores que lutaram no UFC desde **01/01/2026** ou que têm luta marcada (masculino e feminino, todas as categorias). Para eles, mostramos a **carreira completa dentro do UFC**. Lutas fora do UFC não entram.
+- **Escopo:** todos os lutadores que lutaram no UFC desde **01/01/2016** ou que têm luta marcada (cerca de 1.800; os ativos em 2026 têm o filtro "Só ativos em 2026") (masculino e feminino, todas as categorias). Para eles, mostramos a **carreira completa dentro do UFC**. Lutas fora do UFC não entram.
 - **Fontes:** [UFCStats](http://ufcstats.com), a base oficial de estatísticas do UFC (todas as lutas desde 1993, round a round). A ESPN fornece as fotos, a bandeira do país e o calendário de próximos eventos. O Wikimedia Commons é a fonte reserva de fotos, com licença livre.
 - **Stack:** React 19 + Vite + TypeScript. É um site estático com PWA, então dá para instalar no Android. Hospedagem gratuita no Firebase.
 
@@ -17,7 +17,7 @@ Site pessoal de estatísticas do UFC. Traz histórico, estilo de luta, pontos fo
 | `/comparar?a=…&b=…` | Previsão (% de vitória e 6 resultados possíveis), fatores que mais pesam, por que cada um pode vencer, como a luta deve se desenrolar, números lado a lado, últimas 5 lutas e adversários em comum |
 | `/ranking` | Ranking por qualquer estatística física, de cartel ou de desempenho, por categoria ou peso absoluto (com filtro de gênero e mínimo de lutas) |
 | `/cinturoes` | **Linha do tempo** de cada cinturão (12 categorias + BMF): visão geral dos reinados e modo história com scroll, com manchetes, scorecards, campeão com defesas e dias, interinos, vacâncias com motivo e recordes que são quebrados ao vivo. Também a lista de todas as disputas desde 1993 |
-| `/eventos`, `/evento/:id` | Linha do tempo de todos os eventos desde 2026, em ordem cronológica, com o card aberto ao clicar |
+| `/eventos`, `/evento/:id` | Linha do tempo de todos os eventos desde 2016, em ordem cronológica, com o card aberto ao clicar |
 | `/modelo` | Como a previsão funciona e quanto ela acerta |
 
 ## Como a previsão funciona
@@ -40,7 +40,7 @@ Os números são recalculados a cada atualização e aparecem em `/modelo`.
 
 ### Ranking oficial, forma recente e cinturões
 
-- **Ranking oficial:** desde 20/06/2026 o UFC usa o *Meta UFC Rankings* (modelo baseado em Elo, campeão + 15 por categoria). Como o ufc.com bloqueia acesso automatizado, o pipeline lê a tabela mantida na Wikipédia (`UFC_rankings`), que cita o ufc.com a cada atualização semanal. A data da divulgação fica em `meta.json`. O ranking só cobre quem está no site (lutou em 2026 ou tem luta marcada).
+- **Ranking oficial:** desde 20/06/2026 o UFC usa o *Meta UFC Rankings* (modelo baseado em Elo, campeão + 15 por categoria). Como o ufc.com bloqueia acesso automatizado, o pipeline lê a tabela mantida na Wikipédia (`UFC_rankings`), que cita o ufc.com a cada atualização semanal. A data da divulgação fica em `meta.json`. O ranking só cobre quem está no site (lutou desde 2016 ou tem luta marcada).
 - **Forma recente:** nota de 0 a 100 com as últimas 5 lutas (peso 0,75 por luta mais antiga), usando "resultado − esperado pelo Elo" e um pequeno ajuste por finalização/nocaute.
 - **Cinturões:** passagens por cinturões calculadas a partir da linha do tempo (inclui interino e BMF, que não contam como "ex-campeão").
 - **Posição nas estatísticas:** cada estatística mostra a colocação na categoria (ou entre todos do gênero quando a categoria tem menos de 15 lutadores elegíveis).

@@ -5,7 +5,7 @@ import { compareUrl } from '../components/events';
 import { FighterPicker } from '../components/fighters';
 import { Avatar, CountUp, Flag, Icon, Loading, ResultBadge, Rich } from '../components/ui';
 import { analyze, shortName, type Analysis } from '../lib/compare';
-import { useEvents, useFighter, useFighters, useModel } from '../lib/data';
+import { useRecentEvents, useFighter, useFighters, useModel } from '../lib/data';
 import { renderShareImage, type ShareData } from '../lib/shareImage';
 import { divisionName, fmtDate, fmtDateShort, fmtInt, fmtNum, fmtPct, recordStr, todayIso } from '../lib/format';
 import { DIVISION_BY_KEY, type DivisionKey } from '../shared/divisions';
@@ -20,7 +20,7 @@ export default function Compare() {
   const evName = params.get('ev');
 
   const fighters = useFighters().data;
-  const events = useEvents().data;
+  const events = useRecentEvents().data;
   const model = useModel().data;
   const A = useFighter(slugA);
   const B = useFighter(slugB);

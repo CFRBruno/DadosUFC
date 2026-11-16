@@ -16,7 +16,7 @@ export default function EventPage() {
   if (error) return <div className="container"><ErrorBox message={error} /></div>;
   if (!data) return <Loading />;
   const ev = [...data.upcoming, ...data.past].find((e) => e.id === id);
-  if (!ev) return <div className="container empty">Evento não encontrado (só exibimos eventos a partir de 2026).</div>;
+  if (!ev) return <div className="container empty">Evento não encontrado (só exibimos eventos a partir de 2016).</div>;
   return (
     <div className="container">
       <div className="page-head">

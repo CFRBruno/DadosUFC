@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { ResultBoutRow, UpcomingBoutRow } from '../components/events';
 import HeroFX from '../components/HeroFX';
 import { Avatar, CountUp, Loading } from '../components/ui';
-import { useEvents, useFighters, useMeta, useOfficialBoard } from '../lib/data';
+import { useRecentEvents, useFighters, useMeta, useOfficialBoard } from '../lib/data';
 import { fmtDate, fmtPct, todayIso } from '../lib/format';
 import { divisionName, recordStr } from '../lib/format';
 import type { FighterSummary, OfficialBoard } from '../shared/types';
@@ -131,7 +131,7 @@ export default function Home() {
   const heroRef = useRef<HTMLElement>(null);
   const meta = useMeta().data;
   const fighters = useFighters().data;
-  const events = useEvents().data;
+  const events = useRecentEvents().data;
   const byId = useMemo(() => new Map((fighters ?? []).map((f) => [f.id, f])), [fighters]);
   const nextEvent = events?.upcoming[0];
   const lastEvent = events?.past[0];
@@ -150,7 +150,7 @@ export default function Home() {
               <span className="accent">Sem Achismo.</span>
             </h1>
             <p className="lead">
-              Histórico, estilo de luta, pontos fortes e fracos de todos que pisaram no octógono em 2026 — e um comparador
+              Histórico, estilo de luta, pontos fortes e fracos de todos que lutaram no UFC desde 2016 — e um comparador
               que estima quem vence e como, com base em mais de {meta ? (Math.floor(meta.fightCount / 1000) * 1000).toLocaleString('pt-BR') : '8.000'} lutas.
             </p>
             <div className="actions">

@@ -55,6 +55,7 @@ export default function Fighters() {
   const gender = params.get('genero') ?? '';
   const sort = (params.get('ordem') ?? 'nome') as keyof typeof SORTS;
   const onlyUpcoming = params.get('marcada') === '1';
+  const onlyActive = params.get('ativos') === '1';
   const styles = useMemo(() => (params.get('estilo') ?? '').split('|').filter(Boolean), [params]);
   const [countryQ, setCountryQ] = useState('');
   const countries = useMemo(() => (params.get('pais') ?? '').split('|').filter(Boolean), [params]);
@@ -73,8 +74,8 @@ export default function Fighters() {
 
   // base sem o filtro de país: dela saem as opções do filtro e as contagens
   const base = useMemo(
-    () => (data ?? []).filter((f) => (!div || f.division === div) && (!gender || (gender === 'f' ? f.women : !f.women)) && (!onlyUpcoming || f.upcoming)),
-    [data, div, gender, onlyUpcoming],
+    () => (data ?? []).filter((f) => (!div || f.division === div) && (!gender || (gender === 'f' ? f.women : !f.women)) && (!onlyUpcoming || f.upcoming) && (!onlyActive || f.active)),
+    [data, div, gender, onlyUpcoming, onlyActive],
   );
   const countryOptions = useMemo(() => {
     const m = new Map<string, { n: number; flag: string }>();
@@ -117,9 +118,9 @@ export default function Fighters() {
   return (
     <div className="container">
       <div className="page-head">
-        <span className="eyebrow">Lutaram no UFC em 2026</span>
+        <span className="eyebrow">Lutaram no UFC desde 2016</span>
         <h1 style={{ marginTop: 8 }}>Lutadores</h1>
-        <p>Todos os atletas que lutaram no UFC desde janeiro de 2026 ou que têm luta marcada. Estatísticas consideram somente a carreira dentro do UFC.</p>
+        <p>Todos os atletas que lutaram no UFC desde janeiro de 2016 ou que têm luta marcada. Estatísticas consideram somente a carreira dentro do UFC.</p>
       </div>
       <div className="filters">
         <input className="input search" placeholder="Buscar por nome ou apelido…" value={q} onChange={(e) => set('q', e.target.value)} aria-label="Buscar lutador" />
@@ -168,6 +169,9 @@ export default function Fighters() {
         <select className="select" value={sort} onChange={(e) => set('ordem', e.target.value)} aria-label="Ordenar" disabled={!!q}>
           {Object.entries(SORTS).map(([k, l]) => <option key={k} value={k}>Ordenar: {l}</option>)}
         </select>
+        <label className="chip" style={{ height: 42, padding: '0 12px', cursor: 'pointer' }}>
+          <input type="checkbox" checked={onlyActive} onChange={(e) => set('ativos', e.target.checked ? '1' : '')} /> Só ativos em 2026
+        </label>
         <label className="chip" style={{ height: 42, padding: '0 12px', cursor: 'pointer' }}>
           <input type="checkbox" checked={onlyUpcoming} onChange={(e) => set('marcada', e.target.checked ? '1' : '')} /> Com luta marcada
         </label>

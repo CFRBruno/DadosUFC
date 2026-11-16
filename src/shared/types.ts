@@ -184,6 +184,8 @@ export interface FighterSummary {
   style: string;
   streak: string;
   upcoming: boolean;
+  /** lutou em 2026 ou tem luta marcada */
+  active: boolean;
   /** foto (Wikimedia Commons) e página do arquivo, para crédito/licença */
   photo: string | null;
   photoPage: string | null;
@@ -280,6 +282,8 @@ export interface Meta {
   latestEvent: { name: string; date: string } | null;
   scopeFrom: string;
   fighterCount: number;
+  /** lutadores que lutaram em 2026 ou têm luta marcada */
+  activeCount: number;
   fightCount: number;
   model: ModelMetrics;
   upcomingSource: string;

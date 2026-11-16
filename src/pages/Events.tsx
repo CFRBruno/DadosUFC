@@ -71,7 +71,7 @@ export default function Events() {
       <div className="page-head">
         <span className="eyebrow">Calendário</span>
         <h1 style={{ marginTop: 8 }}>Eventos</h1>
-        <p>Todos os eventos do UFC desde janeiro de 2026, mais os próximos cards. Clique num evento para ver as lutas.</p>
+        <p>Todos os eventos do UFC desde janeiro de 2016, mais os próximos cards. Clique num evento para ver as lutas.</p>
       </div>
 
       <div className="filters">

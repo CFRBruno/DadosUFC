@@ -49,6 +49,7 @@ export async function fetchEspn(offline: boolean, fromYear: number): Promise<Esp
       /* sem cache */
     }
   }
+  events = events.map((e) => ({ ...e, competitions: e.competitions ?? [] })); // eventos sem card (cancelados)
   const athletes = new Map<string, EspnAthlete>();
   for (const e of events)
     for (const c of e.competitions)

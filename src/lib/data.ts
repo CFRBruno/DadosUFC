@@ -40,6 +40,8 @@ export function useJson<T>(path: string | null): Resource<T> {
 
 export const useFighters = () => useJson<FighterSummary[]>('fighters.json');
 export const useFighter = (slug: string | null | undefined) => useJson<FighterDetail>(slug ? `fighters/${slug}.json` : null);
+/** só os próximos e os eventos de 2026 (arquivo pequeno) */
+export const useRecentEvents = () => useJson<{ upcoming: EventInfo[]; past: EventInfo[] }>('events-recent.json');
 export const useEvents = () => useJson<{ upcoming: EventInfo[]; past: EventInfo[] }>('events.json');
 export const useModel = () => useJson<ModelParams>('model.json');
 export const useOfficialBoard = () => useJson<OfficialBoard>('official-rankings.json');
