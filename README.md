@@ -45,6 +45,11 @@ Os números são recalculados a cada atualização e aparecem em `/modelo`.
 - **Cinturões:** passagens por cinturões calculadas a partir da linha do tempo (inclui interino e BMF, que não contam como "ex-campeão").
 - **Posição nas estatísticas:** cada estatística mostra a colocação na categoria (ou entre todos do gênero quando a categoria tem menos de 15 lutadores elegíveis).
 
+### Previsão pré-luta e scorecards
+
+- **Previsão pré-luta:** cada luta desde 2015 mostra o que o modelo previa *antes* dela (vencedor, método e resultado completo), calculado só com lutas anteriores. Não é a previsão do modelo final, que já "viu" a luta.
+- **Scorecards:** a ESPN publica o total de pontos de cada jurado nas decisões (ex.: 29-28), não a pontuação round a round. O pipeline guarda o que coleta em `data/scorecards/archive.json` (até 260 lutas por execução, das mais recentes às mais antigas) e o workflow grava o arquivo de volta no repositório.
+
 ### Linhas de mercado
 
 A ESPN só publica as linhas perto da data da luta e depois as retira. Por isso, cada execução do pipeline guarda o que encontrar em `data/odds/archive.json`, e o GitHub Actions grava esse arquivo de volta no repositório (commit automático "Atualiza arquivo de linhas de mercado"). Se você trabalha no repositório localmente, faça `git pull` antes de enviar alterações.

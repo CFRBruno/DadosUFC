@@ -41,6 +41,7 @@ jobs:
             data/raw/cache-*.json
             data/raw/espn-headshots.json
             data/raw/wikipedia-ufc-rankings.txt
+            data/raw/espn-sb-*.json
             data/raw/wikidata-photos.json
           key: dados-cache-${{ github.run_id }}
           restore-keys: dados-cache-
@@ -48,15 +49,15 @@ jobs:
       - name: Gerar dados (UFCStats)
         run: npm run data
 
-      # a ESPN retira as linhas depois da luta: o que foi coletado hoje fica guardado no repositório
+      # a ESPN retira as linhas depois da luta (e os scorecards são coletados aos poucos): o que foi coletado fica guardado no repositório
       - name: Guardar linhas de mercado
         if: ${{ github.ref_name == github.event.repository.default_branch }}
         run: |
-          if [ -n "$(git status --porcelain data/odds)" ]; then
+          if [ -n "$(git status --porcelain data/odds data/scorecards)" ]; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add data/odds
-            git commit -m "Atualiza arquivo de linhas de mercado"
+            git add data/odds data/scorecards
+            git commit -m "Atualiza arquivos de mercado e scorecards"
             git push || echo "::warning::Não foi possível gravar o arquivo de mercado agora; a próxima execução tenta de novo."
           fi
 

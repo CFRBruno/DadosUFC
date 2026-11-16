@@ -92,7 +92,7 @@ const score = (m: { sd: number[]; coef: number[] }, x: Float64Array) => {
   return z;
 };
 
-export interface Trained { v2: Model2; metrics: ModelMetrics; zOos: Map<string, number> }
+export interface Trained { v2: Model2; metrics: ModelMetrics; zOos: Map<string, number>; pOos: Map<string, { p: number; mk: boolean }> }
 
 export function trainModel2(samples: Sample[], market: (number | null)[], info: Map<string, MethodInfo>): Trained {
   const keys = baseKeys(samples[0].fa);
@@ -200,5 +200,7 @@ export function trainModel2(samples: Sample[], market: (number | null)[], info: 
   };
   const zOos = new Map<string, number>();
   for (let i = 0; i < N; i++) if (!Number.isNaN(z[i])) zOos.set(samples[i].id, z[i]);
-  return { v2: { keys, sd: stats.sd, coef: stats.coef, market: blend, groupWeights }, metrics, zOos };
+  const pOos = new Map<string, { p: number; mk: boolean }>();
+  for (let i = 0; i < N; i++) if (!Number.isNaN(pFinal[i])) pOos.set(samples[i].id, { p: pFinal[i], mk: combined[i] });
+  return { v2: { keys, sd: stats.sd, coef: stats.coef, market: blend, groupWeights }, metrics, zOos, pOos };
 }

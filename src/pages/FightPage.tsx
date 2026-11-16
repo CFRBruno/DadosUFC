@@ -1,10 +1,10 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { BodyMap, CmpBar } from '../components/charts';
-import { Avatar, ErrorBox, Loading, ResultBadge } from '../components/ui';
+import { Avatar, CountUp, ErrorBox, Loading, ResultBadge } from '../components/ui';
 import { useFighter } from '../lib/data';
-import { divisionName, fmtDate, fmtInt, fmtTime, methodText } from '../lib/format';
-import { S, type StatLine } from '../shared/types';
+import { divisionName, fmtDate, fmtInt, fmtPct, fmtTime, methodText } from '../lib/format';
+import { S, type FightEntry, type StatLine } from '../shared/types';
 
 export default function FightPage() {
   const { slug, fightId } = useParams();
@@ -70,6 +70,9 @@ export default function FightPage() {
         </p>
         {fight.referee && <p className="note" style={{ textAlign: 'center', marginTop: 4 }}>Árbitro: {fight.referee}</p>}
       </div>
+
+      <PreFight fight={fight} meName={f.name} oppName={opp.name} />
+      {fight.judges && <Judges fight={fight} meName={f.name} oppName={opp.name} />}
 
       {!st ? (
         <div className="panel note" style={{ marginTop: 16 }}>Sem estatísticas detalhadas para esta luta.</div>
@@ -141,6 +144,76 @@ export default function FightPage() {
           </div>
         </>
       )}
+    </div>
+  );
+}
+
+const M_PT = { KO: 'nocaute', SUB: 'finalização', DEC: 'decisão' } as const;
+
+/** Probabilidades calculadas ANTES da luta (modelo treinado só com lutas anteriores): vencedor, método e resultado completo. */
+function PreFight({ fight, meName, oppName }: { fight: FightEntry; meName: string; oppName: string }) {
+  const pr = fight.pred;
+  if (!pr) return null;
+  const m = fight.method === 'KO' || fight.method === 'SUB' || fight.method === 'DEC' ? fight.method : null;
+  const decided = fight.result === 'W' || fight.result === 'L';
+  const winnerName = fight.result === 'W' ? meName : oppName;
+  const pWin = fight.result === 'W' ? pr.p : 1 - pr.p;
+  const sh = fight.result === 'W' ? pr.mine : pr.opp;
+  const pMethod = m ? pr.p * pr.mine[m] + (1 - pr.p) * pr.opp[m] : null;
+  const pBoth = m && decided ? pWin * sh[m] : null;
+  const favName = pr.p >= 0.5 ? meName : oppName;
+  const favP = Math.max(pr.p, 1 - pr.p);
+  const cards: { label: string; value: number; sub: string }[] = [];
+  if (decided) cards.push({ label: 'Vencedor', value: pWin, sub: winnerName });
+  else cards.push({ label: 'Chance de cada um', value: pr.p, sub: `${meName} ${fmtPct(pr.p)} · ${oppName} ${fmtPct(1 - pr.p)}` });
+  if (pMethod != null) cards.push({ label: 'Método', value: pMethod, sub: M_PT[m!] });
+  if (pBoth != null) cards.push({ label: 'Resultado completo', value: pBoth, sub: `${winnerName} por ${M_PT[m!]}` });
+  return (
+    <div className="panel" style={{ marginTop: 16 }}>
+      <div className="panel-title">O que o modelo previa antes da luta</div>
+      <div className="pre-grid">
+        {cards.map((c) => (
+          <div className="pre-card" key={c.label}>
+            <span>{c.label}</span>
+            <b><CountUp value={c.value} format={(n) => fmtPct(n)} ms={1000} fromZero /></b>
+            <small>{c.sub}</small>
+            <div className="pct-bar"><i style={{ width: `${c.value * 100}%` }} /></div>
+          </div>
+        ))}
+      </div>
+      <p className="note" style={{ marginTop: 12 }}>
+        Favorito do modelo: <b>{favName}</b> ({fmtPct(favP)}). Cada porcentagem é a chance que o modelo dava a aquele desfecho antes da luta: do vencedor, do método e dos dois juntos.
+        O cálculo usa só o que se sabia na época: o modelo foi treinado apenas com lutas anteriores a ela{pr.mk ? ', com o sinal de mercado da época' : ''}.
+        Previsões existem para lutas desde 2015.
+      </p>
+    </div>
+  );
+}
+
+/** Total de pontos de cada jurado (a pontuação round a round não está disponível nas fontes do site). */
+function Judges({ fight, meName, oppName }: { fight: FightEntry; meName: string; oppName: string }) {
+  const js = fight.judges ?? [];
+  const wins = js.filter((j) => j.me > j.opp).length, loses = js.filter((j) => j.opp > j.me).length;
+  return (
+    <div className="panel" style={{ marginTop: 16 }}>
+      <div className="panel-title">Pontuação dos jurados</div>
+      <div className="table-scroll">
+        <table className="mini-table judges">
+          <thead><tr><th>Jurado</th><th style={{ color: 'var(--a)' }}>{meName}</th><th style={{ color: 'var(--b)' }}>{oppName}</th></tr></thead>
+          <tbody>
+            {js.map((j) => (
+              <tr key={j.name}>
+                <td>{j.name}</td>
+                <td className={j.me > j.opp ? 'jw' : j.me < j.opp ? 'jl' : ''}>{j.me}</td>
+                <td className={j.opp > j.me ? 'jw' : j.opp < j.me ? 'jl' : ''}>{j.opp}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p className="note" style={{ marginTop: 10 }}>
+        {methodText(fight.method, fight.decision, '')} · {meName} {wins} × {loses} {oppName}. Aqui aparece o total de cada jurado; as fontes do site (UFCStats e ESPN) não publicam a pontuação round a round.
+      </p>
     </div>
   );
 }

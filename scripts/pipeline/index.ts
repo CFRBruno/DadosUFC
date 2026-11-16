@@ -7,7 +7,7 @@ import path from 'node:path';
 import { DIVISION_BY_KEY, MAIN_DIVISIONS, parseWeightClass, type DivisionKey } from '../../src/shared/divisions';
 import type {
   RankingRow, TitleFight,
-  EventInfo, FightEntry, FighterDetail, FighterSummary, MethodBreakdown, Meta, OfficialBoard, StatRank, TitleReign, UpcomingBout,
+  EventInfo, FightEntry, FighterDetail, FighterSummary, FightPred, MethodBreakdown, Meta, OfficialBoard, StatRank, TitleReign, UpcomingBout,
 } from '../../src/shared/types';
 import { S } from '../../src/shared/types';
 import { emptyState } from '../../src/shared/model';
@@ -23,6 +23,7 @@ import { fetchWikiPhotos, photoMatcher } from './photos';
 import { buildTitleHistory } from './titleHistory';
 import { checkHeadshots, countryPt, espnHeadshot, espnPage, espnUpcoming, fetchEspn, matchEspnIds } from './espn';
 import { fetchOfficialRankings } from './rankings';
+import { loadScorecards, scorecardLookup, updateScorecards } from './scorecards';
 import { buildStory } from '../../src/lib/titleStory';
 
 /** Lutadores que lutaram no UFC a partir desta data entram no site. */
@@ -94,6 +95,9 @@ async function main() {
   console.log(`  ${fights.length} lutas, ${bios.size} lutadores, ${events.size} eventos`);
   const { priors, fiveRoundDecFactor } = computePriors(fights);
   console.log('• Calculando Elo e estados pré-luta…');
+  const scArchive = await loadScorecards();
+  await updateScorecards(scArchive, fights, offline);
+  const scoresOf = scorecardLookup(scArchive);
   const proc = processChronologically(fights, bios, priors, fiveRoundDecFactor);
   console.log('• Gerando variáveis pré-luta e treinando o modelo…');
   const feat = buildFeatures(fights, bios, priors);
@@ -247,6 +251,17 @@ async function main() {
         recordBefore: snap.recordBefore[i], oppRecordBefore: snap.recordBefore[o],
         eloBefore: Math.round(snap.eloBefore[i]), eloAfter: Math.round(snap.eloAfter[i]), oppEloBefore: Math.round(snap.eloBefore[o]),
         stats: f.stats ? { me: f.stats[i], opp: f.stats[o], rounds: f.rounds.map((r) => [r[i], r[o]]) } : null,
+        ...(() => {
+          const sc = f.method === 'DEC' ? scoresOf(f.date, f.fighters[0].name, f.fighters[1].name) : null;
+          return sc ? { judges: sc.map((j) => ({ name: j.name, me: i === 0 ? j.a : j.b, opp: i === 0 ? j.b : j.a })) } : {};
+        })(),
+        ...(() => {
+          const po = trained.pOos.get(f.id), mi = methodInfo.get(f.id);
+          if (!po || !mi) return {};
+          const r4 = (m: { KO: number; SUB: number; DEC: number }) => ({ KO: Math.round(m.KO * 1e4) / 1e4, SUB: Math.round(m.SUB * 1e4) / 1e4, DEC: Math.round(m.DEC * 1e4) / 1e4 });
+          const pred: FightPred = { p: Math.round((i === 0 ? po.p : 1 - po.p) * 1e4) / 1e4, mk: po.mk, mine: r4(i === 0 ? mi.sharesA : mi.sharesB), opp: r4(i === 0 ? mi.sharesB : mi.sharesA) };
+          return { pred };
+        })(),
       });
     }
     entries.reverse(); // mais recente primeiro

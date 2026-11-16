@@ -111,6 +111,20 @@ export interface FightEntry {
   eloAfter: number;
   oppEloBefore: number;
   stats: FightSide | null;
+  /** previsão feita ANTES da luta (modelo treinado só com lutas anteriores), do ponto de vista do lutador da página */
+  pred?: FightPred;
+  /** pontuação de cada jurado (total da luta) nas decisões, quando disponível */
+  judges?: { name: string; me: number; opp: number }[];
+}
+
+export interface FightPred {
+  /** chance de o lutador da página vencer */
+  p: number;
+  /** a previsão usou o sinal de mercado (só inclusa, nunca exibida) */
+  mk: boolean;
+  /** como cada um venceria: distribuição do método se o lutador vencer / se o adversário vencer */
+  mine: { KO: number; SUB: number; DEC: number };
+  opp: { KO: number; SUB: number; DEC: number };
 }
 
 export interface MethodCount { n: number; byRound: number[] }
