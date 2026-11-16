@@ -86,15 +86,15 @@ function HeroStats({ fighters, accuracy, fights }: { fighters: number; accuracy:
   const run = (k: number) => (k > 0 && k < 1 ? 'shaking' : '');
   return (
     <div className="hero-stats">
-      <div><b><span className={`num ${run(kF)}`}><CountUp value={fighters} fromZero ms={1700} format={(n) => String(Math.round(n))} onProgress={setKF} /></span></b><span>Lutadores</span></div>
+      <div><b><span className={`num ${run(kF)}`}><CountUp value={fighters} fromZero accelerate ms={2800} format={(n) => String(Math.round(n))} onProgress={setKF} /></span></b><span>Lutadores</span></div>
       <div>
         <b className="acc-num">
-          <span className={`num ${run(kA)}`}><CountUp value={accuracy} fromZero ms={2000} delay={150} format={(n) => fmtPct(n)} onProgress={setKA} /></span>
+          <span className={`num ${run(kA)}`}><CountUp value={accuracy} fromZero accelerate ms={2800} format={(n) => fmtPct(n)} onProgress={setKA} /></span>
           <ProgressArrow k={kA} />
         </b>
         <span>Acerto em lutas marcadas</span>
       </div>
-      <div><b><span className={`num ${run(kL)}`}><CountUp value={fights} fromZero ms={1900} delay={300} format={(n) => Math.round(n).toLocaleString('pt-BR')} onProgress={setKL} /></span></b><span>Lutas na base</span></div>
+      <div><b><span className={`num ${run(kL)}`}><CountUp value={fights} fromZero accelerate ms={2800} format={(n) => Math.round(n).toLocaleString('pt-BR')} onProgress={setKL} /></span></b><span>Lutas na base</span></div>
     </div>
   );
 }

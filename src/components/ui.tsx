@@ -155,11 +155,13 @@ export function Flag({ src, country }: { src?: string | null; country?: string |
 }
 
 /** Número que "sobe" até o valor (ease-out); respeita prefers-reduced-motion. */
-export function CountUp({ value, format, ms = 900, delay = 0, fromZero = false, onProgress }: {
+export function CountUp({ value, format, ms = 900, delay = 0, fromZero = false, accelerate = false, onProgress }: {
   value: number; format: (n: number) => string; ms?: number; delay?: number;
+  /** começa devagar e acelera até o fim (em vez de desacelerar na chegada) */
+  accelerate?: boolean;
   /** começa em 0 na primeira exibição (em vez de já mostrar o valor final) */
   fromZero?: boolean;
-  /** progresso 0–1 a cada quadro */
+  /** fração do caminho já percorrida (0–1) a cada quadro, acompanhando o número mostrado */
   onProgress?: (k: number) => void;
 }) {
   const [shown, setShown] = useState(fromZero ? 0 : value);
@@ -174,14 +176,15 @@ export function CountUp({ value, format, ms = 900, delay = 0, fromZero = false, 
     const tick = (t: number) => {
       if (!start) start = t;
       const k = Math.min(1, Math.max(0, (t - start) / ms));
-      const v = a + (value - a) * (1 - Math.pow(1 - k, 3));
+      const e = accelerate ? Math.pow(k, 2.6) : 1 - Math.pow(1 - k, 3);
+      const v = a + (value - a) * e;
       setShown(v);
       from.current = v;
-      cb.current?.(k);
+      cb.current?.(k >= 1 ? 1 : e);
       if (k < 1) raf = requestAnimationFrame(tick);
     };
     const timer = setTimeout(() => { raf = requestAnimationFrame(tick); }, delay);
     return () => { clearTimeout(timer); cancelAnimationFrame(raf); };
-  }, [value, ms, delay]);
+  }, [value, ms, delay, accelerate]);
   return <>{format(shown)}</>;
 }
