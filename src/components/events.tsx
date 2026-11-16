@@ -56,6 +56,11 @@ export function ResultBoutRow({ f }: { f: EventFight }) {
       <div className="bout-meta">
         <span>{f.title && <span style={{ color: 'var(--brand)' }}>Cinturão · </span>}{divisionName(f.division)}</span>
         <span className="bout-actions">
+          {hit == null && fav && (
+            <span className="hit-chip na" title="Empates e lutas sem resultado não entram no placar de acertos">
+              {f.result === 'D' ? 'Empate' : 'Sem resultado'} · modelo favorecia {fav.name.split(' ').slice(-1)[0]} ({Math.round(fav.p * 100)}%)
+            </span>
+          )}
           {hit != null && fav && (
             <span className={`hit-chip ${hit ? 'ok' : 'no'}`} title={`Antes da luta, o modelo dava ${Math.round(fav.p * 100)}% para ${fav.name}`}>
               {hit ? '✓ Modelo acertou' : '✗ Modelo errou'} · {Math.round(fav.p * 100)}%

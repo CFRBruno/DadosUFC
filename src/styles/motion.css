@@ -279,3 +279,4 @@ a.rk-row:hover { background: #1b1b1f; transform: translateX(3px); }
 .score-head span:nth-child(n + 2) { text-align: right; }
 @media (max-width: 560px) { .score-row, .score-head { grid-template-columns: minmax(0, 1.6fr) 44px 48px 62px; } .sc-bar { display: none; } .score-head span:nth-child(3) { display: none; } }
 .score-list { max-height: 520px; overflow-y: auto; padding-right: 4px; }
+.hit-chip.na { color: #e5d34a; border-color: #5a5210; background: rgba(234, 179, 8, 0.1); }
