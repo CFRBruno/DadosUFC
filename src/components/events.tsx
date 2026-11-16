@@ -1,4 +1,4 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import type { EventFight, FighterSummary, UpcomingBout } from '../shared/types';
 import { divisionName, recordStr } from '../lib/format';
 import { METHOD_LABEL } from '../shared/translate';
@@ -39,14 +39,24 @@ export function UpcomingBoutRow({ b, byId }: { b: UpcomingBout; byId: Map<string
 
 export function ResultBoutRow({ f }: { f: EventFight }) {
   const how = f.result === 'NC' ? 'Sem resultado' : f.result === 'D' ? 'Empate' : METHOD_LABEL[f.method];
-  const winSlug = f.winner === 0 ? f.a.slug : f.winner === 1 ? f.b.slug : f.a.slug;
+  const winSlug = (f.winner === 0 ? f.a.slug : f.winner === 1 ? f.b.slug : f.a.slug) ?? f.a.slug ?? f.b.slug;
+  const nav = useNavigate();
+  const url = winSlug ? `/lutador/${winSlug}/luta/${f.id}` : null;
+  // a luta inteira é clicável; os nomes dos lutadores continuam levando ao perfil de cada um
+  const open = (e: React.MouseEvent | React.KeyboardEvent) => {
+    if (!url || (e.target as HTMLElement).closest('a')) return;
+    nav(url);
+  };
   return (
     <div className="bout-wrap">
       <div className="bout-meta">
         <span>{f.title && <span style={{ color: 'var(--brand)' }}>Cinturão · </span>}{divisionName(f.division)}</span>
-        {winSlug && <Link to={`/lutador/${winSlug}/luta/${f.id}`} style={{ color: 'var(--brand)' }}>Estatísticas →</Link>}
+        {url && <Link to={url} style={{ color: 'var(--brand)' }}>Estatísticas →</Link>}
       </div>
-      <div className={`bout ${f.winner === 0 ? 'win-a' : f.winner === 1 ? 'win-b' : f.result === 'D' ? 'draw' : ''}`}>
+      <div
+        className={`bout ${url ? 'clickable' : ''} ${f.winner === 0 ? 'win-a' : f.winner === 1 ? 'win-b' : f.result === 'D' ? 'draw' : ''}`}
+        {...(url ? { role: 'link', tabIndex: 0, onClick: open, onKeyDown: (e: React.KeyboardEvent) => { if (e.key === 'Enter') open(e); }, 'aria-label': `Estatísticas da luta ${f.a.name} contra ${f.b.name}` } : {})}
+      >
         <Side id={f.a.id} name={f.a.name} slug={f.a.slug} rec={f.winner === 0 ? 'Venceu' : f.winner === 1 ? 'Perdeu' : ''} cls={f.winner === 0 ? 'win' : f.winner === 1 ? 'lose' : ''} side="a" />
         <div className="mid"><b>{how}</b>R{f.endRound} · {f.endTime}</div>
         <Side id={f.b.id} name={f.b.name} slug={f.b.slug} rec={f.winner === 1 ? 'Venceu' : f.winner === 0 ? 'Perdeu' : ''} cls={f.winner === 1 ? 'win' : f.winner === 0 ? 'lose' : ''} side="b" right />
