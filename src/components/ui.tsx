@@ -155,23 +155,33 @@ export function Flag({ src, country }: { src?: string | null; country?: string |
 }
 
 /** Número que "sobe" até o valor (ease-out); respeita prefers-reduced-motion. */
-export function CountUp({ value, format, ms = 900 }: { value: number; format: (n: number) => string; ms?: number }) {
-  const [shown, setShown] = useState(value);
-  const from = useRef(0);
+export function CountUp({ value, format, ms = 900, delay = 0, fromZero = false, onProgress }: {
+  value: number; format: (n: number) => string; ms?: number; delay?: number;
+  /** começa em 0 na primeira exibição (em vez de já mostrar o valor final) */
+  fromZero?: boolean;
+  /** progresso 0–1 a cada quadro */
+  onProgress?: (k: number) => void;
+}) {
+  const [shown, setShown] = useState(fromZero ? 0 : value);
+  const from = useRef(fromZero ? 0 : 0);
+  const cb = useRef(onProgress);
+  cb.current = onProgress;
   useEffect(() => {
-    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { setShown(value); return; }
-    const start = performance.now();
+    if (window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) { setShown(value); cb.current?.(1); return; }
     const a = from.current;
     let raf = 0;
+    let start = 0;
     const tick = (t: number) => {
-      const k = Math.min(1, (t - start) / ms);
+      if (!start) start = t;
+      const k = Math.min(1, Math.max(0, (t - start) / ms));
       const v = a + (value - a) * (1 - Math.pow(1 - k, 3));
       setShown(v);
       from.current = v;
+      cb.current?.(k);
       if (k < 1) raf = requestAnimationFrame(tick);
     };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [value, ms]);
+    const timer = setTimeout(() => { raf = requestAnimationFrame(tick); }, delay);
+    return () => { clearTimeout(timer); cancelAnimationFrame(raf); };
+  }, [value, ms, delay]);
   return <>{format(shown)}</>;
 }

@@ -1,8 +1,9 @@
-import { useMemo } from 'react';
+import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ResultBoutRow, UpcomingBoutRow } from '../components/events';
 import { FighterCard } from '../components/fighters';
-import { Loading } from '../components/ui';
+import HeroFX from '../components/HeroFX';
+import { CountUp, Icon, Loading } from '../components/ui';
 import { useEvents, useFighters, useMeta } from '../lib/data';
 import { fmtDate, fmtPct } from '../lib/format';
 import { MAIN_DIVISIONS } from '../shared/divisions';
@@ -25,24 +26,46 @@ function HeroVisual({ count }: { count: number | null }) {
           </radialGradient>
           <filter id="blur"><feGaussianBlur stdDeviation="6" /></filter>
         </defs>
-        <circle cx="200" cy="200" r="150" fill="url(#glow)" />
-        {ticks.map((a, i) => (
+        <g data-depth="10"><circle cx="200" cy="200" r="150" fill="url(#glow)" /></g>
+        <g data-depth="4">{ticks.map((a, i) => (
           <line key={i} x1={200 + 178 * Math.cos(a)} y1={200 + 178 * Math.sin(a)} x2={200 + 192 * Math.cos(a)} y2={200 + 192 * Math.sin(a)} stroke="#555" strokeWidth="3" />
-        ))}
-        <g className="spin-slow"><polygon points={oct(170)} fill="none" stroke="#1d2a3a" strokeWidth="1.5" /></g>
-        <g className="spin-rev"><polygon points={oct(150)} fill="none" stroke="#2a2a2a" strokeWidth="1.5" transform="rotate(12 200 200)" /></g>
-        <g className="spin-slow"><polygon points={oct(120)} fill="none" stroke="#5c0d10" strokeWidth="1.5" transform="rotate(-18 200 200)" /></g>
-        <polygon points={oct(76)} fill="none" stroke="#ed1c24" strokeWidth="6" opacity="0.5" filter="url(#blur)" />
-        <polygon points={oct(76)} fill="#050000" stroke="#ed1c24" strokeWidth="2" />
-        <circle cx="128" cy="118" r="3" fill="#ed1c24" />
-        <text x="200" y="196" textAnchor="middle" fill="#ed1c24" fontFamily="Roboto Mono, monospace" fontWeight="700" fontSize="26" letterSpacing="2">{count ?? '—'}</text>
-        <text x="200" y="220" textAnchor="middle" fill="#ed1c24" fontFamily="Roboto Mono, monospace" fontWeight="700" fontSize="11" letterSpacing="3">LUTADORES</text>
+        ))}</g>
+        <g data-depth="7"><g className="spin-slow"><polygon points={oct(170)} fill="none" stroke="#1d2a3a" strokeWidth="1.5" /></g></g>
+        <g data-depth="12"><g className="spin-rev"><polygon points={oct(150)} fill="none" stroke="#2a2a2a" strokeWidth="1.5" transform="rotate(12 200 200)" /></g></g>
+        <g data-depth="17"><g className="spin-slow"><polygon points={oct(120)} fill="none" stroke="#5c0d10" strokeWidth="1.5" transform="rotate(-18 200 200)" /></g></g>
+        <g data-depth="24">
+          <polygon points={oct(76)} fill="none" stroke="#ed1c24" strokeWidth="6" opacity="0.5" filter="url(#blur)" />
+          <polygon points={oct(76)} fill="#050000" stroke="#ed1c24" strokeWidth="2" />
+          <circle cx="128" cy="118" r="3" fill="#ed1c24" />
+          <text x="200" y="196" textAnchor="middle" fill="#ed1c24" fontFamily="Roboto Mono, monospace" fontWeight="700" fontSize="26" letterSpacing="2">{count == null ? '—' : <CountUp value={count} fromZero ms={1700} format={(n) => String(Math.round(n))} />}</text>
+          <text x="200" y="220" textAnchor="middle" fill="#ed1c24" fontFamily="Roboto Mono, monospace" fontWeight="700" fontSize="11" letterSpacing="3">LUTADORES</text>
+        </g>
       </svg>
     </div>
   );
 }
 
+/** Estatísticas do herói: os números sobem; a seta verde pisca e cresce com o acerto e some ao chegar. */
+function HeroStats({ fighters, accuracy, fights }: { fighters: number; accuracy: number; fights: number }) {
+  const [k, setK] = useState(0);
+  const running = k > 0 && k < 1;
+  return (
+    <div className="hero-stats">
+      <div><b><CountUp value={fighters} fromZero ms={1700} format={(n) => String(Math.round(n))} /></b><span>Lutadores</span></div>
+      <div>
+        <b className="acc-num">
+          <CountUp value={accuracy} fromZero ms={2000} delay={150} format={(n) => fmtPct(n)} onProgress={setK} />
+          <span className={`acc-arrow ${running ? 'on' : ''}`} style={{ '--k': k } as React.CSSProperties} aria-hidden="true"><Icon name="up" /></span>
+        </b>
+        <span>Acerto em lutas marcadas</span>
+      </div>
+      <div><b><CountUp value={fights} fromZero ms={1900} delay={300} format={(n) => Math.round(n).toLocaleString('pt-BR')} /></b><span>Lutas na base</span></div>
+    </div>
+  );
+}
+
 export default function Home() {
+  const heroRef = useRef<HTMLElement>(null);
   const meta = useMeta().data;
   const fighters = useFighters().data;
   const events = useEvents().data;
@@ -62,7 +85,8 @@ export default function Home() {
 
   return (
     <>
-      <section className="hero">
+      <section className="hero" ref={heroRef}>
+        <HeroFX hostRef={heroRef} />
         <div className="container">
           <div>
             <span className="tag-box">Temporada 2026</span>
@@ -78,13 +102,7 @@ export default function Home() {
               <Link to="/comparar" className="btn btn-primary">Comparar lutadores</Link>
               <Link to="/lutadores" className="btn btn-outline">Ver lutadores</Link>
             </div>
-            {meta && (
-              <div className="hero-stats">
-                <div><b>{meta.fighterCount}</b><span>Lutadores</span></div>
-                <div><b>{fmtPct(meta.model.accuracy)}</b><span>Acerto em lutas marcadas</span></div>
-                <div><b>{meta.fightCount.toLocaleString('pt-BR')}</b><span>Lutas na base</span></div>
-              </div>
-            )}
+            {meta && <HeroStats fighters={meta.fighterCount} accuracy={meta.model.accuracy} fights={meta.fightCount} />}
           </div>
           <HeroVisual count={meta?.fighterCount ?? null} />
         </div>
