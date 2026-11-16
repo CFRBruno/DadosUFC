@@ -191,11 +191,11 @@ export function buildFeatures(
     const date = Date.parse(f.date);
     const lbs = divisionLbs(f.division);
     const fa = snapshot(A, p, date, lbs), fb = snapshot(B, p, date, lbs);
-    if (f.winner != null && f.date >= from) {
+    if (f.date >= from) {
       samples.push({
         id: f.id, date: f.date, div: f.division, women: f.women, rounds: f.scheduledRounds, title: f.title,
         a: f.fighters[0].id, b: f.fighters[1].id, an: f.fighters[0].name, bn: f.fighters[1].name,
-        y: f.winner === 0 ? 1 : 0, method: f.method, fa, fb,
+        y: f.winner == null ? 0.5 : f.winner === 0 ? 1 : 0, method: f.method, fa, fb,
       });
     }
     if (f.outcome === 'NC') { A.last = date; B.last = date; continue; }

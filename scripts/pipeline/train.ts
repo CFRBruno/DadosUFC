@@ -100,6 +100,8 @@ export function trainModel2(samples: Sample[], market: (number | null)[], info: 
   const X = samples.map((s) => Float64Array.from(pairVector(keys, s.fa, s.fb)));
   const y = samples.map((s) => s.y);
   const N = samples.length;
+  // empates/lutas sem resultado (y = 0,5) recebem previsão, mas não entram no treino nem nas métricas
+  const decided = (i: number) => y[i] !== 0.5;
   const lastYear = Number(samples[N - 1].date.slice(0, 4));
   const idxWhere = (fn: (i: number) => boolean) => { const o: number[] = []; for (let i = 0; i < N; i++) if (fn(i)) o.push(i); return o; };
   const fit = (ix: number[], C = C_STATS) => fitLR(ix.map((i) => X[i]), ix.map((i) => y[i]), C);
@@ -107,7 +109,7 @@ export function trainModel2(samples: Sample[], market: (number | null)[], info: 
   // 1. só estatísticas, ano a ano
   const z = new Array<number>(N).fill(NaN);
   for (let Y = EVAL_FROM; Y <= lastYear; Y++) {
-    const tr = idxWhere((i) => samples[i].date >= TRAIN_FROM && samples[i].date < `${Y}-01-01`);
+    const tr = idxWhere((i) => decided(i) && samples[i].date >= TRAIN_FROM && samples[i].date < `${Y}-01-01`);
     const te = idxWhere((i) => samples[i].date.startsWith(String(Y)));
     if (!te.length) continue;
     const m = fit(tr);
@@ -120,7 +122,7 @@ export function trainModel2(samples: Sample[], market: (number | null)[], info: 
   const pFinal = z.map((v) => (Number.isNaN(v) ? NaN : sigmoid2(v)));
   const combined = new Array<boolean>(N).fill(false);
   for (let Y = MARKET_EVAL_FROM; Y <= lastYear; Y++) {
-    const tr = idxWhere((i) => hasM(i) && samples[i].date < `${Y}-01-01`);
+    const tr = idxWhere((i) => hasM(i) && decided(i) && samples[i].date < `${Y}-01-01`);
     const te = idxWhere((i) => hasM(i) && samples[i].date.startsWith(String(Y)));
     if (tr.length < 300 || !te.length) continue;
     const m = fitLR(tr.map(bx), tr.map((i) => y[i]), C_BLEND);
@@ -128,9 +130,9 @@ export function trainModel2(samples: Sample[], market: (number | null)[], info: 
   }
 
   // 3. modelos finais (tudo o que existe até hoje)
-  const all = idxWhere((i) => samples[i].date >= TRAIN_FROM);
+  const all = idxWhere((i) => decided(i) && samples[i].date >= TRAIN_FROM);
   const stats = fit(all);
-  const mIdx = idxWhere(hasM);
+  const mIdx = idxWhere((i) => hasM(i) && decided(i));
   let blend: Model2['market'] = null;
   if (mIdx.length >= 300) {
     const b = fitLR(mIdx.map(bx), mIdx.map((i) => y[i]), C_BLEND);
@@ -139,7 +141,7 @@ export function trainModel2(samples: Sample[], market: (number | null)[], info: 
 
   // peso médio de cada fator (|contribuição| média no logit) nas lutas recentes
   const gw = new Map<string, number>();
-  const recent = idxWhere((i) => samples[i].date >= `${EVAL_FROM}-01-01`);
+  const recent = idxWhere((i) => decided(i) && samples[i].date >= `${EVAL_FROM}-01-01`);
   for (const i of recent) {
     const g = new Map<string, number>();
     for (let j = 0; j < names.length; j++) {
@@ -160,8 +162,8 @@ export function trainModel2(samples: Sample[], market: (number | null)[], info: 
     }
     return { n: ix.length, accuracy: ix.length ? ok / ix.length : 0, logLoss: ix.length ? ll / ix.length : 0 };
   };
-  const statsAll = idxWhere((i) => !Number.isNaN(z[i]));
-  const head = idxWhere((i) => combined[i]);
+  const statsAll = idxWhere((i) => decided(i) && !Number.isNaN(z[i]));
+  const head = idxWhere((i) => decided(i) && combined[i]);
   const headline = head.length ? head : statsAll;
   const hm = evalSet(headline, (i) => pFinal[i]);
   let eloOk = 0, methodHit = 0, methodN = 0, exact = 0, infoN = 0;
@@ -181,7 +183,7 @@ export function trainModel2(samples: Sample[], market: (number | null)[], info: 
     ];
     if (outs.sort((a, b) => b[1] - a[1])[0][0] === (y[i] === 1 ? 'A' : 'B') + s.method) exact++;
   }
-  const rec = idxWhere((i) => !Number.isNaN(z[i]) && samples[i].date >= RECENT_FROM);
+  const rec = idxWhere((i) => decided(i) && !Number.isNaN(z[i]) && samples[i].date >= RECENT_FROM);
   const metrics: ModelMetrics = {
     trainN: all.length,
     testN: hm.n,

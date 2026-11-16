@@ -141,7 +141,7 @@ export function processChronologically(
     const b = stateOf(f.fighters[1].id);
     const p = priorsFor(priors, f.division);
 
-    if (f.winner != null && f.date >= TRAIN_FROM) {
+    if (f.date >= TRAIN_FROM) {
       const fa = featureValues(a, p, f.date).v;
       const fb = featureValues(b, p, f.date).v;
       const prior = methodPrior(p, f.scheduledRounds, fiveRoundDecFactor);
@@ -149,7 +149,7 @@ export function processChronologically(
         id: f.id,
         date: f.date,
         x: featureDiff(fa, fb),
-        y: f.winner === 0 ? 1 : 0,
+        y: f.winner == null ? 0.5 : f.winner === 0 ? 1 : 0,
         eloA: a.elo,
         eloB: b.elo,
         method: f.method === 'KO' || f.method === 'SUB' || f.method === 'DEC' ? f.method : 'OTHER',
