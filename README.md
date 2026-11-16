@@ -25,7 +25,7 @@ Site pessoal de estatísticas do UFC. Traz histórico, estilo de luta, pontos fo
 1. **Retrato pré-luta:** todas as ~9.000 lutas do UFC são processadas em ordem cronológica. Antes de cada luta, cada lutador ganha um retrato com cerca de 140 medidas: ratings (Elo e Glicko), nível dos adversários, estatísticas da carreira, das lutas mais recentes e ajustadas por quem enfrentou, idade, envergadura, tempo parado e momento.
 2. **Estatísticas suavizadas:** com poucas lutas, as taxas são "puxadas" para a média da categoria.
 3. **Regressão logística regularizada:** aprende quanto cada diferença entre os dois lutadores pesa no resultado, usando as lutas desde 2005 e sempre os números que cada um tinha *antes* da luta.
-4. **Sinal de mercado:** em lutas marcadas, o consenso do mercado de apostas entra como mais um insumo do cálculo. Ele resume o que as estatísticas do UFC não enxergam (lesões, camp, carreira fora do UFC). **O site não mostra odds**; elas só entram na conta. No comparador livre (lutas hipotéticas), vale apenas a parte estatística.
+4. **Três leituras em lutas marcadas:** o comparador mostra estatísticas, mercado (probabilidade implícita no consenso do mercado de apostas, sem a margem da casa) e a combinada. O site mostra a probabilidade, nunca as cotações. Lutas hipotéticas e eventos ainda sem linha usam apenas as estatísticas.
 5. **Método:** cruza como o favorito costuma vencer com como o adversário costuma perder, partindo da média da categoria (lutas de 5 rounds têm menos decisões).
 
 **Avaliação (sempre "para a frente": para prever um ano, o modelo só conhece os anos anteriores):**

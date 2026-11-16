@@ -44,7 +44,7 @@ export default function About() {
           <p><b>1. Retrato pré-luta:</b> todas as {meta?.fightCount.toLocaleString('pt-BR') ?? ''} lutas do UFC são processadas em ordem. Antes de cada luta, cada lutador ganha um retrato com {nVars} medidas: vários ratings (Elo e Glicko, que também medem a incerteza), nível dos adversários, estatísticas da carreira, das lutas mais recentes e ajustadas por quem enfrentou, idade, envergadura, tempo parado e momento.</p>
           <p><b>2. Estatísticas suavizadas:</b> com poucas lutas, as taxas são "puxadas" para a média da categoria, para que uma luta só não gere números extremos.</p>
           <p><b>3. Regressão logística regularizada:</b> o modelo aprende quanto cada diferença entre os dois pesa no resultado, usando {m.trainN.toLocaleString('pt-BR')} lutas desde 2005 e sempre os números que cada um tinha <i>antes</i> da luta.</p>
-          <p><b>4. Sinal de mercado:</b> em lutas marcadas, o consenso do mercado de apostas entra como mais um insumo — ele resume o que as estatísticas do UFC não enxergam (lesões, camp, carreira fora do UFC). É usado só no cálculo; o site não mostra odds. No comparador livre (lutas hipotéticas), vale apenas a parte estatística.</p>
+          <p><b>4. Três leituras em lutas marcadas:</b> o comparador mostra <b>estatísticas</b> (só os números do UFC), <b>mercado</b> (a probabilidade implícita no consenso do mercado de apostas, já sem a margem da casa) e <b>combinada</b> (a previsão final, que pondera as duas). O mercado resume o que as estatísticas do UFC não enxergam (lesões, camp, carreira fora do UFC) e, quando discorda das estatísticas sobre quem é o favorito, isso aparece no texto da análise. O site mostra só essa probabilidade, nunca as cotações. Lutas hipotéticas e eventos ainda sem linha usam apenas as estatísticas.</p>
           <p><b>5. Método:</b> combina como cada um costuma vencer com como o outro costuma perder, partindo da média da categoria (lutas de 5 rounds têm menos decisões).</p>
         </div>
       </div>
@@ -67,7 +67,7 @@ export default function About() {
         <ul>
           <li>Estreantes e lutadores com poucas lutas no UFC têm previsões menos confiáveis (o UFC não registra lutas de outras organizações).</li>
           <li>A parte estatística não sabe de lesões, troca de equipe, corte de peso ou luta em casa — por isso o sinal de mercado ajuda tanto nas lutas marcadas.</li>
-          <li>O sinal de mercado só existe perto da luta: previsões de eventos distantes e de lutas hipotéticas usam apenas estatísticas{m.marketOnly ? <> (o mercado sozinho acertou {fmtPct(m.marketOnly.accuracy, 1)} nas mesmas lutas da avaliação)</> : null}.</li>
+          <li>O sinal de mercado só existe perto da luta: previsões de eventos distantes e de lutas hipotéticas usam apenas estatísticas{m.marketOnly ? <> (o mercado sozinho acertou {fmtPct(m.marketOnly.accuracy, 1)} nas mesmas lutas da avaliação, as estatísticas sozinhas {fmtPct(m.statsSame.accuracy, 1)} e as duas combinadas {fmtPct(m.accuracy, 1)})</> : null}.</li>
           <li>MMA é um esporte de alta variância: mesmo a melhor previsão erra cerca de 1 em cada 3 lutas.</li>
         </ul>
       </div>

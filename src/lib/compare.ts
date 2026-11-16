@@ -32,6 +32,8 @@ export interface Analysis {
   pStats: number;
   /** a previsão inclui o sinal de mercado (luta marcada)? */
   usesMarket: boolean;
+  /** chance de A segundo o mercado (probabilidade implícita sem a margem da casa), quando há */
+  pMarket: number | null;
   table: OutcomeTable;
   mostLikely: { side: 'A' | 'B'; method: 'KO' | 'SUB' | 'DEC'; p: number };
   methodGivenWin: { A: Record<'KO' | 'SUB' | 'DEC', number>; B: Record<'KO' | 'SUB' | 'DEC', number> };
@@ -133,17 +135,17 @@ export function analyze(A: FighterDetail, B: FighterDetail, model: ModelParams, 
       : `**${fav}** chega com ${level} — ${fmtPct(favP)} de chance de vitória segundo o modelo. O resultado isolado mais provável é **${mostLikely.side === 'A' ? nA : nB} por ${METHOD_PT[mostLikely.method]}** (${fmtPct(mostLikely.p)}).`,
   );
   if (usesMarket) {
-    const sA = stats.p;
-    const sFav = sA >= 0.5 ? nA : nB;
-    const same = (sA >= 0.5) === (pred.pA >= 0.5);
-    const diff = Math.abs(pred.pA - sA);
+    const sA = stats.p, mA = opts.market!;
+    const lead = (p: number) => (p >= 0.5 ? nA : nB);
+    const pct = (p: number) => fmtPct(Math.max(p, 1 - p));
+    const sameSide = (sA >= 0.5) === (mA >= 0.5);
     narrative.push(
-      `**Estatísticas × mercado:** como a luta está marcada, a previsão combina as estatísticas com o consenso do mercado (usado só no cálculo). Só pelas estatísticas, ${sFav} teria ${fmtPct(Math.max(sA, 1 - sA))}. ` +
-        (!same
-          ? `O mercado **inverte** esse favoritismo — sinal de que há informação fora dos números do UFC (lesões, camp, carreira anterior, estilo).`
-          : diff < 0.04
-            ? 'O mercado praticamente concorda com os números.'
-            : (Math.max(pred.pA, pB) > Math.max(sA, 1 - sA) ? 'O mercado **reforça** esse favoritismo.' : 'O mercado vê uma luta **mais equilibrada** do que os números sugerem.')),
+      `**Estatísticas × mercado:** como a luta está marcada, a previsão combina duas leituras. Pelas **estatísticas**, ${lead(sA)} é favorito(a) com ${pct(sA)}; pelo **mercado**, ${lead(mA)} com ${pct(mA)}; combinadas, ${lead(pred.pA)} com ${pct(pred.pA)}. ` +
+        (!sameSide
+          ? `As duas leituras **discordam** sobre quem é o favorito — sinal de que o mercado enxerga algo que os números do UFC não mostram (lesões, camp, carreira fora do UFC, estilo).`
+          : Math.abs(mA - sA) < 0.05
+            ? 'As duas leituras praticamente concordam.'
+            : 'As duas apontam o mesmo favorito, mas com confianças diferentes.'),
     );
   }
   const strEdge = strA - strB;
@@ -204,6 +206,7 @@ export function analyze(A: FighterDetail, B: FighterDetail, model: ModelParams, 
     pA: pred.pA,
     pStats: stats.p,
     usesMarket,
+    pMarket: opts.market ?? null,
     table,
     mostLikely,
     methodGivenWin,

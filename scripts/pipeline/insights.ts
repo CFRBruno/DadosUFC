@@ -90,13 +90,15 @@ export function computePercentiles(
 // --- Forma recente -----------------------------------------------------------------------
 
 /**
- * Nota de forma (0–100) com as últimas 5 lutas, as mais recentes pesando mais (×0,75 por luta).
+ * Nota de forma (0–100) com as últimas N lutas (padrão 5), as mais recentes pesando mais.
  * Cada luta vale "resultado − resultado esperado pelo Elo": vencer um adversário forte pontua mais,
  * perder para um muito mais forte pesa pouco. Finalização/nocaute ajusta ±0,10. Poucas lutas
  * puxam a nota para 50.
  */
-export function computeForm(entries: FightEntry[]): FormInfo | null {
-  const last = entries.filter((e) => e.result !== 'NC').slice(0, 5); // entries: mais recente primeiro
+export function computeForm(entries: FightEntry[], window = 5): FormInfo | null {
+  const last = entries.filter((e) => e.result !== 'NC').slice(0, window); // entries: mais recente primeiro
+  // a luta mais antiga da janela sempre pesa ~35% da mais recente, qualquer que seja o tamanho da janela
+  const decay = window > 1 ? 0.35 ** (1 / (window - 1)) : 1;
   if (!last.length) return null;
   let sum = 0, wsum = 0;
   const last5: FormInfo['last5'] = [];
@@ -105,7 +107,7 @@ export function computeForm(entries: FightEntry[]): FormInfo | null {
     const sc = e.result === 'W' ? 1 : e.result === 'L' ? 0 : 0.5;
     const fin = e.method === 'KO' || e.method === 'SUB';
     const perf = sc - exp + (sc === 1 && fin ? 0.1 : sc === 0 && fin ? -0.1 : 0);
-    const w = 0.75 ** k;
+    const w = decay ** k;
     sum += w * perf; wsum += w;
     last5.push({ r: e.result as 'W' | 'L' | 'D', opp: e.opponent.name, method: e.method, date: e.date, delta: Math.round(perf * 100) / 100 });
   });

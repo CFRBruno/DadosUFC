@@ -1,7 +1,7 @@
 // Modelo de previsão v2: ~140 diferenças entre os dois lutadores (ratings, estatísticas
 // recentes e ajustadas pelo adversário, físico, momento) numa regressão logística
 // regularizada. Quando a luta está marcada e há linha de mercado, ela entra como
-// mais um sinal (somente no cálculo — o site não mostra odds).
+// mais um sinal; o comparador mostra a probabilidade de mercado (nunca as cotações).
 // Usado pelo pipeline (treino/avaliação) e pelo site (comparador).
 
 export type FeatureVec = Record<string, number | null>;

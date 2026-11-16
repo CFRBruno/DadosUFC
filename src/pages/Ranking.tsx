@@ -17,7 +17,10 @@ export default function Ranking() {
   const mode = params.get('modo') === 'cat' ? 'cat' : 'abs';
   const cat = (params.get('cat') as DivisionKey) || 'LW';
   const gender = params.get('genero') ?? '';
-  const minFights = Number(params.get('min') ?? (stat.rate ? 3 : 1));
+  const win = [3, 5, 7, 10].includes(Number(params.get('n'))) ? Number(params.get('n')) : 5; // janela da forma recente
+  const isForm = statKey === 'form';
+  const valueKey = isForm ? `form${win}` : statKey;
+  const minFights = Number(params.get('min') ?? (isForm ? win : stat.rate ? 3 : 1));
   const dir = (params.get('ordem') as 'asc' | 'desc') || stat.dir;
   const [limit, setLimit] = useState(50);
 
@@ -38,7 +41,7 @@ export default function Ranking() {
     const out: { f: FighterSummary; v: number; fights: number }[] = [];
     for (const r of rows.data) {
       const f = byId.get(r.id);
-      const v = r.s[statKey];
+      const v = r.s[valueKey];
       if (!f || v == null || !Number.isFinite(v)) continue;
       const fights = r.s.fights ?? 0;
       if (fights < minFights) continue;
@@ -48,7 +51,7 @@ export default function Ranking() {
     }
     out.sort((a, b) => (dir === 'desc' ? b.v - a.v : a.v - b.v) || b.fights - a.fights);
     return out;
-  }, [rows.data, fighters, byId, statKey, minFights, mode, cat, gender, dir]);
+  }, [rows.data, fighters, byId, valueKey, minFights, mode, cat, gender, dir]);
 
   // posição com empates
   const ranks = useMemo(() => {
@@ -63,7 +66,7 @@ export default function Ranking() {
     <div className="container">
       <div className="page-head">
         <span className="eyebrow">Ranking</span>
-        <h1 style={{ marginTop: 8 }}>{stat.label}</h1>
+        <h1 style={{ marginTop: 8 }}>{stat.label}{isForm ? ` · últimas ${win} lutas` : ''}</h1>
         <p>{scope}. Somente lutas no UFC, entre os lutadores do site.{stat.hint ? ` ${stat.hint}.` : ''}</p>
       </div>
 
@@ -90,8 +93,15 @@ export default function Ranking() {
             ))}
           </div>
         )}
+        {isForm && (
+          <div className="seg" role="group" aria-label="Quantas lutas considerar">
+            {[3, 5, 7, 10].map((n) => (
+              <button key={n} className={win === n ? 'on' : ''} onClick={() => set({ n: String(n), min: null })}>Últimas {n}</button>
+            ))}
+          </div>
+        )}
         <select className="select" value={minFights} onChange={(e) => set({ min: e.target.value })} aria-label="Mínimo de lutas">
-          {[1, 3, 5, 10].map((n) => <option key={n} value={n}>Mín. {n} luta{n > 1 ? 's' : ''} no UFC</option>)}
+          {[...new Set([1, 3, 5, 10, ...(isForm ? [win] : [])])].sort((a, b) => a - b).map((n) => <option key={n} value={n}>Mín. {n} luta{n > 1 ? 's' : ''} no UFC</option>)}
         </select>
         <button className="btn btn-ghost" onClick={() => set({ ordem: dir === 'desc' ? 'asc' : 'desc' })} title="Inverter a ordem">
           {dir === 'desc' ? 'Maior → menor' : 'Menor → maior'}
@@ -126,6 +136,7 @@ export default function Ranking() {
             </div>
           )}
           {list.length === 0 && <div className="empty">Ninguém com esse filtro. Tente diminuir o mínimo de lutas.</div>}
+          {isForm && <p className="note" style={{ marginTop: 14 }}>Por padrão só entra quem tem pelo menos {win} lutas no UFC (para a janela escolhida). Cada luta vale o resultado menos o esperado pelo Elo; as mais recentes pesam mais. 50 é o neutro.</p>}
           {stat.rate && <p className="note" style={{ marginTop: 14 }}>Taxas por minuto e percentuais exigem amostra: por padrão, só entra quem tem pelo menos 3 lutas no UFC.</p>}
         </>
       )}

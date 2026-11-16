@@ -176,6 +176,24 @@ function AnalysisView({ A, B, an, model }: { A: FighterDetail; B: FighterDetail;
           <i style={{ width: `${an.pA * 100}%` }} />
           <i style={{ width: `${(1 - an.pA) * 100}%` }} />
         </div>
+        {an.usesMarket && an.pMarket != null ? (
+          <div className="three-reads" aria-label="Três leituras da previsão">
+            {([
+              ['Estatísticas', an.pStats, 'só os números do UFC'],
+              ['Mercado', an.pMarket, 'consenso, sem a margem da casa'],
+              ['Combinada', an.pA, 'a previsão acima'],
+            ] as const).map(([label, p, hint]) => (
+              <div key={label} className={`read ${label === 'Combinada' ? 'main' : ''}`}>
+                <span className="read-label">{label}</span>
+                <div className="read-vals"><b className="fa">{fmtPct(p)}</b><i>×</i><b className="fb">{fmtPct(1 - p)}</b></div>
+                <div className="read-bar"><i style={{ width: `${p * 100}%` }} /></div>
+                <small>{hint}</small>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="note" style={{ marginTop: 14, textAlign: 'center' }}>Sem linha de mercado para esta luta: a previsão usa apenas as estatísticas.</p>
+        )}
         <div className="outcome-grid">
           {(['A', 'B'] as const).map((side) => (
             <div key={side}>
@@ -197,7 +215,7 @@ function AnalysisView({ A, B, an, model }: { A: FighterDetail; B: FighterDetail;
         </div>
         <p className="note" style={{ marginTop: 12 }}>
           {an.usesMarket
-            ? <>Luta marcada: a previsão combina as estatísticas do UFC com o consenso do mercado (só pelas estatísticas: {nA} {fmtPct(an.pStats)} × {fmtPct(1 - an.pStats)} {nB}). Nesse modo o modelo acertou {fmtPct(model.metrics.accuracy, 1)} dos vencedores em {model.metrics.testN.toLocaleString('pt-BR')} lutas desde {model.metrics.testFrom.slice(0, 4)}, sempre prevendo lutas que ainda não conhecia. </>
+            ? <>Luta marcada: a previsão combina as estatísticas do UFC com o consenso do mercado (veja as três leituras acima). Nesse modo o modelo acertou {fmtPct(model.metrics.accuracy, 1)} dos vencedores em {model.metrics.testN.toLocaleString('pt-BR')} lutas desde {model.metrics.testFrom.slice(0, 4)}, sempre prevendo lutas que ainda não conhecia. </>
             : <>Previsão só com estatísticas do UFC ({model.metrics.trainN.toLocaleString('pt-BR')} lutas no treino): acerta {fmtPct(model.metrics.stats.accuracy, 1)} dos vencedores no longo prazo ({model.metrics.stats.n.toLocaleString('pt-BR')} lutas desde {model.metrics.stats.from.slice(0, 4)}, sempre prevendo lutas que ainda não conhecia). Lutas marcadas ganham também o sinal do mercado e chegam a {fmtPct(model.metrics.accuracy, 1)}. </>}
           <Link to="/modelo" style={{ color: 'var(--brand)' }}>Como funciona →</Link>
         </p>

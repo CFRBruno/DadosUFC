@@ -38,6 +38,7 @@ export const RANK_STATS: RankStat[] = [
   { key: 'decW', label: 'Vitórias por decisão', group: 'Cartel no UFC', fmt: fmtInt, dir: 'desc' },
   { key: 'fin', label: 'Vitórias antes do fim (KO + finalização)', group: 'Cartel no UFC', fmt: fmtInt, dir: 'desc' },
   { key: 'winPct', label: '% de vitórias', group: 'Cartel no UFC', fmt: (n) => fmtPct(n), dir: 'desc', rate: true },
+  { key: 'form', label: 'Forma recente', group: 'Cartel no UFC', fmt: (n) => String(Math.round(n)), dir: 'desc', hint: 'Nota de 0 a 100 com as últimas lutas (você escolhe quantas), ajustada pelo nível dos adversários' },
   { key: 'streak', label: 'Sequência de vitórias atual', group: 'Cartel no UFC', fmt: fmtInt, dir: 'desc' },
   // estatísticas (mesmas chaves dos cartões do perfil)
   { key: 'slpm', label: 'Golpes sig. conectados/min', group: 'Estatísticas no UFC', fmt: (n) => fmtNum(n, 2), dir: 'desc', rate: true },

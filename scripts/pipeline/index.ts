@@ -489,6 +489,8 @@ async function main() {
           td: r.td, tdAcc: t.tdA ? r.tdAcc : null, tdDef: t.tdOppA ? r.tdDef : null,
           sub: r.sub, kd: r.kd, kdAbs: r.kdAbs, ctrl: r.ctrl,
           finishRate: t.wins ? r.finishRate : null,
+          form3: computeForm(d.fights, 3)?.score ?? null, form5: computeForm(d.fights, 5)?.score ?? null,
+          form7: computeForm(d.fights, 7)?.score ?? null, form10: computeForm(d.fights, 10)?.score ?? null,
           minutes: t.time / 60,
         },
       };
