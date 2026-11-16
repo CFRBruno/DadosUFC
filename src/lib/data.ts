@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import type { EventInfo, FighterDetail, FighterSummary, Meta, ModelParams } from '../shared/types';
+import type { EventInfo, FighterDetail, FighterSummary, Meta, ModelParams, OfficialBoard } from '../shared/types';
 
 const BASE = import.meta.env.BASE_URL + 'data/';
 const cache = new Map<string, Promise<unknown>>();
@@ -42,4 +42,5 @@ export const useFighters = () => useJson<FighterSummary[]>('fighters.json');
 export const useFighter = (slug: string | null | undefined) => useJson<FighterDetail>(slug ? `fighters/${slug}.json` : null);
 export const useEvents = () => useJson<{ upcoming: EventInfo[]; past: EventInfo[] }>('events.json');
 export const useModel = () => useJson<ModelParams>('model.json');
+export const useOfficialBoard = () => useJson<OfficialBoard>('official-rankings.json');
 export const useMeta = () => useJson<Meta>('meta.json');

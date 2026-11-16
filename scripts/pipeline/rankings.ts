@@ -48,7 +48,8 @@ export function parseRankings(text: string): OfficialRankings {
     const title = sec.slice(0, sec.indexOf('===')).trim();
     const division = DIVISIONS[title];
     if (!division) continue;
-    released ??= /Rankings released on ([A-Za-z]+ \d+, \d{4})/.exec(sec)?.[1] ?? null;
+    const rel = /Rankings released on ([A-Za-z]+ \d+, \d{4})/.exec(sec)?.[1];
+    if (!released && rel && !Number.isNaN(Date.parse(rel + ' UTC'))) released = new Date(rel + ' UTC').toISOString().slice(0, 10); // AAAA-MM-DD
     const table = sec.slice(sec.indexOf('{|'), sec.indexOf('\n|}'));
     for (const row of table.split('\n|-')) {
       const lines = row.split('\n').map((l) => l.trim());

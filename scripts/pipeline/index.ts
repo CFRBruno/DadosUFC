@@ -4,10 +4,10 @@
 
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { DIVISION_BY_KEY, parseWeightClass, type DivisionKey } from '../../src/shared/divisions';
+import { DIVISION_BY_KEY, MAIN_DIVISIONS, parseWeightClass, type DivisionKey } from '../../src/shared/divisions';
 import type {
   RankingRow, TitleFight,
-  EventInfo, FightEntry, FighterDetail, FighterSummary, MethodBreakdown, Meta, StatRank, TitleReign, UpcomingBout,
+  EventInfo, FightEntry, FighterDetail, FighterSummary, MethodBreakdown, Meta, OfficialBoard, StatRank, TitleReign, UpcomingBout,
 } from '../../src/shared/types';
 import { S } from '../../src/shared/types';
 import { emptyState } from '../../src/shared/model';
@@ -408,6 +408,18 @@ async function main() {
     else unmatched.push(e.name);
   }
   console.log(`  Ranking oficial (${officialRankings.released ?? 'indisponível'}): ${officialRankings.entries.length - unmatched.length} de ${officialRankings.entries.length} no site${unmatched.length ? ` · fora do escopo ou sem correspondência: ${unmatched.join(', ')}` : ''}`);
+  const board: OfficialBoard = {
+    released: officialRankings.released,
+    divisions: MAIN_DIVISIONS.map((dv) => ({
+      key: dv.key, name: dv.name, women: dv.women,
+      entries: officialRankings.entries.filter((e) => e.division === dv.key).sort((x, y) => x.pos - y.pos).map((e) => {
+        const id = idByName.get(norm(e.name)) ?? null;
+        const d = id ? detailById.get(id) : undefined;
+        return { pos: e.pos, name: e.name, id: d ? id : null, slug: d?.slug ?? null };
+      }),
+    })).filter((dv) => dv.entries.length),
+  };
+  await writeFile(path.join(OUT, 'official-rankings.json'), JSON.stringify(board));
   for (const [key, div] of Object.entries(th.history.divisions)) {
     const story = buildStory(div, today);
     const add = (id: string | undefined, rg: TitleReign) => { const d = id ? detailById.get(id) : undefined; if (d) d.titleReigns.push(rg); };

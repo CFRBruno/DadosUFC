@@ -1,13 +1,12 @@
 import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ResultBoutRow, UpcomingBoutRow } from '../components/events';
-import { FighterCard } from '../components/fighters';
 import HeroFX from '../components/HeroFX';
-import { CountUp, Loading } from '../components/ui';
-import { useEvents, useFighters, useMeta } from '../lib/data';
+import { Avatar, CountUp, Loading } from '../components/ui';
+import { useEvents, useFighters, useMeta, useOfficialBoard } from '../lib/data';
 import { fmtDate, fmtPct, todayIso } from '../lib/format';
-import { MAIN_DIVISIONS } from '../shared/divisions';
-import type { FighterSummary } from '../shared/types';
+import { divisionName, recordStr } from '../lib/format';
+import type { FighterSummary, OfficialBoard } from '../shared/types';
 
 function HeroVisual({ next }: { next: { name: string; date: string | null } | null }) {
   const [k, setK] = useState(0);
@@ -100,6 +99,34 @@ function HeroStats({ fighters, accuracy, fights }: { fighters: number; accuracy:
   );
 }
 
+const TOP_N = 5; // campeão + 5 primeiros em cada categoria (todos os cartões têm a mesma altura)
+
+function RankCard({ d, byId }: { d: OfficialBoard['divisions'][number]; byId: Map<string, FighterSummary> }) {
+  const rows = d.entries.filter((e) => e.pos <= TOP_N);
+  return (
+    <div className="rk-card">
+      <div className="rk-head">
+        <b>{divisionName(d.key)}</b>
+        <Link to={`/lutadores?cat=${d.key}&ordem=oficial`}>Top 15 →</Link>
+      </div>
+      <div className="rk-rows">
+        {rows.map((e) => {
+          const f = e.id ? byId.get(e.id) : undefined;
+          const inner = (
+            <>
+              <span className={`rk-pos ${e.pos === 0 ? 'champ' : ''}`}>{e.pos === 0 ? 'C' : e.pos}</span>
+              <Avatar name={e.name} id={e.id} size="sm" />
+              <span className="rk-name">{e.name}</span>
+              <span className="rk-rec">{f ? recordStr(f.record) : ''}</span>
+            </>
+          );
+          return e.slug ? <Link key={e.pos} to={`/lutador/${e.slug}`} className="rk-row">{inner}</Link> : <div key={e.pos} className="rk-row">{inner}</div>;
+        })}
+      </div>
+    </div>
+  );
+}
+
 export default function Home() {
   const heroRef = useRef<HTMLElement>(null);
   const meta = useMeta().data;
@@ -109,15 +136,7 @@ export default function Home() {
   const nextEvent = events?.upcoming[0];
   const lastEvent = events?.past[0];
 
-  const topByDivision = useMemo(() => {
-    if (!fighters) return [];
-    const out: { name: string; f: FighterSummary }[] = [];
-    for (const d of MAIN_DIVISIONS) {
-      const best = fighters.filter((f) => f.division === d.key && f.record.w + f.record.l >= 3).sort((a, b) => b.elo - a.elo)[0];
-      if (best) out.push({ name: d.name, f: best });
-    }
-    return out;
-  }, [fighters]);
+  const board = useOfficialBoard().data;
 
   return (
     <>
@@ -189,20 +208,24 @@ export default function Home() {
           </>
         )}
 
-        {topByDivision.length > 0 && (
+        {board && board.divisions.length > 0 && (
           <>
             <div className="section-title">
-              <h2>Melhor Elo por categoria</h2>
-              <Link to="/ranking">Ranking completo →</Link>
+              <h2>Ranking oficial do UFC</h2>
+              <span className="note">{board.released ? `divulgado em ${fmtDate(board.released)}` : ''}</span>
             </div>
-            <div className="grid-3">
-              {topByDivision.map(({ name, f }) => (
-                <div key={name}>
-                  <div className="eyebrow" style={{ marginBottom: 8 }}>{name}</div>
-                  <FighterCard f={f} />
+            {[false, true].map((women) => {
+              const divs = board.divisions.filter((d) => d.women === women);
+              if (!divs.length) return null;
+              return (
+                <div key={String(women)} className="rk-group">
+                  <div className="rk-group-title">{women ? 'Feminino' : 'Masculino'}</div>
+                  <div className="rk-grid">
+                    {divs.map((d) => <RankCard key={d.key} d={d} byId={byId} />)}
+                  </div>
                 </div>
-              ))}
-            </div>
+              );
+            })}
           </>
         )}
       </div>

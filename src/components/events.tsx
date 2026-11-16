@@ -22,15 +22,17 @@ export function UpcomingBoutRow({ b, byId }: { b: UpcomingBout; byId: Map<string
     <div className="bout-wrap">
       <div className="bout-meta">
         <span>{label && <span style={{ color: 'var(--brand)' }}>{label} · </span>}{divisionName(b.division, true)} · {b.rounds} rounds</span>
-        {b.a.slug && b.b.slug && (
-          <Link to={compareUrl(b)} className="btn btn-primary btn-sm" style={{ height: 30, fontSize: 11 }}>
-            <Icon name="swords" className="arrow" /> Analisar
-          </Link>
-        )}
       </div>
       <div className="bout">
         <Side id={b.a.id} name={b.a.name} slug={b.a.slug} rec={fa ? recordStr(fa.record) : 'Estreia'} side="a" />
-        <div className="mid"><b>vs</b></div>
+        <div className="mid">
+          <b className="vs">vs</b>
+          {b.a.slug && b.b.slug && (
+            <Link to={compareUrl(b)} className="btn btn-primary btn-sm analyze-btn">
+              <Icon name="swords" className="arrow" /> Analisar
+            </Link>
+          )}
+        </div>
         <Side id={b.b.id} name={b.b.name} slug={b.b.slug} rec={fb ? recordStr(fb.record) : 'Estreia'} side="b" right />
       </div>
     </div>
@@ -58,7 +60,7 @@ export function ResultBoutRow({ f }: { f: EventFight }) {
         {...(url ? { role: 'link', tabIndex: 0, onClick: open, onKeyDown: (e: React.KeyboardEvent) => { if (e.key === 'Enter') open(e); }, 'aria-label': `Estatísticas da luta ${f.a.name} contra ${f.b.name}` } : {})}
       >
         <Side id={f.a.id} name={f.a.name} slug={f.a.slug} rec={f.winner === 0 ? 'Venceu' : f.winner === 1 ? 'Perdeu' : ''} cls={f.winner === 0 ? 'win' : f.winner === 1 ? 'lose' : ''} side="a" />
-        <div className="mid"><b>{how}</b>R{f.endRound} · {f.endTime}</div>
+        <div className="mid result"><b>{how}</b><span>R{f.endRound} · {f.endTime}</span>{url && <em>ver luta →</em>}</div>
         <Side id={f.b.id} name={f.b.name} slug={f.b.slug} rec={f.winner === 1 ? 'Venceu' : f.winner === 0 ? 'Perdeu' : ''} cls={f.winner === 1 ? 'win' : f.winner === 0 ? 'lose' : ''} side="b" right />
       </div>
     </div>

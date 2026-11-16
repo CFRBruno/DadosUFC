@@ -172,3 +172,36 @@ a:hover > .chip, .fighter-card:hover .chip { transform: translateY(-1px); }
 .bout.clickable:active { transform: scale(0.995); }
 .bout.clickable:focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
 .bout.clickable .side { cursor: pointer; }
+
+/* ---------- lutas: foco no centro; lados mais enxutos ---------- */
+.bout { grid-template-columns: minmax(0, 1fr) minmax(150px, 1.25fr) minmax(0, 1fr); gap: 8px; }
+@media (max-width: 560px) { .bout { grid-template-columns: minmax(0, 1fr) minmax(104px, 1.1fr) minmax(0, 1fr); } }
+.bout .side .nm { font-size: 14px; }
+.bout .mid { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px; min-height: 58px; padding: 6px 10px; border-radius: 12px; background: rgba(255, 255, 255, 0.04); }
+.bout .mid b { font-size: 14px; letter-spacing: 0.08em; color: #fff; }
+.bout .mid .vs { font-size: 15px; color: var(--muted); letter-spacing: 0.2em; }
+.bout .mid span { font-size: 12.5px; color: var(--text-2); font-family: var(--font-mono); }
+.bout .mid em { font-style: normal; font-size: 11px; color: var(--brand); font-weight: 700; opacity: 0; transform: translateY(-3px); transition: opacity 0.25s, transform 0.25s var(--ease-out); }
+.bout.clickable:hover .mid em, .bout.clickable:focus-visible .mid em { opacity: 1; transform: none; }
+.bout.clickable:hover .mid { background: rgba(255, 255, 255, 0.07); }
+.analyze-btn { height: 32px; font-size: 11.5px; }
+
+/* ---------- ranking oficial na tela inicial ---------- */
+.rk-group + .rk-group { margin-top: 26px; }
+.rk-group-title { font: 700 13px var(--font-display, Oswald, sans-serif); letter-spacing: 0.22em; text-transform: uppercase; color: var(--brand); margin-bottom: 12px; display: flex; align-items: center; gap: 12px; }
+.rk-group-title::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, #3a0b0e, transparent); }
+.rk-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 14px; }
+@media (min-width: 1000px) { .rk-grid { grid-template-columns: repeat(3, 1fr); } }
+.rk-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px 14px 10px; display: flex; flex-direction: column; }
+.rk-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+.rk-head b { font-size: 14px; font-weight: 900; letter-spacing: 0.04em; text-transform: uppercase; }
+.rk-head a { font-size: 12px; color: var(--brand); font-weight: 700; }
+.rk-rows { display: grid; grid-auto-rows: 46px; gap: 4px; }
+.rk-row { display: grid; grid-template-columns: 26px 34px minmax(0, 1fr) auto; gap: 10px; align-items: center; padding: 0 8px; border-radius: 10px; transition: background-color 0.2s, transform 0.25s var(--ease-out); }
+a.rk-row:hover { background: #1b1b1f; transform: translateX(3px); }
+.rk-pos { display: grid; place-items: center; width: 24px; height: 24px; border-radius: 7px; background: #202024; color: var(--text-2); font: 800 12px var(--font-mono); }
+.rk-pos.champ { background: linear-gradient(160deg, #f2c94c, #b8860b); color: #1a1200; }
+.rk-row:first-child { background: rgba(242, 201, 76, 0.07); }
+.rk-name { font-weight: 800; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rk-rec { font: 600 12px var(--font-mono); color: var(--muted); }
+.rk-row .avatar { width: 34px; height: 34px; }

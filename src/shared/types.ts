@@ -299,3 +299,9 @@ export interface RankingRow {
   id: string;
   s: Record<string, number | null>;
 }
+
+/** Ranking oficial do UFC por categoria (campeão = pos 0), para a tela inicial. */
+export interface OfficialBoard {
+  released: string | null;
+  divisions: { key: DivisionKey; name: string; women: boolean; entries: { pos: number; name: string; id: string | null; slug: string | null }[] }[];
+}
