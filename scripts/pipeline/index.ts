@@ -7,7 +7,7 @@ import path from 'node:path';
 import { DIVISION_BY_KEY, MAIN_DIVISIONS, parseWeightClass, type DivisionKey } from '../../src/shared/divisions';
 import type {
   RankingRow, TitleFight,
-  EventInfo, FightEntry, FighterDetail, FighterSummary, FightPred, MethodBreakdown, Meta, OfficialBoard, StatRank, TitleReign, UpcomingBout,
+  EventInfo, FightEntry, FighterDetail, FighterSummary, FightPred, MethodBreakdown, Meta, OfficialBoard, StatRank, UpsetFight, TitleReign, UpcomingBout,
 } from '../../src/shared/types';
 import { S } from '../../src/shared/types';
 import { emptyState } from '../../src/shared/model';
@@ -443,6 +443,18 @@ async function main() {
       }),
     })).filter((dv) => dv.entries.length),
   };
+  // zebras e favoritos: todas as lutas decididas desde 2015 com a previsão pré-luta
+  const upsets: UpsetFight[] = [];
+  for (const f of fights) {
+    const po = trained.pOos.get(f.id);
+    if (!po || f.winner == null || f.outcome !== 'W') continue;
+    upsets.push({
+      i: f.id, d: f.date, e: f.event, v: f.division, t: f.title,
+      a: [f.fighters[0].name, slugOf.get(f.fighters[0].id) ?? null], b: [f.fighters[1].name, slugOf.get(f.fighters[1].id) ?? null],
+      w: f.winner as 0 | 1, p: Math.round(po.p * 1e3) / 1e3, m: f.method, mk: po.mk,
+    });
+  }
+  await writeFile(path.join(OUT, 'upsets.json'), JSON.stringify(upsets));
   await writeFile(path.join(OUT, 'official-rankings.json'), JSON.stringify(board));
   for (const [key, div] of Object.entries(th.history.divisions)) {
     const story = buildStory(div, today);

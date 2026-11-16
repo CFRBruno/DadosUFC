@@ -14,6 +14,7 @@ import EventPage from './pages/EventPage';
 import About from './pages/About';
 import Ranking from './pages/Ranking';
 import Titles from './pages/Titles';
+import Upsets from './pages/Upsets';
 
 type Nav = { to: string; label: string; icon: Parameters<typeof Icon>[0]['name']; end?: boolean };
 const NAV: Nav[] = [
@@ -129,6 +130,7 @@ export default function App() {
           <Route path="/lutador/:slug/luta/:fightId" element={<FightPage />} />
           <Route path="/comparar" element={<Compare />} />
           <Route path="/ranking" element={<Ranking />} />
+          <Route path="/ranking/zebras" element={<Upsets />} />
           <Route path="/eventos" element={<Events />} />
           <Route path="/evento/:id" element={<EventPage />} />
           <Route path="/cinturoes" element={<Titles />} />

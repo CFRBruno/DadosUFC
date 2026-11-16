@@ -323,3 +323,18 @@ export interface OfficialBoard {
   released: string | null;
   divisions: { key: DivisionKey; name: string; women: boolean; entries: { pos: number; name: string; id: string | null; slug: string | null }[] }[];
 }
+
+/** Luta com a previsão feita antes dela (modelo treinado só com lutas anteriores), para o ranking de zebras e favoritos. */
+export interface UpsetFight {
+  i: string;                 // id da luta
+  d: string;                 // data
+  e: string;                 // evento
+  v: DivisionKey;
+  t: boolean;                // disputa de cinturão
+  a: [name: string, slug: string | null];
+  b: [name: string, slug: string | null];
+  w: 0 | 1;                  // quem venceu
+  p: number;                 // chance pré-luta de `a`
+  m: string;                 // método (KO, SUB, DEC…)
+  mk: boolean;               // a previsão incluiu o sinal de mercado
+}

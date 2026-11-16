@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import RankTabs from '../components/RankTabs';
 import { Avatar, ErrorBox, Flag, Loading } from '../components/ui';
 import { useFighters, useJson } from '../lib/data';
 import { RANK_BY_KEY, RANK_STATS } from '../lib/rankingStats';
@@ -70,6 +71,7 @@ export default function Ranking() {
         <p>{scope}. Somente lutas no UFC, entre os lutadores do site.{stat.hint ? ` ${stat.hint}.` : ''}</p>
       </div>
 
+      <div className="filters" style={{ marginBottom: 10 }}><RankTabs /></div>
       <div className="filters">
         <select className="select" value={statKey} onChange={(e) => set({ stat: e.target.value, ordem: null, min: null })} aria-label="Estatística" style={{ minWidth: 260 }}>
           {GROUPS.map((g) => (

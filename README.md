@@ -56,6 +56,8 @@ Os números são recalculados a cada atualização e aparecem em `/modelo`.
 - **Placar do modelo:** cada luta já realizada mostra se o modelo acertou o vencedor (previsão feita antes da luta) e a página `/modelo` traz o placar por evento e o acumulado do ano.
 - **Imagem de compartilhamento:** no comparador, "Copiar imagem" copia um PNG da previsão para a área de transferência (ou baixa o arquivo, se o navegador não permitir). Como o CDN da ESPN não permite desenhar suas fotos num `<canvas>`, o pipeline guarda cópias pequenas em `public/data/photos/` (cache em `data/raw/photos`); elas servem só para essa imagem e têm direitos autorais da ESPN (uso pessoal).
 
+- **Zebras e favoritos** (`/ranking/zebras`): ranking das lutas desde 2015 pela chance pré-luta do vencedor: as maiores zebras (vencedor com a menor chance) e os favoritos que venceram, em peso absoluto ou por categoria, com filtro de período e de disputas de cinturão. Os dados saem de `public/data/upsets.json`.
+
 ### Linhas de mercado
 
 A ESPN só publica as linhas perto da data da luta e depois as retira. Por isso, cada execução do pipeline guarda o que encontrar em `data/odds/archive.json`, e o GitHub Actions grava esse arquivo de volta no repositório (commit automático "Atualiza arquivo de linhas de mercado"). Se você trabalha no repositório localmente, faça `git pull` antes de enviar alterações.

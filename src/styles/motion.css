@@ -280,3 +280,17 @@ a.rk-row:hover { background: #1b1b1f; transform: translateX(3px); }
 @media (max-width: 560px) { .score-row, .score-head { grid-template-columns: minmax(0, 1.6fr) 44px 48px 62px; } .sc-bar { display: none; } .score-head span:nth-child(3) { display: none; } }
 .score-list { max-height: 520px; overflow-y: auto; padding-right: 4px; }
 .hit-chip.na { color: #e5d34a; border-color: #5a5210; background: rgba(234, 179, 8, 0.1); }
+
+/* zebras e favoritos */
+.rank-tabs a { display: inline-flex; align-items: center; padding: 0 16px; height: 34px; border-radius: 7px; font-size: 12.5px; font-weight: 700; color: var(--text-2); transition: background-color 0.25s, color 0.25s; }
+.rank-tabs a.on { background: var(--red-face, var(--brand)); color: #fff; }
+.up-row { grid-template-columns: 40px minmax(0, 1fr) minmax(110px, 190px) auto; }
+.up-main { min-width: 0; }
+.up-names { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px; }
+.up-win { color: #4ade80; font-weight: 800; }
+.up-def { color: var(--muted); font-size: 12px; }
+.up-lose { color: #ff8a8e; font-weight: 700; }
+.up-odds small { display: block; margin-top: 3px; font-size: 10.5px; color: var(--muted); white-space: nowrap; }
+.up-bar { height: 6px; border-radius: 3px; background: #7f1d1d; overflow: hidden; }
+.up-bar i { display: block; height: 100%; background: #22c55e; transform-origin: left; animation: barGrow 0.9s var(--ease-out) 0.1s both; }
+@media (max-width: 640px) { .up-row { grid-template-columns: 34px minmax(0, 1fr) auto; } .up-odds { display: none; } }
