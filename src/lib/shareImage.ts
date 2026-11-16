@@ -15,7 +15,8 @@ export interface ShareData {
 }
 
 const W = 1080, H = 1350;
-const pct = (p: number) => `${Math.round(p * 100)}%`;
+/** Nunca mostra 0% nem 100% (nada é certo no MMA); mantém os dois lados somando 100. */
+const pct = (p: number) => `${Math.min(99, Math.max(1, Math.round(p * 100)))}%`;
 const css = (name: string, fallback: string) => getComputedStyle(document.documentElement).getPropertyValue(name).trim() || fallback;
 
 function octagon(ctx: CanvasRenderingContext2D, cx: number, cy: number, r: number) {
@@ -42,6 +43,14 @@ function fit(ctx: CanvasRenderingContext2D, text: string, maxW: number, font: (p
   ctx.font = font(px);
   while (ctx.measureText(text).width > maxW && px > min) { px -= 2; ctx.font = font(px); }
   return px;
+}
+
+/** Corta o texto com reticências para caber em `maxW` na fonte atual do contexto. */
+function ellipsize(ctx: CanvasRenderingContext2D, text: string, maxW: number): string {
+  if (ctx.measureText(text).width <= maxW) return text;
+  let t = text;
+  while (t.length > 1 && ctx.measureText(t + '…').width > maxW) t = t.slice(0, -1);
+  return t.trimEnd() + '…';
 }
 
 const initials = (n: string) => n.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]).join('').toUpperCase();
@@ -74,7 +83,8 @@ export async function renderShareImage(d: ShareData): Promise<Blob> {
   ctx.fillStyle = brand; ctx.fillText('UFC', 64 + dw + 4, 92);
   ctx.textAlign = 'right'; ctx.font = '600 24px Inter'; ctx.fillStyle = '#7c7c84'; ctx.fillText('dadosufc.web.app', W - 64, 90);
   ctx.textAlign = 'center'; ctx.font = '700 26px "Roboto Mono"'; ctx.fillStyle = brand;
-  ctx.fillText(d.context.toUpperCase(), W / 2, 136);
+  fit(ctx, d.context.toUpperCase(), 700, (px) => `700 ${px}px "Roboto Mono"`, 26, 16);
+  ctx.fillText(ellipsize(ctx, d.context.toUpperCase(), 700), W / 2, 136);
 
   // lutadores
   const drawFighter = (f: ShareFighter, img: HTMLImageElement | null, cx: number, color: string) => {
@@ -91,7 +101,7 @@ export async function renderShareImage(d: ShareData): Promise<Blob> {
     ctx.restore();
     ctx.textAlign = 'center'; ctx.fillStyle = '#fff';
     fit(ctx, f.name.toUpperCase(), 440, (px) => `700 ${px}px Oswald`, 56);
-    ctx.fillText(f.name.toUpperCase(), cx, 572);
+    ctx.fillText(ellipsize(ctx, f.name.toUpperCase(), 440), cx, 572);
     ctx.font = '700 26px "Roboto Mono"'; ctx.fillStyle = '#8a8a93'; ctx.fillText(f.record, cx, 614);
   };
   drawFighter(d.a, imgA, 270, cA);
@@ -101,7 +111,11 @@ export async function renderShareImage(d: ShareData): Promise<Blob> {
   ctx.fillStyle = brand; ctx.font = '700 38px Oswald'; ctx.textAlign = 'center'; ctx.fillText('VS', W / 2, 336);
 
   // porcentagens
-  ctx.font = '900 150px Inter';
+  // as duas porcentagens usam o mesmo tamanho e deixam livre a faixa central (rótulo "chance de vitória")
+  const bigW = (px: number) => { ctx.font = `900 ${px}px Inter`; return Math.max(ctx.measureText(pct(d.pA)).width, ctx.measureText(pct(1 - d.pA)).width); };
+  let bigPx = 150;
+  while (bigPx > 80 && bigW(bigPx) > 400) bigPx -= 6;
+  ctx.font = `900 ${bigPx}px Inter`;
   ctx.textAlign = 'left'; ctx.fillStyle = cA; ctx.fillText(pct(d.pA), 64, 790);
   ctx.textAlign = 'right'; ctx.fillStyle = cB; ctx.fillText(pct(1 - d.pA), W - 64, 790);
   ctx.textAlign = 'center'; ctx.font = '700 20px "Roboto Mono"'; ctx.fillStyle = '#7c7c84'; ctx.fillText('CHANCE DE', W / 2, 752); ctx.fillText('VITÓRIA', W / 2, 778);
@@ -136,8 +150,8 @@ export async function renderShareImage(d: ShareData): Promise<Blob> {
   ctx.lineWidth = 2; ctx.strokeStyle = 'rgba(237,28,36,0.45)'; ctx.stroke();
   ctx.textAlign = 'center'; ctx.font = '700 22px "Roboto Mono"'; ctx.fillStyle = brand; ctx.fillText('RESULTADO MAIS PROVÁVEL', W / 2, y + 38);
   const line = `${d.mostLikely} (${pct(d.mostLikelyP)})`;
-  fit(ctx, line, W - 180, (px) => `800 ${px}px Inter`, 44);
-  ctx.fillStyle = '#fff'; ctx.fillText(line, W / 2, y + 90);
+  fit(ctx, line, W - 180, (px) => `800 ${px}px Inter`, 44, 24);
+  ctx.fillStyle = '#fff'; ctx.fillText(ellipsize(ctx, line, W - 180), W / 2, y + 90);
   y += 124 + 40;
 
   // métodos
@@ -145,7 +159,7 @@ export async function renderShareImage(d: ShareData): Promise<Blob> {
   const col = (x: number, name: string, color: string, m: ShareData['methodsA']) => {
     ctx.textAlign = 'left'; ctx.font = '800 24px Inter'; ctx.fillStyle = color;
     fit(ctx, `${name.toUpperCase()} VENCE POR`, 440, (px) => `800 ${px}px Inter`, 24, 16);
-    ctx.fillText(`${name.toUpperCase()} VENCE POR`, x, y);
+    ctx.fillText(ellipsize(ctx, `${name.toUpperCase()} VENCE POR`, 450), x, y);
     M.forEach(([label, k], i) => {
       const yy = y + 34 + i * 34;
       ctx.font = '600 22px Inter'; ctx.fillStyle = '#a0a0a8'; ctx.fillText(label, x, yy);
