@@ -29,7 +29,30 @@ const NAV: Nav[] = [
 const MOBILE_MAIN = ['/', '/lutadores', '/comparar', '/eventos'];
 const MOBILE_MORE = NAV.filter((n) => !MOBILE_MAIN.includes(n.to));
 
+/** Instalação como app (PWA): usa o aviso nativo quando o navegador oferece; no iPhone, mostra o passo a passo. */
+interface InstallEvent extends Event { prompt: () => Promise<void>; userChoice: Promise<{ outcome: string }> }
+function useInstall() {
+  const [ev, setEv] = useState<InstallEvent | null>(null);
+  const [installed, setInstalled] = useState(() => window.matchMedia?.('(display-mode: standalone)').matches || (navigator as unknown as { standalone?: boolean }).standalone === true);
+  useEffect(() => {
+    const on = (e: Event) => { e.preventDefault(); setEv(e as InstallEvent); };
+    const done = () => { setInstalled(true); setEv(null); };
+    window.addEventListener('beforeinstallprompt', on);
+    window.addEventListener('appinstalled', done);
+    return () => { window.removeEventListener('beforeinstallprompt', on); window.removeEventListener('appinstalled', done); };
+  }, []);
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !installed;
+  return {
+    available: !installed && (!!ev || ios),
+    install: async () => {
+      if (ev) { await ev.prompt(); await ev.userChoice; setEv(null); }
+      else if (ios) window.alert('Para instalar no iPhone/iPad: toque em Compartilhar (quadrado com seta) e depois em "Adicionar à Tela de Início".');
+    },
+  };
+}
+
 export default function App() {
+  const pwa = useInstall();
   const { pathname } = useLocation();
   const [moreOpen, setMoreOpen] = useState(false);
   useEffect(() => {
@@ -115,6 +138,7 @@ export default function App() {
           <span>
             Dados: UFCStats · fotos e calendário: ESPN
             {meta ? ` · atualizado em ${fmtDate(meta.generatedAt.slice(0, 10))}` : ''}
+            {pwa.available && <> · <button className="link-btn" onClick={pwa.install}>Instalar app</button></>}
             {` · versão ${__BUILD__.sha} (${new Date(__BUILD__.at).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })})`}
           </span>
         </div>
@@ -122,6 +146,12 @@ export default function App() {
       {moreOpen && <div className="more-backdrop" onClick={() => setMoreOpen(false)} />}
       {moreOpen && (
         <div className="more-sheet" role="menu">
+          {pwa.available && (
+            <button className="more-install" role="menuitem" onClick={() => { setMoreOpen(false); pwa.install(); }}>
+              <Icon name="up" />
+              Instalar app
+            </button>
+          )}
           {MOBILE_MORE.map((n) => (
             <NavLink key={n.to} to={n.to} role="menuitem">
               <Icon name={n.icon} />

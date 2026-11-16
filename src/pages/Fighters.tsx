@@ -17,6 +17,27 @@ export default function Fighters() {
   const { data, error } = useFighters();
 
   // clicar fora (ou abrir outro menu) fecha os menus de filtro; as seleções ficam na URL
+  // ao abrir um menu, empurra-o para dentro da tela (celular: o botão fica à esquerda e o menu é mais largo que o espaço)
+  useEffect(() => {
+    const onToggle = (e: Event) => {
+      const d = e.target as HTMLDetailsElement;
+      if (!d.matches?.('details.country-filter') || !d.open) return;
+      const menu = d.querySelector<HTMLElement>('.country-menu');
+      if (!menu) return;
+      menu.style.translate = '0px';
+      requestAnimationFrame(() => {
+        const r = menu.getBoundingClientRect();
+        const M = 12;
+        let dx = 0;
+        if (r.right > window.innerWidth - M) dx = window.innerWidth - M - r.right;
+        if (r.left + dx < M) dx = M - r.left;
+        menu.style.translate = `${dx}px`;
+      });
+    };
+    document.addEventListener('toggle', onToggle, true);
+    return () => document.removeEventListener('toggle', onToggle, true);
+  }, []);
+
   useEffect(() => {
     const close = (e: Event) => {
       document.querySelectorAll<HTMLDetailsElement>('details.country-filter[open]').forEach((d) => {
