@@ -342,3 +342,31 @@ export interface UpsetFight {
   m: string;                 // método (KO, SUB, DEC…)
   mk: boolean;               // a previsão incluiu o sinal de mercado
 }
+
+/** Pico de Elo de um lutador (todos os que já lutaram no UFC). */
+export interface EloPeakRow {
+  n: string;                  // nome
+  s: string | null;           // slug (só quem tem página)
+  p: number;                  // pico
+  pd: string;                 // data do pico (após a luta)
+  c: number;                  // Elo atual (após a última luta)
+  f: number;                  // lutas no UFC
+  v: DivisionKey;             // última categoria
+  y0: number;                 // ano da estreia
+  y1: number;                 // ano da última luta
+  a: boolean;                 // ativo em 2026
+}
+
+/** Previsão para as lutas dos próximos eventos (modelo final aplicado ao retrato atual de cada lutador). */
+export interface UpcomingForecast {
+  event: { id: string; name: string; date: string | null };
+  v: DivisionKey;
+  t: boolean;
+  rounds: number;
+  a: [name: string, slug: string | null];
+  b: [name: string, slug: string | null];
+  /** chance de `a` — combinada, só estatísticas e mercado (null se não há linha) */
+  p: number;
+  ps: number;
+  pm: number | null;
+}

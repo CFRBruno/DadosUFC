@@ -58,6 +58,9 @@ Os números são recalculados a cada atualização e aparecem em `/modelo`.
 
 - **Zebras e favoritos** (`/ranking/zebras`): ranking das lutas desde 2015 pela chance pré-luta do vencedor: as maiores zebras (vencedor com a menor chance) e os favoritos que venceram, em peso absoluto ou por categoria, com filtro de período e de disputas de cinturão. Os dados saem de `public/data/upsets.json`.
 
+- **Elo histórico** (`/ranking/elo`): o maior Elo (pico) de cada lutador que já lutou no UFC desde 1993 (`elo-peaks.json`), por categoria ou absoluto, com mínimo de lutas e filtro de era.
+- **Zebras e favoritos dos próximos eventos** (`/ranking/zebras?quando=proximas`): previsão do modelo final para cada luta marcada (`upcoming-forecast.json`), com favoritos e azarões, lutas equilibradas e onde estatísticas e mercado discordam.
+
 ### Linhas de mercado
 
 A ESPN só publica as linhas perto da data da luta e depois as retira. Por isso, cada execução do pipeline guarda o que encontrar em `data/odds/archive.json`, e o GitHub Actions grava esse arquivo de volta no repositório (commit automático "Atualiza arquivo de linhas de mercado"). Se você trabalha no repositório localmente, faça `git pull` antes de enviar alterações.

@@ -294,3 +294,5 @@ a.rk-row:hover { background: #1b1b1f; transform: translateX(3px); }
 .up-bar { height: 6px; border-radius: 3px; background: #7f1d1d; overflow: hidden; }
 .up-bar i { display: block; height: 100%; background: #22c55e; transform-origin: left; animation: barGrow 0.9s var(--ease-out) 0.1s both; }
 @media (max-width: 640px) { .up-row { grid-template-columns: 34px minmax(0, 1fr) auto; } .up-odds { display: none; } }
+
+.elo-row { grid-template-columns: 40px minmax(0, 1fr) minmax(60px, 180px) auto; }

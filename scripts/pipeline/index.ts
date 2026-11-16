@@ -4,10 +4,11 @@
 
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
-import { DIVISION_BY_KEY, MAIN_DIVISIONS, parseWeightClass, type DivisionKey } from '../../src/shared/divisions';
+import { DIVISION_BY_KEY, divisionLbs, MAIN_DIVISIONS, parseWeightClass, type DivisionKey } from '../../src/shared/divisions';
+import { atDate, predictStats, withMarket } from '../../src/shared/model2';
 import type {
   RankingRow, TitleFight,
-  EventInfo, FightEntry, FighterDetail, FighterSummary, FightPred, MethodBreakdown, Meta, OfficialBoard, StatRank, UpsetFight, TitleReign, UpcomingBout,
+  EventInfo, FightEntry, FighterDetail, FighterSummary, FightPred, MethodBreakdown, EloPeakRow, Meta, OfficialBoard, StatRank, UpcomingForecast, UpsetFight, TitleReign, UpcomingBout,
 } from '../../src/shared/types';
 import { S } from '../../src/shared/types';
 import { emptyState } from '../../src/shared/model';
@@ -460,6 +461,37 @@ async function main() {
     });
   }
   await writeFile(path.join(OUT, 'upsets.json'), JSON.stringify(upsets));
+  // pico de Elo de todos os lutadores que já lutaram no UFC
+  const eloPeaks: EloPeakRow[] = [];
+  for (const [id, hist] of proc.eloHistory) {
+    if (!hist.length) continue;
+    let peak = hist[0];
+    for (const h of hist) if (h[1] > peak[1]) peak = h;
+    const fs = fightsBy.get(id) ?? [];
+    const last = fs[fs.length - 1];
+    const d = detailById.get(id);
+    eloPeaks.push({
+      n: bios.get(id)?.name ?? id, s: d?.slug ?? null, p: peak[1], pd: peak[0], c: hist[hist.length - 1][1], f: fs.filter((x) => x.outcome !== 'NC').length || fs.length,
+      v: lastDivision(id), y0: Number(fs[0].date.slice(0, 4)), y1: Number(last.date.slice(0, 4)), a: !!d?.active,
+    });
+  }
+  await writeFile(path.join(OUT, 'elo-peaks.json'), JSON.stringify(eloPeaks));
+
+  // previsão das lutas dos próximos eventos
+  const forecasts: UpcomingForecast[] = [];
+  for (const ev of upcomingEvents) {
+    for (const b of ev.bouts) {
+      const A = b.a.id ? detailById.get(b.a.id) : undefined, B = b.b.id ? detailById.get(b.b.id) : undefined;
+      if (!A || !B || !b.date) continue;
+      const when = Date.parse(b.date), lbs = divisionLbs(b.division);
+      const st = predictStats(model.v2, atDate(A.fv, when, lbs), atDate(B.fv, when, lbs));
+      const pc = withMarket(model.v2, st.z, b.mk ?? null);
+      const r3 = (x: number) => Math.round(x * 1e3) / 1e3;
+      forecasts.push({ event: { id: ev.id, name: ev.name, date: ev.date }, v: b.division, t: b.title, rounds: b.rounds, a: [b.a.name, A.slug], b: [b.b.name, B.slug], p: r3(pc), ps: r3(st.p), pm: b.mk != null && model.v2.market ? r3(b.mk) : null });
+    }
+  }
+  await writeFile(path.join(OUT, 'upcoming-forecast.json'), JSON.stringify(forecasts));
+
   await writeFile(path.join(OUT, 'official-rankings.json'), JSON.stringify(board));
   for (const [key, div] of Object.entries(th.history.divisions)) {
     const story = buildStory(div, today);

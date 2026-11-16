@@ -15,6 +15,7 @@ import About from './pages/About';
 import Ranking from './pages/Ranking';
 import Titles from './pages/Titles';
 import Upsets from './pages/Upsets';
+import EloPeaks from './pages/EloPeaks';
 
 type Nav = { to: string; label: string; icon: Parameters<typeof Icon>[0]['name']; end?: boolean };
 const NAV: Nav[] = [
@@ -131,6 +132,7 @@ export default function App() {
           <Route path="/comparar" element={<Compare />} />
           <Route path="/ranking" element={<Ranking />} />
           <Route path="/ranking/zebras" element={<Upsets />} />
+          <Route path="/ranking/elo" element={<EloPeaks />} />
           <Route path="/eventos" element={<Events />} />
           <Route path="/evento/:id" element={<EventPage />} />
           <Route path="/cinturoes" element={<Titles />} />
