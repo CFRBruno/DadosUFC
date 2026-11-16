@@ -7,8 +7,9 @@ import { useEffect, useRef } from 'react';
  * - elementos com data-depth dentro da seção se deslocam em profundidades diferentes.
  * Com "reduzir movimento" desenha apenas um quadro estático.
  */
-interface Node { x: number; y: number; vx: number; vy: number; r: number }
-interface Pulse { path: { x: number; y: number }[]; seg: number; t: number }
+interface Node { x: number; y: number; vx: number; vy: number; r: number; flash: number }
+/** Faísca elétrica: um traço curto e fino que corre pela rede, acendendo as linhas por onde passa. */
+interface Pulse { path: { x: number; y: number; n?: number }[]; seg: number; d: number; left: number[] }
 
 export default function HeroFX({ hostRef }: { hostRef: React.RefObject<HTMLElement | null> }) {
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -38,7 +39,7 @@ export default function HeroFX({ hostRef }: { hostRef: React.RefObject<HTMLEleme
       const n = Math.max(28, Math.min(80, Math.round((W * H) / 11000)));
       nodes = Array.from({ length: n }, () => ({
         x: Math.random() * W, y: Math.random() * H,
-        vx: (Math.random() - 0.5) * 0.18, vy: (Math.random() - 0.5) * 0.18, r: 1 + Math.random() * 1.3,
+        vx: (Math.random() - 0.5) * 0.18, vy: (Math.random() - 0.5) * 0.18, r: 1 + Math.random() * 1.3, flash: 0,
       }));
     };
 
@@ -50,15 +51,17 @@ export default function HeroFX({ hostRef }: { hostRef: React.RefObject<HTMLEleme
       return out;
     };
     const spawn = (from: { x: number; y: number }, firstIdx: number) => {
-      const path = [from, nodes[firstIdx]];
+      const path: { x: number; y: number; n?: number }[] = [from, { x: nodes[firstIdx].x, y: nodes[firstIdx].y, n: firstIdx }];
       let cur = firstIdx;
-      for (let h = 0; h < 3; h++) {
-        const nb = neighbors(cur).filter((j) => !path.includes(nodes[j]));
+      const seen = new Set([firstIdx]);
+      for (let h = 0; h < 4; h++) {
+        const nb = neighbors(cur).filter((j) => !seen.has(j));
         if (!nb.length) break;
         cur = nb[Math.floor(Math.random() * nb.length)];
-        path.push(nodes[cur]);
+        seen.add(cur);
+        path.push({ x: nodes[cur].x, y: nodes[cur].y, n: cur });
       }
-      if (pulses.length < 9) pulses.push({ path: path.map((p) => ({ x: p.x, y: p.y })), seg: 0, t: 0 });
+      if (pulses.length < 8) pulses.push({ path, seg: 0, d: 0, left: [] });
     };
 
     const frame = (now: number) => {
@@ -115,24 +118,66 @@ export default function HeroFX({ hostRef }: { hostRef: React.RefObject<HTMLEleme
         });
         ctx.lineWidth = 1;
       }
-      // pontos (os ligados ao cursor brilham)
+      // pontos (os ligados ao cursor ficam mais claros; ao receber a faísca, piscam)
       for (const n of nodes) {
         const d = mouse.on ? Math.hypot(mouse.x - n.x, mouse.y - n.y) : 1e9;
         const glow = d < CURSOR ? 1 - d / CURSOR : 0;
-        ctx.fillStyle = glow > 0 ? `rgba(255, ${110 + 90 * glow}, ${110 + 90 * glow}, ${0.5 + glow * 0.5})` : 'rgba(190, 80, 86, 0.55)';
-        ctx.beginPath(); ctx.arc(n.x, n.y, n.r + glow * 1.4, 0, Math.PI * 2); ctx.fill();
+        n.flash = Math.max(0, n.flash - 0.035 * dt);
+        const w = Math.max(glow * 0.7, n.flash);
+        ctx.fillStyle = w > 0 ? `rgba(255, ${100 + 140 * w}, ${100 + 140 * w}, ${0.55 + w * 0.45})` : 'rgba(190, 80, 86, 0.55)';
+        ctx.beginPath(); ctx.arc(n.x, n.y, n.r + w * 0.9, 0, Math.PI * 2); ctx.fill();
       }
-      // pulsos viajando (sinapses)
+      // faíscas: traço curto com cauda que se apaga; as linhas já percorridas ficam acesas e esmaecem
+      ctx.lineCap = 'round';
+      const TAIL = 46, SPEED = 4.2;
       for (let p = pulses.length - 1; p >= 0; p--) {
         const u = pulses[p];
-        u.t += 0.035 * dt;
-        if (u.t >= 1) { u.t = 0; u.seg++; }
-        if (u.seg >= u.path.length - 1) { pulses.splice(p, 1); continue; }
-        const a = u.path[u.seg], b = u.path[u.seg + 1];
-        const x = a.x + (b.x - a.x) * u.t, y = a.y + (b.y - a.y) * u.t;
-        const g = ctx.createRadialGradient(x, y, 0, x, y, 14);
-        g.addColorStop(0, 'rgba(255, 235, 235, 0.95)'); g.addColorStop(0.25, 'rgba(255, 70, 78, 0.65)'); g.addColorStop(1, 'rgba(237, 28, 36, 0)');
-        ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y, 14, 0, Math.PI * 2); ctx.fill();
+        for (const q of u.path) if (q.n != null) { q.x = nodes[q.n].x; q.y = nodes[q.n].y; } // acompanha os pontos à deriva
+        // linhas por onde já passou
+        for (let i = 0; i < u.seg; i++) {
+          const age = (now - (u.left[i] ?? now)) / 900;
+          if (age >= 1) continue;
+          const a = u.path[i], b = u.path[i + 1];
+          ctx.strokeStyle = `rgba(255, 90, 96, ${(1 - age) * 0.55})`;
+          ctx.lineWidth = 1.2;
+          ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+        }
+        if (u.seg >= u.path.length - 1) { if (now - (u.left[u.seg - 1] ?? 0) > 900) pulses.splice(p, 1); continue; }
+        u.d += SPEED * dt;
+        let a = u.path[u.seg], b = u.path[u.seg + 1];
+        let len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+        while (u.d >= len && u.seg < u.path.length - 1) {
+          u.d -= len; u.left[u.seg] = now;
+          if (b.n != null) nodes[b.n].flash = 1;
+          u.seg++;
+          if (u.seg >= u.path.length - 1) break;
+          a = u.path[u.seg]; b = u.path[u.seg + 1]; len = Math.hypot(b.x - a.x, b.y - a.y) || 1;
+        }
+        if (u.seg >= u.path.length - 1) continue;
+        // posição da cabeça e da cauda (a cauda pode estar no trecho anterior)
+        const head = { x: a.x + ((b.x - a.x) * u.d) / len, y: a.y + ((b.y - a.y) * u.d) / len };
+        const pts = [head];
+        let remain = TAIL, sx = head.x, sy = head.y, si = u.seg, from = u.d;
+        while (remain > 0 && si >= 0) {
+          const pa = u.path[si], pb = u.path[si + 1];
+          const sl = Math.hypot(pb.x - pa.x, pb.y - pa.y) || 1;
+          const back = Math.min(remain, from);
+          sx = pa.x + ((pb.x - pa.x) * (from - back)) / sl; sy = pa.y + ((pb.y - pa.y) * (from - back)) / sl;
+          pts.push({ x: sx, y: sy });
+          remain -= back;
+          si--; if (si >= 0) from = Math.hypot(u.path[si + 1].x - u.path[si].x, u.path[si + 1].y - u.path[si].y);
+        }
+        // subdivide para a cauda ter degradê suave
+        const fine: { x: number; y: number }[] = [];
+        for (let i = 0; i < pts.length - 1; i++) for (let j = 0; j < 8; j++) fine.push({ x: pts[i].x + ((pts[i + 1].x - pts[i].x) * j) / 8, y: pts[i].y + ((pts[i + 1].y - pts[i].y) * j) / 8 });
+        fine.push(pts[pts.length - 1]);
+        pts.length = 0; pts.push(...fine);
+        for (let i = 0; i < pts.length - 1; i++) {
+          const k = 1 - i / (pts.length - 1);
+          ctx.strokeStyle = `rgba(255, ${70 + 170 * k * k}, ${76 + 164 * k * k}, ${0.12 + 0.88 * k})`;
+          ctx.lineWidth = 0.7 + 1.5 * k;
+          ctx.beginPath(); ctx.moveTo(pts[i].x, pts[i].y); ctx.lineTo(pts[i + 1].x, pts[i + 1].y); ctx.stroke();
+        }
       }
       ctx.restore();
 
