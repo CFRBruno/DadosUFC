@@ -3,13 +3,14 @@ import { Link } from 'react-router-dom';
 import { ResultBoutRow, UpcomingBoutRow } from '../components/events';
 import { FighterCard } from '../components/fighters';
 import HeroFX from '../components/HeroFX';
-import { CountUp, Icon, Loading } from '../components/ui';
+import { CountUp, Loading } from '../components/ui';
 import { useEvents, useFighters, useMeta } from '../lib/data';
 import { fmtDate, fmtPct } from '../lib/format';
 import { MAIN_DIVISIONS } from '../shared/divisions';
 import type { FighterSummary } from '../shared/types';
 
 function HeroVisual({ count }: { count: number | null }) {
+  const [k, setK] = useState(0);
   const oct = (r: number) =>
     Array.from({ length: 8 }, (_, i) => {
       const a = (Math.PI / 8) * (2 * i + 1);
@@ -37,7 +38,7 @@ function HeroVisual({ count }: { count: number | null }) {
           <polygon points={oct(76)} fill="none" stroke="#ed1c24" strokeWidth="6" opacity="0.5" filter="url(#blur)" />
           <polygon points={oct(76)} fill="#050000" stroke="#ed1c24" strokeWidth="2" />
           <circle cx="128" cy="118" r="3" fill="#ed1c24" />
-          <text x="200" y="196" textAnchor="middle" fill="#ed1c24" fontFamily="Roboto Mono, monospace" fontWeight="700" fontSize="26" letterSpacing="2">{count == null ? '—' : <CountUp value={count} fromZero ms={1700} format={(n) => String(Math.round(n))} />}</text>
+          <text className={k > 0 && k < 1 ? 'shaking' : ''} x="200" y="196" textAnchor="middle" fill="#ed1c24" fontFamily="Roboto Mono, monospace" fontWeight="700" fontSize="26" letterSpacing="2">{count == null ? '—' : <CountUp value={count} fromZero ms={1700} format={(n) => String(Math.round(n))} onProgress={setK} />}</text>
           <text x="200" y="220" textAnchor="middle" fill="#ed1c24" fontFamily="Roboto Mono, monospace" fontWeight="700" fontSize="11" letterSpacing="3">LUTADORES</text>
         </g>
       </svg>
@@ -45,21 +46,37 @@ function HeroVisual({ count }: { count: number | null }) {
   );
 }
 
-/** Estatísticas do herói: os números sobem; a seta verde pisca e cresce com o acerto e some ao chegar. */
+/** Seta grossa que funciona como barra de progresso vertical: enche de baixo para cima com o acerto. */
+function ProgressArrow({ k }: { k: number }) {
+  const id = 'arrowFill';
+  return (
+    <span className={`acc-arrow ${k > 0 && k < 1 ? 'on' : ''}`} aria-hidden="true">
+      <svg viewBox="0 0 24 32">
+        <defs>
+          <clipPath id={id}><rect x="0" y={32 - 32 * k} width="24" height={32 * k} /></clipPath>
+        </defs>
+        <path className="arrow-shape back" d="M12 1 23 14h-7v17H8V14H1Z" />
+        <path className="arrow-shape fill" d="M12 1 23 14h-7v17H8V14H1Z" clipPath={`url(#${id})`} />
+      </svg>
+    </span>
+  );
+}
+
+/** Estatísticas do herói: os números sobem tremendo de leve; a seta-barra enche com o acerto e some ao chegar. */
 function HeroStats({ fighters, accuracy, fights }: { fighters: number; accuracy: number; fights: number }) {
-  const [k, setK] = useState(0);
-  const running = k > 0 && k < 1;
+  const [kF, setKF] = useState(0), [kA, setKA] = useState(0), [kL, setKL] = useState(0);
+  const run = (k: number) => (k > 0 && k < 1 ? 'shaking' : '');
   return (
     <div className="hero-stats">
-      <div><b><CountUp value={fighters} fromZero ms={1700} format={(n) => String(Math.round(n))} /></b><span>Lutadores</span></div>
+      <div><b><span className={`num ${run(kF)}`}><CountUp value={fighters} fromZero ms={1700} format={(n) => String(Math.round(n))} onProgress={setKF} /></span></b><span>Lutadores</span></div>
       <div>
         <b className="acc-num">
-          <CountUp value={accuracy} fromZero ms={2000} delay={150} format={(n) => fmtPct(n)} onProgress={setK} />
-          <span className={`acc-arrow ${running ? 'on' : ''}`} style={{ '--k': k } as React.CSSProperties} aria-hidden="true"><Icon name="up" /></span>
+          <span className={`num ${run(kA)}`}><CountUp value={accuracy} fromZero ms={2000} delay={150} format={(n) => fmtPct(n)} onProgress={setKA} /></span>
+          <ProgressArrow k={kA} />
         </b>
         <span>Acerto em lutas marcadas</span>
       </div>
-      <div><b><CountUp value={fights} fromZero ms={1900} delay={300} format={(n) => Math.round(n).toLocaleString('pt-BR')} /></b><span>Lutas na base</span></div>
+      <div><b><span className={`num ${run(kL)}`}><CountUp value={fights} fromZero ms={1900} delay={300} format={(n) => Math.round(n).toLocaleString('pt-BR')} onProgress={setKL} /></span></b><span>Lutas na base</span></div>
     </div>
   );
 }

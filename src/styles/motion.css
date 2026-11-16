@@ -150,7 +150,15 @@ a:hover > .chip, .fighter-card:hover .chip { transform: translateY(-1px); }
 .hero .container { z-index: 1; }
 [data-depth] { will-change: transform; }
 .acc-num { display: inline-flex; align-items: center; gap: 4px; }
-.acc-arrow { display: inline-grid; place-items: center; width: 22px; height: 22px; color: #22c55e; opacity: 0; transform: scale(0.6); transition: opacity 0.45s ease, transform 0.45s var(--ease-out); }
-.acc-arrow svg { width: 100%; height: 100%; stroke-width: 3; filter: drop-shadow(0 0 6px rgba(34, 197, 94, 0.75)); }
-.acc-arrow.on { opacity: 1; transform: scale(calc(0.8 + var(--k, 0) * 0.9)); animation: arrowBlink 0.55s ease-in-out infinite; transition: none; }
-@keyframes arrowBlink { 0%, 100% { opacity: 1; } 50% { opacity: 0.25; } }
+.acc-arrow { display: inline-block; width: 16px; height: 22px; margin-left: 2px; opacity: 0; transition: opacity 0.5s ease; }
+.acc-arrow.on { opacity: 1; transition: none; }
+.acc-arrow svg { width: 100%; height: 100%; overflow: visible; }
+.arrow-shape { stroke-linejoin: round; stroke-width: 1.5; }
+.arrow-shape.back { fill: rgba(34, 197, 94, 0.14); stroke: rgba(34, 197, 94, 0.55); }
+.arrow-shape.fill { fill: #22c55e; stroke: #22c55e; filter: drop-shadow(0 0 5px rgba(34, 197, 94, 0.8)); }
+/* tremor leve enquanto o número sobe */
+@keyframes tremble { 0% { transform: translate(0, 0); } 25% { transform: translate(0.7px, -0.5px); } 50% { transform: translate(-0.6px, 0.6px); } 75% { transform: translate(0.5px, 0.4px); } 100% { transform: translate(0, 0); } }
+.shaking { animation: tremble 0.12s linear infinite; }
+.hero-stats .num.shaking { display: inline-block; }
+/* o número herda o estilo do <b> (as regras de ".hero-stats span" são só dos rótulos) */
+.hero-stats b .num { font: inherit; color: inherit; letter-spacing: inherit; text-transform: none; }
