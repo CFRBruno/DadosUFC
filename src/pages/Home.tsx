@@ -5,12 +5,17 @@ import { FighterCard } from '../components/fighters';
 import HeroFX from '../components/HeroFX';
 import { CountUp, Loading } from '../components/ui';
 import { useEvents, useFighters, useMeta } from '../lib/data';
-import { fmtDate, fmtPct } from '../lib/format';
+import { fmtDate, fmtPct, todayIso } from '../lib/format';
 import { MAIN_DIVISIONS } from '../shared/divisions';
 import type { FighterSummary } from '../shared/types';
 
-function HeroVisual({ count }: { count: number | null }) {
+function HeroVisual({ next }: { next: { name: string; date: string | null } | null }) {
   const [k, setK] = useState(0);
+  // dias até o próximo evento (as datas vêm sem horário) e nome curto ("UFC 335", "UFC Fight Night")
+  const days = next?.date ? Math.round((Date.parse(next.date) - Date.parse(todayIso())) / 864e5) : null;
+  const parts = (next?.name ?? '').split(':');
+  const numbered = /^UFC \d+/.test(parts[0]);
+  const label = (numbered ? parts[0] : (parts[1] ?? parts[0]).trim().replace(/\s+vs\.?\s+/i, ' × ')).toUpperCase();
   const oct = (r: number) =>
     Array.from({ length: 8 }, (_, i) => {
       const a = (Math.PI / 8) * (2 * i + 1);
@@ -38,8 +43,22 @@ function HeroVisual({ count }: { count: number | null }) {
           <polygon points={oct(76)} fill="none" stroke="#ed1c24" strokeWidth="6" opacity="0.5" filter="url(#blur)" />
           <polygon points={oct(76)} fill="#050000" stroke="#ed1c24" strokeWidth="2" />
           <circle cx="128" cy="118" r="3" fill="#ed1c24" />
-          <text className={k > 0 && k < 1 ? 'shaking' : ''} x="200" y="196" textAnchor="middle" fill="#ed1c24" fontFamily="Roboto Mono, monospace" fontWeight="700" fontSize="26" letterSpacing="2">{count == null ? '—' : <CountUp value={count} fromZero ms={1700} format={(n) => String(Math.round(n))} onProgress={setK} />}</text>
-          <text x="200" y="220" textAnchor="middle" fill="#ed1c24" fontFamily="Roboto Mono, monospace" fontWeight="700" fontSize="11" letterSpacing="3">LUTADORES</text>
+          {days == null ? (
+            <text x="200" y="206" textAnchor="middle" fill="#ed1c24" fontFamily="Roboto Mono, monospace" fontWeight="700" fontSize="11" letterSpacing="3">PRÓXIMO EVENTO</text>
+          ) : (
+            <>
+              <text x="200" y="170" textAnchor="middle" fill="#ed1c24" fontFamily="Roboto Mono, monospace" fontWeight="700" fontSize="9.5" letterSpacing="3">PRÓXIMO EVENTO</text>
+              {days <= 0 ? (
+                <text x="200" y="208" textAnchor="middle" fill="#ed1c24" fontFamily="Roboto Mono, monospace" fontWeight="700" fontSize="30" letterSpacing="2">HOJE</text>
+              ) : (
+                <>
+                  <text className={k > 0 && k < 1 ? 'shaking' : ''} x="200" y="206" textAnchor="middle" fill="#ed1c24" fontFamily="Roboto Mono, monospace" fontWeight="700" fontSize="40"><CountUp value={days} fromZero ms={1500} format={(n) => String(Math.round(n))} onProgress={setK} /></text>
+                  <text x="200" y="224" textAnchor="middle" fill="#ed1c24" fontFamily="Roboto Mono, monospace" fontWeight="700" fontSize="10" letterSpacing="4">{days === 1 ? 'DIA' : 'DIAS'}</text>
+                </>
+              )}
+              <text x="200" y="241" textAnchor="middle" fill="#ff6b70" fontFamily="Roboto Mono, monospace" fontWeight="700" fontSize={label.length > 18 ? 8 : 10} letterSpacing="1">{label}</text>
+            </>
+          )}
         </g>
       </svg>
     </div>
@@ -121,7 +140,7 @@ export default function Home() {
             </div>
             {meta && <HeroStats fighters={meta.fighterCount} accuracy={meta.model.accuracy} fights={meta.fightCount} />}
           </div>
-          <HeroVisual count={meta?.fighterCount ?? null} />
+          <HeroVisual next={nextEvent ? { name: nextEvent.name, date: nextEvent.date } : null} />
         </div>
       </section>
 

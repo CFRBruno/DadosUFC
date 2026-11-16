@@ -162,3 +162,6 @@ a:hover > .chip, .fighter-card:hover .chip { transform: translateY(-1px); }
 .hero-stats .num.shaking { display: inline-block; }
 /* o número herda o estilo do <b> (as regras de ".hero-stats span" são só dos rótulos) */
 .hero-stats b .num { font: inherit; color: inherit; letter-spacing: inherit; text-transform: none; }
+
+/* textos do herói não são selecionáveis (nem o seletor de texto aparece ao arrastar) */
+.hero-visual, .hero-stats, .hero-visual text { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; cursor: default; }
