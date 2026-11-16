@@ -33,6 +33,7 @@ export default defineConfig({
       workbox: {
         navigateFallback: '/index.html',
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        globIgnores: ['data/**'], // fotos e dados são baixados sob demanda
         runtimeCaching: [
           {
             // dados: rede primeiro (dados novos sempre que houver internet); o cache só cobre a falta de conexão

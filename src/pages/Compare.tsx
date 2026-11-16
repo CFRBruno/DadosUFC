@@ -1,4 +1,4 @@
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { BodyMap, CmpBar } from '../components/charts';
 import { compareUrl } from '../components/events';
@@ -6,6 +6,7 @@ import { FighterPicker } from '../components/fighters';
 import { Avatar, CountUp, Flag, Icon, Loading, ResultBadge, Rich } from '../components/ui';
 import { analyze, shortName, type Analysis } from '../lib/compare';
 import { useEvents, useFighter, useFighters, useModel } from '../lib/data';
+import { renderShareImage, type ShareData } from '../lib/shareImage';
 import { divisionName, fmtDate, fmtDateShort, fmtInt, fmtNum, fmtPct, recordStr, todayIso } from '../lib/format';
 import { DIVISION_BY_KEY, type DivisionKey } from '../shared/divisions';
 import type { FighterDetail, FighterSummary, ModelParams } from '../shared/types';
@@ -161,6 +162,7 @@ function AnalysisView({ A, B, an, model }: { A: FighterDetail; B: FighterDetail;
       {/* Previsão */}
       <div className="panel">
         <div className="panel-title">Previsão</div>
+        <ShareButtons A={A} B={B} an={an} />
         <div className="predict-top">
           <div>
             <div className="pct" style={{ color: 'var(--a)' }}><CountUp value={an.pA} format={(n) => fmtPct(n)} /></div>
@@ -368,6 +370,64 @@ function AnalysisView({ A, B, an, model }: { A: FighterDetail; B: FighterDetail;
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+const METHOD_PT: Record<'KO' | 'SUB' | 'DEC', string> = { KO: 'KO/TKO', SUB: 'finalização', DEC: 'decisão' };
+
+/** Gera a imagem da previsão e permite copiar para a área de transferência, compartilhar ou baixar. */
+function ShareButtons({ A, B, an }: { A: FighterDetail; B: FighterDetail; an: Analysis }) {
+  const [msg, setMsg] = useState('');
+  const [busy, setBusy] = useState(false);
+  const photo = (f: FighterDetail) => (f.photoLocal ? `${import.meta.env.BASE_URL}data/${f.photoLocal}` : null);
+  const data = (): ShareData => ({
+    a: { name: A.name, record: recordStr(A.record), photo: photo(A) },
+    b: { name: B.name, record: recordStr(B.record), photo: photo(B) },
+    context: `${divisionName(an.division)} · ${an.rounds} rounds`,
+    pA: an.pA,
+    reads: an.usesMarket && an.pMarket != null ? [{ label: 'Estatísticas', p: an.pStats }, { label: 'Mercado', p: an.pMarket }, { label: 'Combinada', p: an.pA }] : undefined,
+    mostLikely: `${an.mostLikely.side === 'A' ? A.name : B.name} por ${METHOD_PT[an.mostLikely.method]}`,
+    mostLikelyP: an.mostLikely.p,
+    methodsA: an.methodGivenWin.A,
+    methodsB: an.methodGivenWin.B,
+  });
+  const file = `${A.slug}-x-${B.slug}.png`;
+  const flash = (t: string) => { setMsg(t); setTimeout(() => setMsg(''), 3500); };
+  const download = (blob: Blob) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = file; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+  };
+  const canCopy = typeof ClipboardItem !== 'undefined' && !!navigator.clipboard?.write;
+  const run = async (kind: 'copy' | 'share' | 'download') => {
+    if (busy) return;
+    setBusy(true);
+    try {
+      const pending = renderShareImage(data());
+      if (kind === 'copy') {
+        if (!canCopy) { download(await pending); flash('Este navegador não permite copiar imagens; baixei o arquivo.'); }
+        else {
+          try { await navigator.clipboard.write([new ClipboardItem({ 'image/png': pending })]); flash('Imagem copiada! É só colar.'); }
+          catch { download(await pending); flash('Não consegui copiar (permissão do navegador); baixei o arquivo.'); }
+        }
+      } else if (kind === 'share') {
+        const blob = await pending;
+        const f = new File([blob], file, { type: 'image/png' });
+        if (navigator.canShare?.({ files: [f] })) await navigator.share({ files: [f], title: `${A.name} × ${B.name}` });
+        else { download(blob); flash('Compartilhamento indisponível aqui; baixei o arquivo.'); }
+      } else { download(await pending); flash('Imagem baixada.'); }
+    } catch (e) {
+      if ((e as Error).name !== 'AbortError') flash('Não foi possível gerar a imagem.');
+    } finally { setBusy(false); }
+  };
+  return (
+    <div className="share-bar">
+      <button className="btn btn-ghost btn-sm" onClick={() => run('copy')} disabled={busy}><Icon name="copy" /> Copiar imagem</button>
+      {typeof navigator.canShare === 'function' && <button className="btn btn-ghost btn-sm" onClick={() => run('share')} disabled={busy}><Icon name="share" /> Compartilhar</button>}
+      <button className="btn btn-ghost btn-sm" onClick={() => run('download')} disabled={busy}><Icon name="down" /> Baixar</button>
+      <span className="share-msg" role="status" aria-live="polite">{msg}</span>
     </div>
   );
 }

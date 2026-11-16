@@ -21,7 +21,7 @@ import { classifyStyle, computeForm, computePercentiles, computeRates, recentStr
 import { loadDataset, type RawFight } from './load';
 import { fetchWikiPhotos, photoMatcher } from './photos';
 import { buildTitleHistory } from './titleHistory';
-import { checkHeadshots, countryPt, espnHeadshot, espnPage, espnUpcoming, fetchEspn, matchEspnIds } from './espn';
+import { checkHeadshots, countryPt, espnHeadshot, espnPage, espnUpcoming, fetchEspn, localPhotos, matchEspnIds } from './espn';
 import { fetchOfficialRankings } from './rankings';
 import { loadScorecards, scorecardLookup, updateScorecards } from './scorecards';
 import { buildStory } from '../../src/lib/titleStory';
@@ -371,6 +371,12 @@ async function main() {
       division: f.division,
       title: f.title,
       scheduledRounds: f.scheduledRounds,
+      ...(() => {
+        const po = trained.pOos.get(f.id), mi = methodInfo.get(f.id);
+        if (!po || !mi) return {};
+        const r4 = (m: { KO: number; SUB: number; DEC: number }) => ({ KO: Math.round(m.KO * 1e4) / 1e4, SUB: Math.round(m.SUB * 1e4) / 1e4, DEC: Math.round(m.DEC * 1e4) / 1e4 });
+        return { pred: { pA: Math.round(po.p * 1e4) / 1e4, mk: po.mk, shA: r4(mi.sharesA), shB: r4(mi.sharesB) } };
+      })(),
     });
   }
   // o CSV traz o card do evento principal para baixo; invertemos p/ main event no topo
@@ -380,6 +386,9 @@ async function main() {
   console.log('• Gravando JSON…');
   await rm(OUT, { recursive: true, force: true });
   await mkdir(path.join(OUT, 'fighters'), { recursive: true });
+  const idOfPhoto = (u: string | null) => (u ? /full\/(\d+)\.png/.exec(u)?.[1] : undefined);
+  const localSet = await localPhotos(details.map((d) => idOfPhoto(d.photo)).filter((x): x is string => !!x), path.join(OUT, 'photos'), offline);
+  for (const d of details) { const pid = idOfPhoto(d.photo); if (pid && localSet.has(pid)) d.photoLocal = `photos/${pid}.png`; }
   await writeFile(path.join(OUT, 'model.json'), JSON.stringify(model));
   await writeFile(path.join(OUT, 'events.json'), JSON.stringify({ upcoming: upcomingEvents, past }));
 
@@ -455,8 +464,8 @@ async function main() {
   }
 
   const summaries: FighterSummary[] = details
-    .map(({ id, slug, name, nickname, division, women, record, elo, lastFight, age, style, streak, upcoming, photo, photoPage, country, flag, official, champ }) => ({
-      id, slug, name, nickname, division, women, record, elo, lastFight, age, style, streak, upcoming, photo, photoPage, country, flag, official, champ,
+    .map(({ id, slug, name, nickname, division, women, record, elo, lastFight, age, style, streak, upcoming, photo, photoPage, country, flag, photoLocal, official, champ }) => ({
+      id, slug, name, nickname, division, women, record, elo, lastFight, age, style, streak, upcoming, photo, photoPage, country, flag, photoLocal, official, champ,
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
   await writeFile(path.join(OUT, 'fighters.json'), JSON.stringify(summaries));

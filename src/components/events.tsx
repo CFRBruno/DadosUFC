@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { modelFavorite, modelHit } from '../lib/hits';
 import type { EventFight, FighterSummary, UpcomingBout } from '../shared/types';
 import { divisionName, recordStr } from '../lib/format';
 import { METHOD_LABEL } from '../shared/translate';
@@ -43,6 +44,7 @@ export function ResultBoutRow({ f }: { f: EventFight }) {
   const how = f.result === 'NC' ? 'Sem resultado' : f.result === 'D' ? 'Empate' : METHOD_LABEL[f.method];
   const winSlug = (f.winner === 0 ? f.a.slug : f.winner === 1 ? f.b.slug : f.a.slug) ?? f.a.slug ?? f.b.slug;
   const nav = useNavigate();
+  const hit = modelHit(f), fav = modelFavorite(f);
   const url = winSlug ? `/lutador/${winSlug}/luta/${f.id}` : null;
   // a luta inteira é clicável; os nomes dos lutadores continuam levando ao perfil de cada um
   const open = (e: React.MouseEvent | React.KeyboardEvent) => {
@@ -53,7 +55,14 @@ export function ResultBoutRow({ f }: { f: EventFight }) {
     <div className="bout-wrap">
       <div className="bout-meta">
         <span>{f.title && <span style={{ color: 'var(--brand)' }}>Cinturão · </span>}{divisionName(f.division)}</span>
-        {url && <Link to={url} style={{ color: 'var(--brand)' }}>Estatísticas →</Link>}
+        <span className="bout-actions">
+          {hit != null && fav && (
+            <span className={`hit-chip ${hit ? 'ok' : 'no'}`} title={`Antes da luta, o modelo dava ${Math.round(fav.p * 100)}% para ${fav.name}`}>
+              {hit ? '✓ Modelo acertou' : '✗ Modelo errou'} · {Math.round(fav.p * 100)}%
+            </span>
+          )}
+          {url && <Link to={url} style={{ color: 'var(--brand)' }}>Estatísticas →</Link>}
+        </span>
       </div>
       <div
         className={`bout ${url ? 'clickable' : ''} ${f.winner === 0 ? 'win-a' : f.winner === 1 ? 'win-b' : f.result === 'D' ? 'draw' : ''}`}

@@ -190,6 +190,8 @@ export interface FighterSummary {
   /** país (pt-BR) e bandeira, via ESPN */
   country: string;
   flag: string;
+  /** foto hospedada no próprio site (usada ao gerar a imagem de compartilhamento, que não pode ler fotos de outros domínios) */
+  photoLocal?: string;
   official: OfficialRank | null;
   /** campeão atual / ex-campeão do UFC (cinturão linear; o BMF não conta) */
   champ: 'atual' | 'ex' | null;
@@ -258,6 +260,8 @@ export interface EventFight {
   division: DivisionKey;
   title: boolean;
   scheduledRounds: number;
+  /** previsão feita antes da luta (treinada só com lutas anteriores), do ponto de vista do lutador `a` */
+  pred?: { pA: number; mk: boolean; shA: { KO: number; SUB: number; DEC: number }; shB: { KO: number; SUB: number; DEC: number } };
 }
 
 export interface EventInfo {

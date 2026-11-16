@@ -1,11 +1,14 @@
+import { Link } from 'react-router-dom';
 import { ErrorBox, Loading } from '../components/ui';
-import { useMeta, useModel } from '../lib/data';
+import { useEvents, useMeta, useModel } from '../lib/data';
+import { eventScore } from '../lib/hits';
 import { fmtDate, fmtPct } from '../lib/format';
 import { FACTOR_LABEL } from '../shared/model2';
 
 export default function About() {
   const { data: model, error } = useModel();
   const meta = useMeta().data;
+  const events = useEvents().data;
   if (error) return <div className="container"><ErrorBox message={error} /></div>;
   if (!model) return <Loading />;
   const m = model.metrics;
@@ -49,6 +52,8 @@ export default function About() {
         </div>
       </div>
 
+      {events && <Scoreboard events={events.past} />}
+
       <div className="panel" style={{ marginTop: 16 }}>
         <div className="panel-title left">Peso de cada fator</div>
         <p className="note" style={{ marginBottom: 14 }}>Quanto cada grupo de variáveis costuma mover a previsão estatística, em média, nas lutas desde {m.stats.from.slice(0, 4)}. Cada grupo soma várias medidas (carreira, lutas recentes e ajuste pelo adversário).</p>
@@ -70,6 +75,36 @@ export default function About() {
           <li>O sinal de mercado só existe perto da luta: previsões de eventos distantes e de lutas hipotéticas usam apenas estatísticas{m.marketOnly ? <> (o mercado sozinho acertou {fmtPct(m.marketOnly.accuracy, 1)} nas mesmas lutas da avaliação, as estatísticas sozinhas {fmtPct(m.statsSame.accuracy, 1)} e as duas combinadas {fmtPct(m.accuracy, 1)})</> : null}.</li>
           <li>MMA é um esporte de alta variância: mesmo a melhor previsão erra cerca de 1 em cada 3 lutas.</li>
         </ul>
+      </div>
+    </div>
+  );
+}
+
+/** Placar do modelo: previsão feita antes de cada evento × resultado (só vencedor). */
+function Scoreboard({ events }: { events: import('../shared/types').EventInfo[] }) {
+  const rows = [...events].filter((e) => e.date).sort((a, b) => (a.date! < b.date! ? -1 : 1)).map((e) => ({ e, ...eventScore(e) })).filter((r) => r.n > 0);
+  if (!rows.length) return null;
+  let cumN = 0, cumH = 0;
+  const withCum = rows.map((r) => { cumN += r.n; cumH += r.hits; return { ...r, cum: cumH / cumN }; });
+  const total = { n: cumN, h: cumH };
+  return (
+    <div className="panel" style={{ marginTop: 16 }}>
+      <div className="panel-title left">Placar do modelo em {withCum[0].e.date!.slice(0, 4)}</div>
+      <p style={{ fontSize: 17, marginBottom: 6 }}><b>{total.h} de {total.n}</b> vencedores previstos corretamente (<b>{fmtPct(total.h / total.n, 1)}</b>)</p>
+      <p className="note" style={{ marginBottom: 14 }}>
+        Cada evento é avaliado com a previsão feita antes dele (modelo treinado só com lutas anteriores; lutas marcadas incluem o sinal de mercado da época). Empates e lutas sem resultado ficam de fora. Num ano, a margem de erro é grande: poucos eventos oscilam bastante em torno da média de longo prazo.
+      </p>
+      <div className="score-head"><span>Evento</span><span>Acertos</span><span /><span>%</span><span>Acumulado</span></div>
+      <div className="score-list">
+        {[...withCum].reverse().map((r) => (
+          <Link to={`/evento/${r.e.id}`} className="score-row" key={r.e.id}>
+            <span className="sc-name">{r.e.name}</span>
+            <span className="sc-hits">{r.hits}/{r.n}</span>
+            <div className="sc-bar"><i style={{ width: `${(r.hits / r.n) * 100}%` }} /></div>
+            <span className="sc-pct">{fmtPct(r.hits / r.n)}</span>
+            <span className="sc-cum" title="Acumulado do ano até este evento">{fmtPct(r.cum)}</span>
+          </Link>
+        ))}
       </div>
     </div>
   );

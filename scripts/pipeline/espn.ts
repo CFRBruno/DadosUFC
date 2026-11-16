@@ -223,3 +223,34 @@ function smallFlag(href: string): string {
   const m = href.match(/a\.espncdn\.com(\/i\/teamlogos\/countries\/500\/[a-z0-9]+\.png)/i);
   return m ? `https://a.espncdn.com/combiner/i?img=${m[1]}&w=40&h=40` : href;
 }
+
+// --- Fotos hospedadas no próprio site (para a imagem de compartilhamento) ----------------------------
+// O CDN da ESPN não envia cabeçalho CORS: o navegador não deixa desenhar essas fotos num <canvas> e
+// copiar o resultado. Por isso guardamos uma cópia pequena de cada foto (cache em data/raw/photos).
+
+const PHOTO_DIR = path.join(RAW_DIR, 'photos');
+
+export async function localPhotos(espnIds: string[], outDir: string, offline: boolean): Promise<Set<string>> {
+  const { mkdir, copyFile, access } = await import('node:fs/promises');
+  await mkdir(PHOTO_DIR, { recursive: true });
+  await mkdir(outDir, { recursive: true });
+  const have = new Set<string>();
+  const exists = async (f: string) => access(f).then(() => true, () => false);
+  let i = 0, fetched = 0;
+  const worker = async () => {
+    while (i < espnIds.length) {
+      const id = espnIds[i++];
+      const cache = path.join(PHOTO_DIR, `${id}.png`);
+      if (!(await exists(cache)) && !offline) {
+        try {
+          const res = await fetch(`https://a.espncdn.com/combiner/i?img=/i/headshots/mma/players/full/${id}.png&w=180&h=131`, { signal: AbortSignal.timeout(30_000) });
+          if (res.ok) { await writeFile(cache, Buffer.from(await res.arrayBuffer())); fetched++; }
+        } catch { /* tenta na próxima execução */ }
+      }
+      if (await exists(cache)) { await copyFile(cache, path.join(outDir, `${id}.png`)); have.add(id); }
+    }
+  };
+  await Promise.all(Array.from({ length: 8 }, worker));
+  if (fetched) console.log(`  ✓ ${fetched} fotos novas guardadas para a imagem de compartilhamento`);
+  return have;
+}

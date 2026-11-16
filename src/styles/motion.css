@@ -236,3 +236,46 @@ a.rk-row:hover { background: #1b1b1f; transform: translateX(3px); }
 .link-btn { all: unset; cursor: pointer; color: var(--brand); text-decoration: underline; }
 .more-install { all: unset; box-sizing: border-box; display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 14px; border-radius: var(--radius); font-weight: 800; font-size: 14px; color: var(--brand); cursor: pointer; }
 .more-install svg { width: 20px; height: 20px; }
+
+/* compartilhar previsão */
+.share-bar { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px; margin: -4px 0 14px; }
+.share-bar .btn { gap: 6px; }
+.share-bar svg { width: 16px; height: 16px; }
+.share-msg { font-size: 12.5px; color: #4ade80; min-height: 1em; }
+
+/* acerto do modelo */
+.bout-actions { display: inline-flex; align-items: center; gap: 12px; flex-wrap: wrap; justify-content: flex-end; }
+.hit-chip { font-size: 11px; letter-spacing: 0.04em; text-transform: none; font-weight: 800; padding: 2px 8px; border-radius: 999px; border: 1px solid; }
+.hit-chip.ok { color: #4ade80; border-color: #14532d; background: rgba(34, 197, 94, 0.1); }
+.hit-chip.no { color: #ff6b70; border-color: #5a1417; background: rgba(239, 68, 68, 0.1); }
+
+/* previsões do card */
+.forecast { display: grid; gap: 12px; }
+.fc-card { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 14px 16px; }
+.fc-main { display: grid; grid-template-columns: minmax(0, 1fr) minmax(150px, 1.1fr) minmax(0, 1fr); gap: 12px; align-items: center; }
+.fc-side { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.fc-side.right { flex-direction: row-reverse; text-align: right; }
+.fc-side b { display: block; font-size: 14.5px; font-weight: 800; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fc-side small { color: var(--muted); font: 600 12px var(--font-mono); }
+.fc-pct { text-align: center; }
+.fc-nums { display: flex; justify-content: center; align-items: baseline; gap: 10px; margin-bottom: 6px; }
+.fc-nums b { font-size: 26px; font-weight: 900; font-variant-numeric: tabular-nums; }
+.fc-nums i { color: var(--muted); font-style: normal; }
+.fc-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px 16px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); font-size: 12.5px; color: var(--text-2); }
+.fc-foot em { font-style: normal; color: var(--muted); font-weight: 700; letter-spacing: 0.04em; }
+@media (max-width: 560px) { .fc-main { grid-template-columns: 1fr; } .fc-side.right { flex-direction: row; text-align: left; } .fc-pct { order: -1; } }
+
+/* placar do modelo */
+.score-list { display: grid; gap: 6px; }
+.score-row, .score-head { display: grid; grid-template-columns: minmax(0, 2.2fr) 56px minmax(80px, 1fr) 52px 76px; gap: 12px; align-items: center; }
+.score-row { padding: 9px 12px; border-radius: 10px; background: var(--surface-2); transition: background-color 0.2s, transform 0.25s var(--ease-out); }
+.score-row:hover { background: #1c1c20; transform: translateX(3px); }
+.sc-name { font-weight: 700; font-size: 13.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sc-hits, .sc-pct, .sc-cum { font: 700 13px var(--font-mono); text-align: right; }
+.sc-cum { color: var(--brand); }
+.sc-bar { height: 8px; border-radius: 4px; background: #2a2a2e; overflow: hidden; }
+.sc-bar i { display: block; height: 100%; background: linear-gradient(90deg, #16a34a, #4ade80); border-radius: 4px; transform-origin: left; animation: barGrow 0.9s var(--ease-out) 0.1s both; }
+.score-head { margin-bottom: 6px; padding: 0 12px; font-size: 10.5px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.score-head span:nth-child(n + 2) { text-align: right; }
+@media (max-width: 560px) { .score-row, .score-head { grid-template-columns: minmax(0, 1.6fr) 44px 48px 62px; } .sc-bar { display: none; } .score-head span:nth-child(3) { display: none; } }
+.score-list { max-height: 520px; overflow-y: auto; padding-right: 4px; }

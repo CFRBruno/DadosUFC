@@ -50,6 +50,12 @@ Os números são recalculados a cada atualização e aparecem em `/modelo`.
 - **Previsão pré-luta:** cada luta desde 2015 mostra o que o modelo previa *antes* dela (vencedor, método e resultado completo), calculado só com lutas anteriores. Não é a previsão do modelo final, que já "viu" a luta.
 - **Scorecards:** a ESPN publica o total de pontos de cada jurado nas decisões (ex.: 29-28), não a pontuação round a round. O pipeline guarda o que coleta em `data/scorecards/archive.json` (até 260 lutas por execução, das mais recentes às mais antigas) e o workflow grava o arquivo de volta no repositório.
 
+### Previsões do card, placar do modelo e imagem de compartilhamento
+
+- **Previsões do card:** a página de cada evento futuro mostra, para cada luta, as três leituras (estatísticas, mercado e combinada), o resultado mais provável e um botão para a análise completa. O cálculo é feito no navegador, com os mesmos dados do comparador.
+- **Placar do modelo:** cada luta já realizada mostra se o modelo acertou o vencedor (previsão feita antes da luta) e a página `/modelo` traz o placar por evento e o acumulado do ano.
+- **Imagem de compartilhamento:** no comparador, "Copiar imagem" copia um PNG da previsão para a área de transferência (ou baixa o arquivo, se o navegador não permitir). Como o CDN da ESPN não permite desenhar suas fotos num `<canvas>`, o pipeline guarda cópias pequenas em `public/data/photos/` (cache em `data/raw/photos`); elas servem só para essa imagem e têm direitos autorais da ESPN (uso pessoal).
+
 ### Linhas de mercado
 
 A ESPN só publica as linhas perto da data da luta e depois as retira. Por isso, cada execução do pipeline guarda o que encontrar em `data/odds/archive.json`, e o GitHub Actions grava esse arquivo de volta no repositório (commit automático "Atualiza arquivo de linhas de mercado"). Se você trabalha no repositório localmente, faça `git pull` antes de enviar alterações.
