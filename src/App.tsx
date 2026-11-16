@@ -41,11 +41,15 @@ function useInstall() {
     window.addEventListener('appinstalled', done);
     return () => { window.removeEventListener('beforeinstallprompt', on); window.removeEventListener('appinstalled', done); };
   }, []);
-  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !installed;
+  const ua = navigator.userAgent;
+  const ios = /iphone|ipad|ipod/i.test(ua) && !installed;
+  // Firefox (Android) não dispara o aviso nativo: a instalação é feita pelo menu do navegador
+  const firefox = /firefox/i.test(ua) && /android/i.test(ua) && !installed;
   return {
-    available: !installed && (!!ev || ios),
+    available: !installed && (!!ev || ios || firefox),
     install: async () => {
       if (ev) { await ev.prompt(); await ev.userChoice; setEv(null); }
+      else if (firefox) window.alert('Para instalar no Firefox: toque no menu ⋮ (três pontos) do navegador e escolha "Instalar" (em versões mais antigas: "Adicionar à tela inicial").');
       else if (ios) window.alert('Para instalar no iPhone/iPad: toque em Compartilhar (quadrado com seta) e depois em "Adicionar à Tela de Início".');
     },
   };
