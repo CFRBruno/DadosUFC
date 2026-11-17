@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { BodyMap, EloChart, MethodBlock, MethodLegend, SimpleBars } from '../components/charts';
 import { compareUrl } from '../components/events';
+import FavButton from '../components/FavButton';
 import { FightRow, OfficialChip } from '../components/fighters';
 import { Avatar, CountUp, ErrorBox, Flag, Icon, Loading } from '../components/ui';
 import { useFighter } from '../lib/data';
@@ -67,6 +68,7 @@ function Profile({ f }: { f: FighterDetail }) {
           </div>
         </div>
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <FavButton kind="fighters" id={f.id} name={f.name} className="big" />
           <Link to={`/comparar?a=${f.slug}`} className="btn btn-primary"><Icon name="swords" className="arrow" /> Comparar</Link>
         </div>
       </div>

@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import EventForecast from '../components/EventForecast';
+import FavButton from '../components/FavButton';
 import { ResultBoutRow, UpcomingBoutRow } from '../components/events';
 import { eventScore } from '../lib/hits';
 import { ErrorBox, Loading } from '../components/ui';
@@ -21,7 +22,7 @@ export default function EventPage() {
     <div className="container">
       <div className="page-head">
         <span className="eyebrow">{fmtDate(ev.date, true)}</span>
-        <h1 style={{ marginTop: 8 }}>{ev.name}</h1>
+        <h1 style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>{ev.name} <FavButton kind="events" id={ev.id} name={ev.name} className="big" /></h1>
         <p>{ev.location}{ev.source === 'manual' ? ' · card cadastrado manualmente' : ''}</p>
       </div>
       {ev.upcoming && ev.bouts.length > 0 && (

@@ -5,6 +5,8 @@ import type { FightEntry, FighterSummary } from '../shared/types';
 import { S } from '../shared/types';
 import { divisionName, fmtDate, fmtPct, fmtTime, methodText, recordStr } from '../lib/format';
 import { Avatar, Flag, Icon, ResultBadge } from './ui';
+import FavButton from './FavButton';
+import { useFavorites } from '../lib/favorites';
 import { useFighters } from '../lib/data';
 
 const norm = (s: string) => s.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
@@ -36,8 +38,10 @@ export function OfficialChip({ o }: { o: NonNullable<FighterSummary['official']>
 }
 
 export function FighterCard({ f }: { f: FighterSummary }) {
+  const isFav = useFavorites().fighters.includes(f.id);
   return (
-    <Link to={`/lutador/${f.slug}`} className="fighter-card">
+    <Link to={`/lutador/${f.slug}`} className={`fighter-card ${isFav ? 'is-fav' : ''}`}>
+      <FavButton kind="fighters" id={f.id} name={f.name} className="corner" />
       <Avatar name={f.name} id={f.id} />
       <div className="info">
         {f.nickname && <div className="nick">"{f.nickname}"</div>}

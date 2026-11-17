@@ -18,6 +18,8 @@ import Upsets from './pages/Upsets';
 import EloPeaks from './pages/EloPeaks';
 import Infograficos from './pages/Infograficos';
 import OfficialRanking from './pages/OfficialRanking';
+import Favoritos from './pages/Favoritos';
+import { useFavorites } from './lib/favorites';
 
 type Nav = { to: string; label: string; icon: Parameters<typeof Icon>[0]['name']; end?: boolean };
 const NAV: Nav[] = [
@@ -62,6 +64,7 @@ function useInstall() {
 
 export default function App() {
   const pwa = useInstall();
+  const favCount = (() => { const f = useFavorites(); return f.fighters.length + f.events.length; })();
   const { pathname } = useLocation();
   const [moreOpen, setMoreOpen] = useState(false);
   useEffect(() => {
@@ -119,6 +122,9 @@ export default function App() {
             ))}
             {ind && <span className="nav-ind" style={{ transform: `translateX(${ind.x}px)`, width: ind.w }} aria-hidden="true" />}
           </nav>
+          <Link to="/favoritos" className="search-btn fav-link" aria-label="Favoritos" title="Favoritos">
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2.8 2.9 6 6.5.9-4.7 4.6 1.1 6.5L12 17.7l-5.8 3.1 1.1-6.5L2.6 9.7l6.5-.9z" /></svg>{favCount > 0 && <i>{favCount}</i>}
+          </Link>
           <button className="search-btn" onClick={() => setSearchOpen(true)} aria-label="Buscar lutador" title="Buscar lutador (Ctrl+K ou /)">
             <Icon name="search" />
           </button>
@@ -135,6 +141,7 @@ export default function App() {
           <Route path="/comparar" element={<Compare />} />
           <Route path="/ranking" element={<Ranking />} />
           <Route path="/ranking/zebras" element={<Upsets />} />
+          <Route path="/favoritos" element={<Favoritos />} />
           <Route path="/ranking/ufc" element={<OfficialRanking />} />
           <Route path="/ranking/elo" element={<EloPeaks />} />
           <Route path="/infograficos" element={<Infograficos />} />

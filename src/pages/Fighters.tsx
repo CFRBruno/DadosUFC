@@ -3,6 +3,7 @@ import { useSearchParams } from 'react-router-dom';
 import { FighterCard, searchFighters } from '../components/fighters';
 import { ErrorBox, Loading } from '../components/ui';
 import { useFighters } from '../lib/data';
+import { useFavorites } from '../lib/favorites';
 import { MAIN_DIVISIONS } from '../shared/divisions';
 
 const SORTS = {
@@ -56,6 +57,8 @@ export default function Fighters() {
   const sort = (params.get('ordem') ?? 'nome') as keyof typeof SORTS;
   const onlyUpcoming = params.get('marcada') === '1';
   const onlyActive = params.get('ativos') === '1';
+  const onlyFav = params.get('favoritos') === '1';
+  const favIds = useFavorites().fighters;
   const styles = useMemo(() => (params.get('estilo') ?? '').split('|').filter(Boolean), [params]);
   const [countryQ, setCountryQ] = useState('');
   const countries = useMemo(() => (params.get('pais') ?? '').split('|').filter(Boolean), [params]);
@@ -74,8 +77,8 @@ export default function Fighters() {
 
   // base sem o filtro de país: dela saem as opções do filtro e as contagens
   const base = useMemo(
-    () => (data ?? []).filter((f) => (!div || f.division === div) && (!gender || (gender === 'f' ? f.women : !f.women)) && (!onlyUpcoming || f.upcoming) && (!onlyActive || f.active)),
-    [data, div, gender, onlyUpcoming, onlyActive],
+    () => (data ?? []).filter((f) => (!div || f.division === div) && (!gender || (gender === 'f' ? f.women : !f.women)) && (!onlyUpcoming || f.upcoming) && (!onlyActive || f.active) && (!onlyFav || favIds.includes(f.id))),
+    [data, div, gender, onlyUpcoming, onlyActive, onlyFav, favIds],
   );
   const countryOptions = useMemo(() => {
     const m = new Map<string, { n: number; flag: string }>();
@@ -169,6 +172,9 @@ export default function Fighters() {
         <select className="select" value={sort} onChange={(e) => set('ordem', e.target.value)} aria-label="Ordenar" disabled={!!q}>
           {Object.entries(SORTS).map(([k, l]) => <option key={k} value={k}>Ordenar: {l}</option>)}
         </select>
+        <label className="chip" style={{ height: 42, padding: '0 12px', cursor: 'pointer' }}>
+          <input type="checkbox" checked={onlyFav} onChange={(e) => set('favoritos', e.target.checked ? '1' : '')} /> ★ Só favoritos
+        </label>
         <label className="chip" style={{ height: 42, padding: '0 12px', cursor: 'pointer' }}>
           <input type="checkbox" checked={onlyActive} onChange={(e) => set('ativos', e.target.checked ? '1' : '')} /> Só ativos em 2026
         </label>

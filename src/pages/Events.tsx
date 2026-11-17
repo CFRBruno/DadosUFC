@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { ResultBoutRow, UpcomingBoutRow } from '../components/events';
+import FavButton from '../components/FavButton';
+import { useFavorites } from '../lib/favorites';
 import { ErrorBox, Icon, Loading } from '../components/ui';
 import { shortName } from '../lib/compare';
 import { useEvents, useFighters } from '../lib/data';
@@ -130,9 +132,11 @@ function EventItem({ e, open, onToggle, isNext, byId }: { e: EventInfo; open: bo
       mainLine += w ? ` · venceu ${shortName(w)}` : main.result === 'D' ? ' · empate' : ' · sem resultado';
     }
   }
+  const favEvent = useFavorites().events.includes(e.id);
   const count = e.upcoming ? e.bouts.length : e.fights.length;
   return (
-    <div className={`tl-item ${open ? 'open' : ''} ${e.upcoming ? 'upcoming' : ''}`}>
+    <div className={`tl-item ${open ? 'open' : ''} ${e.upcoming ? 'upcoming' : ''} ${favEvent ? 'is-fav' : ''}`}>
+      <FavButton kind="events" id={e.id} name={e.name} className="corner" />
       <button className="tl-head" onClick={onToggle} aria-expanded={open} aria-controls={panelId}>
         <div className="tl-date">
           {e.date ? (

@@ -63,6 +63,9 @@ Os números são recalculados a cada atualização e aparecem em `/modelo`.
 
 - **Infográficos** (`/infograficos`): três painéis interativos com climas diferentes: *O UFC em números* (métodos e duração por ano, finalizações por categoria), *matriz de estilos* (mapa de calor de quem vence quem) e *o modelo é honesto?* (calibração das previsões e zebras por faixa). Os dados saem de `infographics.json` e `upsets.json`.
 
+- **Favoritos:** a estrela em lutadores (lista e perfil) e eventos (lista, página do evento e tela inicial) guarda a escolha só no aparelho (localStorage, sem login). Em `/favoritos` ficam todos; na tela inicial, o evento ou lutador favorito entre os 3 próximos eventos ganha o destaque dourado. A lista de lutadores tem o filtro "Só favoritos".
+- **Ranking UFC** (`/ranking/ufc`): campeão + top 15 por categoria (Meta UFC Rankings) e pound-for-pound (painel de mídia), com o peso de cada lutador em kg e (lbs).
+
 ### Linhas de mercado
 
 A ESPN só publica as linhas perto da data da luta e depois as retira. Por isso, cada execução do pipeline guarda o que encontrar em `data/odds/archive.json`, e o GitHub Actions grava esse arquivo de volta no repositório (commit automático "Atualiza arquivo de linhas de mercado"). Se você trabalha no repositório localmente, faça `git pull` antes de enviar alterações.
