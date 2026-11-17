@@ -146,6 +146,12 @@ async function main() {
   const espnOf = matchEspnIds(espn, active, (d) => fightsByDate.get(d) ?? []);
   const ourOfEspn = new Map([...espnOf.entries()].map(([k, v]) => [v, k]));
 
+  // correções manuais de nacionalidade (a ESPN erra alguns cadastros)
+  const countryFix: Record<string, { country: string; flag: string }> = {};
+  try {
+    const raw = JSON.parse(await readFile('data/manual/countries.json', 'utf8')) as Record<string, { country: string; flag: string }>;
+    for (const [k, v] of Object.entries(raw)) if (!k.startsWith('_')) countryFix[norm(k)] = v;
+  } catch { /* sem arquivo */ }
   const scope = new Set<string>();
   for (const f of fights) if (f.date >= SCOPE_FROM) f.fighters.forEach((s) => scope.add(s.id));
 
@@ -296,6 +302,8 @@ async function main() {
         const eid = espnOf.get(id);
         const ath = eid ? espn.athletes.get(eid) : undefined;
         const geo = { country: ath?.country ? countryPt(ath.country) : '', flag: ath?.flag ?? '' };
+        const fix = countryFix[norm(nameOf(id))];
+        if (fix) { geo.country = fix.country; geo.flag = `https://a.espncdn.com/combiner/i?img=/i/teamlogos/countries/500/${fix.flag}.png&w=40&h=40`; }
         if (eid && withHeadshot.has(eid)) return { ...geo, photo: espnHeadshot(eid), photoPage: espnPage(eid) };
         const ph = photoOf(nameOf(id), bio?.dob ?? null);
         return { ...geo, photo: ph?.url ?? null, photoPage: ph?.page ?? null };
