@@ -461,3 +461,10 @@ a.rk-row:hover { background: #1b1b1f; transform: translateX(3px); }
 .rk-card.collapsible:not(.open):hover .rk-hint { background: rgba(237, 28, 36, .24); }
 /* comparador: a estrela fica ao lado do X, espelhada nos dois lados */
 .pick-card.b .fav-btn.pick { right: auto; left: 44px; }
+/* comparador: X vermelho centralizado na vertical; estrela no canto (bem separados, sem clique errado) */
+.pick-card .clear { top: 50%; transform: translateY(-50%); right: 10px; width: 34px; height: 34px; color: #ef4444; }
+.pick-card .clear:hover { color: #fff; background: #b91c1c; }
+.pick-card.b .clear { right: auto; left: 10px; }
+.pick-card .fav-btn.pick { top: 10px; right: 12px; margin: 0; }
+.pick-card.b .fav-btn.pick { right: auto; left: 12px; }
+@media (max-width: 799px) { .pick-card.b .clear { left: auto; right: 10px; } .pick-card.b .fav-btn.pick { left: auto; right: 12px; } }
