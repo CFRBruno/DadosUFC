@@ -2,67 +2,12 @@ import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ResultBoutRow, UpcomingBoutRow } from '../components/events';
 import HeroFX from '../components/HeroFX';
+import HeroIdols from '../components/HeroIdols';
 import { Avatar, CountUp, Loading } from '../components/ui';
 import { useRecentEvents, useFighters, useMeta, useOfficialBoard } from '../lib/data';
-import { fmtDate, fmtPct, todayIso } from '../lib/format';
+import { fmtDate, fmtPct } from '../lib/format';
 import { divisionName, recordStr } from '../lib/format';
 import type { FighterSummary, OfficialBoard } from '../shared/types';
-
-function HeroVisual({ next }: { next: { name: string; date: string | null } | null }) {
-  const [k, setK] = useState(0);
-  // dias até o próximo evento (as datas vêm sem horário) e nome curto ("UFC 335", "UFC Fight Night")
-  const days = next?.date ? Math.round((Date.parse(next.date) - Date.parse(todayIso())) / 864e5) : null;
-  const parts = (next?.name ?? '').split(':');
-  const numbered = /^UFC \d+/.test(parts[0]);
-  const label = (numbered ? parts[0] : (parts[1] ?? parts[0]).trim().replace(/\s+vs\.?\s+/i, ' × ')).toUpperCase();
-  const oct = (r: number) =>
-    Array.from({ length: 8 }, (_, i) => {
-      const a = (Math.PI / 8) * (2 * i + 1);
-      return `${200 + r * Math.cos(a)},${200 + r * Math.sin(a)}`;
-    }).join(' ');
-  const ticks = Array.from({ length: 8 }, (_, i) => (i * Math.PI) / 4);
-  return (
-    <div className="hero-visual" aria-hidden="true">
-      <svg viewBox="0 0 400 400">
-        <defs>
-          <radialGradient id="glow" cx="50%" cy="50%" r="50%">
-            <stop offset="0%" stopColor="#ed1c24" stopOpacity="0.35" />
-            <stop offset="100%" stopColor="#ed1c24" stopOpacity="0" />
-          </radialGradient>
-          <filter id="blur"><feGaussianBlur stdDeviation="6" /></filter>
-        </defs>
-        <g data-depth="10"><circle cx="200" cy="200" r="150" fill="url(#glow)" /></g>
-        <g data-depth="4">{ticks.map((a, i) => (
-          <line key={i} x1={200 + 178 * Math.cos(a)} y1={200 + 178 * Math.sin(a)} x2={200 + 192 * Math.cos(a)} y2={200 + 192 * Math.sin(a)} stroke="#555" strokeWidth="3" />
-        ))}</g>
-        <g data-depth="7"><g className="spin-slow"><polygon points={oct(170)} fill="none" stroke="#1d2a3a" strokeWidth="1.5" /></g></g>
-        <g data-depth="12"><g className="spin-rev"><polygon points={oct(150)} fill="none" stroke="#2a2a2a" strokeWidth="1.5" transform="rotate(12 200 200)" /></g></g>
-        <g data-depth="17"><g className="spin-slow"><polygon points={oct(120)} fill="none" stroke="#5c0d10" strokeWidth="1.5" transform="rotate(-18 200 200)" /></g></g>
-        <g data-depth="24">
-          <polygon points={oct(76)} fill="none" stroke="#ed1c24" strokeWidth="6" opacity="0.5" filter="url(#blur)" />
-          <polygon points={oct(76)} fill="#050000" stroke="#ed1c24" strokeWidth="2" />
-          <circle cx="128" cy="118" r="3" fill="#ed1c24" />
-          {days == null ? (
-            <text x="200" y="206" textAnchor="middle" fill="#ed1c24" fontFamily="Roboto Mono, monospace" fontWeight="700" fontSize="11" letterSpacing="3">PRÓXIMO EVENTO</text>
-          ) : (
-            <>
-              <text x="200" y="170" textAnchor="middle" fill="#ed1c24" fontFamily="Roboto Mono, monospace" fontWeight="700" fontSize="9.5" letterSpacing="3">PRÓXIMO EVENTO</text>
-              {days <= 0 ? (
-                <text x="200" y="208" textAnchor="middle" fill="#ed1c24" fontFamily="Roboto Mono, monospace" fontWeight="700" fontSize="30" letterSpacing="2">HOJE</text>
-              ) : (
-                <>
-                  <text className={k > 0 && k < 1 ? 'shaking' : ''} x="200" y="206" textAnchor="middle" fill="#ed1c24" fontFamily="Roboto Mono, monospace" fontWeight="700" fontSize="40"><CountUp value={days} fromZero ms={1500} format={(n) => String(Math.round(n))} onProgress={setK} /></text>
-                  <text x="200" y="224" textAnchor="middle" fill="#ed1c24" fontFamily="Roboto Mono, monospace" fontWeight="700" fontSize="10" letterSpacing="4">{days === 1 ? 'DIA' : 'DIAS'}</text>
-                </>
-              )}
-              <text x="200" y="241" textAnchor="middle" fill="#ff6b70" fontFamily="Roboto Mono, monospace" fontWeight="700" fontSize={label.length > 18 ? 8 : 10} letterSpacing="1">{label}</text>
-            </>
-          )}
-        </g>
-      </svg>
-    </div>
-  );
-}
 
 /** Seta grossa que funciona como barra de progresso vertical: enche de baixo para cima com o acerto. */
 function ProgressArrow({ k }: { k: number }) {
@@ -86,7 +31,7 @@ function HeroStats({ fighters, accuracy, fights }: { fighters: number; accuracy:
   const run = (k: number) => (k > 0 && k < 1 ? 'shaking' : '');
   return (
     <div className="hero-stats">
-      <div><b><span className={`num ${run(kF)}`}><CountUp value={fighters} fromZero accelerate ms={2800} format={(n) => String(Math.round(n))} onProgress={setKF} /></span></b><span>Lutadores</span></div>
+      <div><b><span className={`num ${run(kF)}`}><CountUp value={fighters} fromZero accelerate ms={2800} format={(n) => Math.round(n).toLocaleString('pt-BR')} onProgress={setKF} /></span></b><span>Lutadores</span></div>
       <div>
         <b className="acc-num">
           <span className={`num ${run(kA)}`}><CountUp value={accuracy} fromZero accelerate ms={2800} format={(n) => fmtPct(n)} onProgress={setKA} /></span>
@@ -159,7 +104,7 @@ export default function Home() {
             </div>
             {meta && <HeroStats fighters={meta.fighterCount} accuracy={meta.model.accuracy} fights={meta.fightCount} />}
           </div>
-          <HeroVisual next={nextEvent ? { name: nextEvent.name, date: nextEvent.date } : null} />
+          <HeroIdols />
         </div>
       </section>
 
