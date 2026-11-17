@@ -17,7 +17,7 @@ export default function Events() {
   const byId = useMemo(() => new Map((fighters ?? []).map((f) => [f.id, f])), [fighters]);
   const [params, setParams] = useSearchParams();
   const order = params.get('ordem') === 'recentes' ? 'recentes' : 'cronologica';
-  const filter = (params.get('mostrar') as Filter) || 'todos';
+  const filter = (params.get('mostrar') as Filter) || 'proximos';
   const [open, setOpen] = useState<Set<string>>(() => new Set(params.get('aberto') ? [params.get('aberto')!] : []));
   const nextRef = useRef<HTMLDivElement>(null);
 
@@ -77,7 +77,7 @@ export default function Events() {
       <div className="filters">
         <div className="seg" role="group" aria-label="Mostrar">
           {([['todos', 'Todos'], ['realizados', 'Realizados'], ['proximos', 'Próximos']] as const).map(([v, l]) => (
-            <button key={v} className={filter === v ? 'on' : ''} onClick={() => setParam('mostrar', v === 'todos' ? null : v)}>{l}</button>
+            <button key={v} className={filter === v ? 'on' : ''} onClick={() => setParam('mostrar', v === 'proximos' ? null : v)}>{l}</button>
           ))}
         </div>
         <div className="seg" role="group" aria-label="Ordem">

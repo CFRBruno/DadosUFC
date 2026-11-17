@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ResultBoutRow, UpcomingBoutRow } from '../components/events';
 import HeroFX from '../components/HeroFX';
-import HeroIdols from '../components/HeroIdols';
+import HeroEvents from '../components/HeroEvents';
 import { Avatar, CountUp, Loading } from '../components/ui';
 import { useRecentEvents, useFighters, useMeta, useOfficialBoard } from '../lib/data';
 import { fmtDate, fmtPct } from '../lib/format';
@@ -104,7 +104,7 @@ export default function Home() {
             </div>
             {meta && <HeroStats fighters={meta.fighterCount} accuracy={meta.model.accuracy} fights={meta.fightCount} />}
           </div>
-          <HeroIdols />
+          <HeroEvents />
         </div>
       </section>
 
@@ -165,7 +165,7 @@ export default function Home() {
               return (
                 <div key={String(women)} className="rk-group">
                   <div className="rk-group-title">{women ? 'Feminino' : 'Masculino'}</div>
-                  <div className="rk-grid">
+                  <div className={`rk-grid ${divs.length < 4 ? 'few' : ''}`}>
                     {divs.map((d) => <RankCard key={d.key} d={d} byId={byId} />)}
                   </div>
                 </div>
