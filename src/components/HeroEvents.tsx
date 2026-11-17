@@ -32,6 +32,19 @@ function pickBouts(ev: EventInfo, elo: (id: string | null) => number): { b: Upco
   return picked.map((b) => ({ b, main: main.includes(b) })).sort((x, y) => Number(y.main) - Number(x.main) || elo(y.b.a.id) + elo(y.b.b.id) - (elo(x.b.a.id) + elo(x.b.b.id)));
 }
 
+/** Dias até o evento pela data local (as fontes só trazem a data, sem horário). */
+function countdown(date: string | null): { text: string; tone: 'far' | 'near' | 'tomorrow' | 'today' } | null {
+  if (!date) return null;
+  const now = new Date();
+  const today = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate());
+  const d = Math.round((Date.parse(date) - today) / 864e5);
+  if (d < 0) return null;
+  if (d === 0) return { text: 'É HOJE! 🔥🔥🔥', tone: 'today' };
+  if (d === 1) return { text: 'É AMANHÃ!', tone: 'tomorrow' };
+  if (d <= 3) return { text: `Faltam ${d === 2 ? 'dois' : 'três'} dias!`, tone: 'near' };
+  return { text: `Faltam ${d} dias`, tone: 'far' };
+}
+
 const last = (n: string) => { const p = n.split(' '); return p.length > 1 ? p[p.length - 1] : n; };
 
 export default function HeroEvents() {
@@ -50,12 +63,15 @@ export default function HeroEvents() {
       {cards.map(({ e, bouts }, i) => (
         <div key={e.id} className="he-card" style={{ ['--i' as string]: i }} data-depth={String(8 + i * 5)}>
           <Link to={`/evento/${e.id}`} className="he-head">
-            <span className="he-when">{i === 0 ? 'PRÓXIMO · ' : ''}{fmtDate(e.date)}</span>
-            <b>{e.name}</b>
+            <span className="he-titles">
+              <span className="he-when">{i === 0 ? 'PRÓXIMO · ' : ''}{fmtDate(e.date)}</span>
+              <b>{e.name}</b>
+            </span>
+            {(() => { const c = countdown(e.date); return c ? <span className={`he-count ${c.tone}`}>{c.text}</span> : null; })()}
           </Link>
           <div className="he-rows">
-            {bouts.map(({ b, main }) => (
-              <Link key={`${b.a.name}-${b.b.name}`} to={b.a.slug && b.b.slug ? compareUrl(b) : `/evento/${e.id}`} className={`he-row ${b.title ? 'title' : ''} ${main ? 'main' : ''}`}>
+            {bouts.map(({ b, main }, r) => (
+              <Link key={`${b.a.name}-${b.b.name}`} style={{ ['--r' as string]: r }} to={b.a.slug && b.b.slug ? compareUrl(b) : `/evento/${e.id}`} className={`he-row ${b.title ? 'title' : ''} ${main ? 'main' : ''}`}>
                 {b.title && <Belt />}
                 <span className="he-names"><i className="a">{last(b.a.name)}</i><em>×</em><i className="b">{last(b.b.name)}</i></span>
                 <span className="he-tag">{b.title ? 'CINTURÃO' : main ? 'LUTA PRINCIPAL' : DIVISION_BY_KEY[b.division]?.short}</span>
