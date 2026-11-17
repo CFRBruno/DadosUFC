@@ -61,6 +61,8 @@ Os números são recalculados a cada atualização e aparecem em `/modelo`.
 - **Elo histórico** (`/ranking/elo`): o maior Elo (pico) de cada lutador que já lutou no UFC desde 1993 (`elo-peaks.json`), por categoria ou absoluto, com mínimo de lutas e filtro de era.
 - **Zebras e favoritos dos próximos eventos** (`/ranking/zebras?quando=proximas`): previsão do modelo final para cada luta marcada (`upcoming-forecast.json`), com favoritos e azarões, lutas equilibradas e onde estatísticas e mercado discordam.
 
+- **Infográficos** (`/infograficos`): três painéis interativos com climas diferentes: *O UFC em números* (métodos e duração por ano, finalizações por categoria), *matriz de estilos* (mapa de calor de quem vence quem) e *o modelo é honesto?* (calibração das previsões e zebras por faixa). Os dados saem de `infographics.json` e `upsets.json`.
+
 ### Linhas de mercado
 
 A ESPN só publica as linhas perto da data da luta e depois as retira. Por isso, cada execução do pipeline guarda o que encontrar em `data/odds/archive.json`, e o GitHub Actions grava esse arquivo de volta no repositório (commit automático "Atualiza arquivo de linhas de mercado"). Se você trabalha no repositório localmente, faça `git pull` antes de enviar alterações.

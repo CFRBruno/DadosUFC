@@ -370,3 +370,12 @@ export interface UpcomingForecast {
   ps: number;
   pm: number | null;
 }
+
+/** Infográficos: métodos de vitória e duração por ano, finalizações por categoria e confronto entre estilos. */
+export interface InfographicsData {
+  years: { y: number; n: number; ko: number; sub: number; dec: number; oth: number; min: number; five: number; w: number }[];
+  divisions: { key: DivisionKey; n: number; ko: number; sub: number; dec: number }[];
+  styles: string[];
+  /** matrix[categoria ou "ALL"][estilo da linha][estilo da coluna]: lutas, vitórias da linha e vitórias da linha por método */
+  matrix: Record<string, Record<string, Record<string, { n: number; w: number; ko: number; sub: number; dec: number }>>>;
+}

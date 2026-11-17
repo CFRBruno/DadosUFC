@@ -16,6 +16,7 @@ import Ranking from './pages/Ranking';
 import Titles from './pages/Titles';
 import Upsets from './pages/Upsets';
 import EloPeaks from './pages/EloPeaks';
+import Infograficos from './pages/Infograficos';
 
 type Nav = { to: string; label: string; icon: Parameters<typeof Icon>[0]['name']; end?: boolean };
 const NAV: Nav[] = [
@@ -25,6 +26,7 @@ const NAV: Nav[] = [
   { to: '/ranking', label: 'Ranking', icon: 'trophy' },
   { to: '/eventos', label: 'Eventos', icon: 'calendar' },
   { to: '/cinturoes', label: 'Cinturões', icon: 'belt' },
+  { to: '/infograficos', label: 'Infográficos', icon: 'chart' },
   { to: '/modelo', label: 'Modelo', icon: 'chart' },
 ];
 // no celular: 4 atalhos fixos + "Mais"
@@ -133,6 +135,7 @@ export default function App() {
           <Route path="/ranking" element={<Ranking />} />
           <Route path="/ranking/zebras" element={<Upsets />} />
           <Route path="/ranking/elo" element={<EloPeaks />} />
+          <Route path="/infograficos" element={<Infograficos />} />
           <Route path="/eventos" element={<Events />} />
           <Route path="/evento/:id" element={<EventPage />} />
           <Route path="/cinturoes" element={<Titles />} />

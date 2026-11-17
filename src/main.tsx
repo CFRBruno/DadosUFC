@@ -10,6 +10,7 @@ import '@fontsource/oswald/700.css';
 import '@fontsource/roboto-mono/700.css';
 import './styles/global.css';
 import './styles/motion.css';
+import './styles/infographics.css';
 import { registerSW } from 'virtual:pwa-register';
 import App from './App';
 

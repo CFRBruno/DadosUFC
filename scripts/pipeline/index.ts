@@ -8,7 +8,7 @@ import { DIVISION_BY_KEY, divisionLbs, MAIN_DIVISIONS, parseWeightClass, type Di
 import { atDate, predictStats, withMarket } from '../../src/shared/model2';
 import type {
   RankingRow, TitleFight,
-  EventInfo, FightEntry, FighterDetail, FighterSummary, FightPred, MethodBreakdown, EloPeakRow, Meta, OfficialBoard, StatRank, UpcomingForecast, UpsetFight, TitleReign, UpcomingBout,
+  EventInfo, FightEntry, FighterDetail, FighterSummary, FightPred, MethodBreakdown, EloPeakRow, InfographicsData, Meta, OfficialBoard, StatRank, UpcomingForecast, UpsetFight, TitleReign, UpcomingBout,
 } from '../../src/shared/types';
 import { S } from '../../src/shared/types';
 import { emptyState } from '../../src/shared/model';
@@ -461,6 +461,51 @@ async function main() {
     });
   }
   await writeFile(path.join(OUT, 'upsets.json'), JSON.stringify(upsets));
+  // infográficos: métodos por ano, finalizações por categoria e confronto entre estilos (estilo atual de cada lutador)
+  {
+    const yearly = new Map<number, { n: number; ko: number; sub: number; dec: number; oth: number; sec: number; five: number; w: number }>();
+    const divAgg = new Map<string, { n: number; ko: number; sub: number; dec: number }>();
+    const STYLES = ['Trocador', 'Wrestler', 'Especialista em jiu-jitsu', 'Grappler', 'Lutador completo'];
+    const styleOf = new Map(details.map((d) => [d.id, d.style]));
+    const matrix: InfographicsData['matrix'] = {};
+    const cell = (div: string, a: string, b: string) => ((matrix[div] ??= {})[a] ??= {})[b] ??= { n: 0, w: 0, ko: 0, sub: 0, dec: 0 };
+    for (const f of fights) {
+      const y = Number(f.date.slice(0, 4));
+      const t = yearly.get(y) ?? { n: 0, ko: 0, sub: 0, dec: 0, oth: 0, sec: 0, five: 0, w: 0 };
+      if (f.outcome === 'W') {
+        t.n++; t.sec += f.durationSec;
+        if (f.method === 'KO') t.ko++; else if (f.method === 'SUB') t.sub++; else if (f.method === 'DEC') t.dec++; else t.oth++;
+        if (f.scheduledRounds >= 5) t.five++;
+        if (f.women) t.w++;
+        yearly.set(y, t);
+        if (f.date >= '2016-01-01' && DIVISION_BY_KEY[f.division]) {
+          const dv = divAgg.get(f.division) ?? { n: 0, ko: 0, sub: 0, dec: 0 };
+          dv.n++; if (f.method === 'KO') dv.ko++; else if (f.method === 'SUB') dv.sub++; else if (f.method === 'DEC') dv.dec++;
+          divAgg.set(f.division, dv);
+        }
+        // estilos (só lutas desde 2016, em que os dois lutadores têm estilo definido)
+        const sa = styleOf.get(f.fighters[0].id), sb = styleOf.get(f.fighters[1].id);
+        if (f.date >= '2016-01-01' && sa && sb && STYLES.includes(sa) && STYLES.includes(sb) && f.winner != null) {
+          const win = f.winner === 0 ? 0 : 1;
+          for (const div of ['ALL', f.division]) {
+            const c1 = cell(div, sa, sb), c2 = cell(div, sb, sa);
+            c1.n++; c2.n++;
+            const wc = win === 0 ? c1 : c2;
+            wc.w++;
+            if (f.method === 'KO') wc.ko++; else if (f.method === 'SUB') wc.sub++; else if (f.method === 'DEC') wc.dec++;
+          }
+        }
+      } else if (f.outcome === 'D' || f.outcome === 'NC') { /* fora das contagens */ }
+    }
+    const info: InfographicsData = {
+      years: [...yearly.entries()].sort((a, b) => a[0] - b[0]).map(([y, t]) => ({ y, n: t.n, ko: t.ko, sub: t.sub, dec: t.dec, oth: t.oth, min: Math.round((t.sec / 60 / Math.max(1, t.n)) * 100) / 100, five: t.five, w: t.w })),
+      divisions: [...divAgg.entries()].map(([key, v]) => ({ key: key as DivisionKey, ...v })),
+      styles: STYLES,
+      matrix,
+    };
+    await writeFile(path.join(OUT, 'infographics.json'), JSON.stringify(info));
+  }
+
   // pico de Elo de todos os lutadores que já lutaram no UFC
   const eloPeaks: EloPeakRow[] = [];
   for (const [id, hist] of proc.eloHistory) {
