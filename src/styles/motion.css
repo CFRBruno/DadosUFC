@@ -389,3 +389,11 @@ a.rk-row:hover { background: #1b1b1f; transform: translateX(3px); }
 @media (prefers-reduced-motion: reduce) { .he-card, .he-card .he-row, .he-count { animation: none; } }
 /* 4 colunas: o cartel sai da linha para o nome caber inteiro */
 @media (min-width: 1100px) { .rk-rec { display: none; } .rk-row { grid-template-columns: 26px 34px minmax(0, 1fr); } .rk-name { font-size: 13.5px; } }
+
+/* peso ao lado do nome (cinza) */
+.rk-name { display: block; line-height: 1.15; }
+.rk-name small { display: block; margin-top: 2px; font: 600 11.5px var(--font-mono); color: #7b7b83; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rk-row { grid-template-columns: 26px 34px minmax(0, 1fr) !important; }
+.rk-rows { grid-auto-rows: 50px; }
+/* página completa: 15 linhas por cartão, 3 colunas */
+@media (min-width: 1100px) { .rk-grid.rk-full { grid-template-columns: repeat(3, 1fr); } }

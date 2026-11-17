@@ -17,6 +17,7 @@ import Titles from './pages/Titles';
 import Upsets from './pages/Upsets';
 import EloPeaks from './pages/EloPeaks';
 import Infograficos from './pages/Infograficos';
+import OfficialRanking from './pages/OfficialRanking';
 
 type Nav = { to: string; label: string; icon: Parameters<typeof Icon>[0]['name']; end?: boolean };
 const NAV: Nav[] = [
@@ -134,6 +135,7 @@ export default function App() {
           <Route path="/comparar" element={<Compare />} />
           <Route path="/ranking" element={<Ranking />} />
           <Route path="/ranking/zebras" element={<Upsets />} />
+          <Route path="/ranking/ufc" element={<OfficialRanking />} />
           <Route path="/ranking/elo" element={<EloPeaks />} />
           <Route path="/infograficos" element={<Infograficos />} />
           <Route path="/eventos" element={<Events />} />

@@ -323,9 +323,12 @@ export interface RankingRow {
 }
 
 /** Ranking oficial do UFC por categoria (campeão = pos 0), para a tela inicial. */
+export interface BoardEntry { pos: number; name: string; id: string | null; slug: string | null; /** peso do lutador em libras */ lbs: number | null }
 export interface OfficialBoard {
   released: string | null;
-  divisions: { key: DivisionKey; name: string; women: boolean; entries: { pos: number; name: string; id: string | null; slug: string | null }[] }[];
+  divisions: { key: DivisionKey; name: string; women: boolean; entries: BoardEntry[] }[];
+  /** pound-for-pound (painel de mídia) */
+  p4p: { released: string | null; men: (BoardEntry & { division: DivisionKey | null })[]; women: (BoardEntry & { division: DivisionKey | null })[] };
 }
 
 /** Luta com a previsão feita antes dela (modelo treinado só com lutas anteriores), para o ranking de zebras e favoritos. */

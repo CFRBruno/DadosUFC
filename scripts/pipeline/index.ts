@@ -438,16 +438,24 @@ async function main() {
     else unmatched.push(e.name);
   }
   console.log(`  Ranking oficial (${officialRankings.released ?? 'indisponível'}): ${officialRankings.entries.length - unmatched.length} de ${officialRankings.entries.length} no site${unmatched.length ? ` · fora do escopo ou sem correspondência: ${unmatched.join(', ')}` : ''}`);
+  const EN_DIV: Record<string, DivisionKey> = { Heavyweight: 'HW', 'Light Heavyweight': 'LHW', Middleweight: 'MW', Welterweight: 'WW', Lightweight: 'LW', Featherweight: 'FW', Bantamweight: 'BW', Flyweight: 'FLW', "Women's Bantamweight": 'WBW', "Women's Flyweight": 'WFLW', "Women's Strawweight": 'WSW', Strawweight: 'WSW' };
+  const boardEntry = (pos: number, name: string, divKey: DivisionKey | null) => {
+    const id = idByName.get(norm(name)) ?? null;
+    const d = id ? detailById.get(id) : undefined;
+    const lbs = (id ? bios.get(id)?.weightLbs : null) ?? (divKey ? divisionLbs(divKey) : null);
+    return { pos, name, id: d ? id : null, slug: d?.slug ?? null, lbs };
+  };
   const board: OfficialBoard = {
     released: officialRankings.released,
     divisions: MAIN_DIVISIONS.map((dv) => ({
       key: dv.key, name: dv.name, women: dv.women,
-      entries: officialRankings.entries.filter((e) => e.division === dv.key).sort((x, y) => x.pos - y.pos).map((e) => {
-        const id = idByName.get(norm(e.name)) ?? null;
-        const d = id ? detailById.get(id) : undefined;
-        return { pos: e.pos, name: e.name, id: d ? id : null, slug: d?.slug ?? null };
-      }),
+      entries: officialRankings.entries.filter((e) => e.division === dv.key).sort((x, y) => x.pos - y.pos).map((e) => boardEntry(e.pos, e.name, dv.key)),
     })).filter((dv) => dv.entries.length),
+    p4p: {
+      released: officialRankings.p4p.released,
+      men: officialRankings.p4p.men.map((e) => { const dk = e.division ? EN_DIV[e.division] ?? null : null; return { ...boardEntry(e.pos, e.name, dk), division: dk }; }),
+      women: officialRankings.p4p.women.map((e) => { const dk = e.division ? EN_DIV[e.division] ?? null : null; return { ...boardEntry(e.pos, e.name, dk), division: dk }; }),
+    },
   };
   // zebras e favoritos: todas as lutas decididas desde 2015 com a previsão pré-luta
   const upsets: UpsetFight[] = [];

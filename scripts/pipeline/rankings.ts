@@ -17,7 +17,7 @@ const DIVISIONS: Record<string, string> = {
 };
 
 export interface OfficialEntry { division: string; pos: number; interim: boolean; name: string }
-export interface OfficialRankings { released: string | null; entries: OfficialEntry[] }
+export interface OfficialRankings { released: string | null; entries: OfficialEntry[]; p4p: P4PRankings }
 
 export async function fetchOfficialRankings(offline: boolean): Promise<OfficialRankings> {
   let text = '';
@@ -40,7 +40,8 @@ export async function fetchOfficialRankings(offline: boolean): Promise<OfficialR
 export function parseRankings(text: string): OfficialRankings {
   const start = text.search(/==\s*Men's Meta rankings\s*==/);
   const end = text.search(/==\s*Men's media rankings\s*==/);
-  if (start < 0 || end < 0) return { released: null, entries: [] };
+  const p4p = parseP4P(text);
+  if (start < 0 || end < 0) return { released: null, entries: [], p4p };
   const body = text.slice(start, end);
   const entries: OfficialEntry[] = [];
   let released: string | null = null;
@@ -69,5 +70,36 @@ export function parseRankings(text: string): OfficialRankings {
       entries.push({ division, pos: tip ? 0 : Number(num), interim: tip === 'IC', name: name.trim() });
     }
   }
-  return { released, entries };
+  return { released, entries, p4p };
+}
+
+export interface P4PEntry { pos: number; name: string; division: string | null }
+export interface P4PRankings { released: string | null; men: P4PEntry[]; women: P4PEntry[] }
+
+/** Pound-for-pound (painel de mídia, ainda publicado no período de transição para o Meta UFC Rankings). */
+export function parseP4P(text: string): P4PRankings {
+  const grab = (heading: RegExp): { rows: P4PEntry[]; released: string | null } => {
+    const m = heading.exec(text);
+    if (!m) return { rows: [], released: null };
+    const rest = text.slice(m.index + m[0].length);
+    const end = rest.search(/\n===?\s*[A-Z]/);
+    const sec = end > 0 ? rest.slice(0, end) : rest;
+    const released = /Rankings released on ([A-Za-z]+ \d+, \d{4})/.exec(sec)?.[1];
+    const table = sec.slice(sec.indexOf('{|'), sec.indexOf('\n|}'));
+    const rows: P4PEntry[] = [];
+    for (const row of table.split('\n|-')) {
+      const lines = row.split('\n').map((l) => l.trim());
+      const num = lines.map((l) => /^!\s*(\d+)\s*$/.exec(l)?.[1]).find(Boolean);
+      if (!num) continue;
+      const cells = lines.filter((l) => l.startsWith('|') && !l.startsWith('|-') && !l.startsWith('|}')).map((l) => l.replace(/^\|\s*/, ''));
+      const nameCell = cells[1] ?? '';
+      const name = /\[\[(?:[^\]|]*\|)?([^\]]+)\]\]/.exec(nameCell)?.[1] ?? /\{\{sortname\|([^|}]*)\|([^|}]*)/i.exec(nameCell)?.slice(1, 3).join(' ') ?? nameCell.replace(/\{\{[^}]*\}\}|<[^>]*>|'+/g, '').trim();
+      const wc = cells.map((c) => /\[\[[^\]|]*\(MMA\)\|([^\]]+)\]\]/.exec(c)?.[1]).find(Boolean) ?? null;
+      if (name) rows.push({ pos: Number(num), name: name.trim(), division: wc });
+    }
+    return { rows, released: released && !Number.isNaN(Date.parse(released + ' UTC')) ? new Date(released + ' UTC').toISOString().slice(0, 10) : null };
+  };
+  const men = grab(/===\s*Men's pound-for-pound\s*===/);
+  const women = grab(/===\s*Women's pound-for-pound\s*===/);
+  return { released: men.released ?? women.released, men: men.rows, women: women.rows };
 }

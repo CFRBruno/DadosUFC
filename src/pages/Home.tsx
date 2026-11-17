@@ -3,11 +3,10 @@ import { Link } from 'react-router-dom';
 import { ResultBoutRow, UpcomingBoutRow } from '../components/events';
 import HeroFX from '../components/HeroFX';
 import HeroEvents from '../components/HeroEvents';
-import { Avatar, CountUp, Loading } from '../components/ui';
+import { DivisionCard } from '../components/OfficialCards';
+import { CountUp, Loading } from '../components/ui';
 import { useRecentEvents, useFighters, useMeta, useOfficialBoard } from '../lib/data';
 import { fmtDate, fmtPct } from '../lib/format';
-import { divisionName, recordStr } from '../lib/format';
-import type { FighterSummary, OfficialBoard } from '../shared/types';
 
 /** Seta grossa que funciona como barra de progresso vertical: enche de baixo para cima com o acerto. */
 function ProgressArrow({ k }: { k: number }) {
@@ -45,32 +44,6 @@ function HeroStats({ fighters, accuracy, fights }: { fighters: number; accuracy:
 }
 
 const TOP_N = 5; // campeão + 5 primeiros em cada categoria (todos os cartões têm a mesma altura)
-
-function RankCard({ d, byId }: { d: OfficialBoard['divisions'][number]; byId: Map<string, FighterSummary> }) {
-  const rows = d.entries.filter((e) => e.pos <= TOP_N);
-  return (
-    <div className="rk-card">
-      <div className="rk-head">
-        <b>{divisionName(d.key)}</b>
-        <Link to={`/lutadores?cat=${d.key}&ordem=oficial`}>Top 15 →</Link>
-      </div>
-      <div className="rk-rows">
-        {rows.map((e) => {
-          const f = e.id ? byId.get(e.id) : undefined;
-          const inner = (
-            <>
-              <span className={`rk-pos ${e.pos === 0 ? 'champ' : ''}`}>{e.pos === 0 ? 'C' : e.pos}</span>
-              <Avatar name={e.name} id={e.id} size="sm" />
-              <span className="rk-name">{e.name}</span>
-              <span className="rk-rec">{f ? recordStr(f.record) : ''}</span>
-            </>
-          );
-          return e.slug ? <Link key={e.pos} to={`/lutador/${e.slug}`} className="rk-row">{inner}</Link> : <div key={e.pos} className="rk-row">{inner}</div>;
-        })}
-      </div>
-    </div>
-  );
-}
 
 export default function Home() {
   const heroRef = useRef<HTMLElement>(null);
@@ -157,7 +130,7 @@ export default function Home() {
           <>
             <div className="section-title">
               <h2>Ranking oficial do UFC</h2>
-              <span className="note">{board.released ? `divulgado em ${fmtDate(board.released)}` : ''}</span>
+              <Link to="/ranking/ufc">Ranking completo →</Link>
             </div>
             {[false, true].map((women) => {
               const divs = board.divisions.filter((d) => d.women === women);
@@ -166,7 +139,7 @@ export default function Home() {
                 <div key={String(women)} className="rk-group">
                   <div className="rk-group-title">{women ? 'Feminino' : 'Masculino'}</div>
                   <div className={`rk-grid ${divs.length < 4 ? 'few' : ''}`}>
-                    {divs.map((d) => <RankCard key={d.key} d={d} byId={byId} />)}
+                    {divs.map((d) => <DivisionCard key={d.key} d={d} top={TOP_N} />)}
                   </div>
                 </div>
               );

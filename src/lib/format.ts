@@ -53,3 +53,6 @@ export function daysAgo(iso: string | null): number | null {
 }
 
 export const todayIso = () => new Date().toISOString().slice(0, 10);
+
+/** "70 kg (155 lbs)" */
+export const fmtWeight = (lbs: number | null | undefined) => (lbs ? `${Math.round(lbs * 0.45359237)} kg (${lbs} lbs)` : '');
