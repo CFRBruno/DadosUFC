@@ -25,6 +25,18 @@ function RankRow({ e, champ, withDivision }: { e: Row; champ: boolean; withDivis
 
 export interface Collapsible { open: boolean; onOpen: () => void }
 
+/** Propriedades do cartão: recolhido = botão "Expandir cartão"; expandido = cartão comum (as linhas ficam clicáveis). */
+function cardProps(name: string, collapsible?: Collapsible) {
+  if (!collapsible) return {};
+  if (collapsible.open) return {};
+  return {
+    role: 'button' as const, tabIndex: 0, 'aria-label': `Expandir cartão ${name}`, 'aria-expanded': false,
+    onClick: collapsible.onOpen,
+    onKeyDown: (e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); collapsible.onOpen(); } },
+  };
+}
+
+
 /** Lista com as primeiras `top` linhas sempre visíveis; o restante abre ao clicar no cartão. */
 function Rows({ rows, top, withDivision, collapsible }: { rows: Row[]; top: number; withDivision?: boolean; collapsible?: Collapsible }) {
   const isChamp = (e: Row) => e.pos === 0 && !withDivision;
@@ -32,11 +44,11 @@ function Rows({ rows, top, withDivision, collapsible }: { rows: Row[]; top: numb
   const extra = collapsible ? rows.filter((e) => e.pos > top) : [];
   return (
     <>
-      <div className="rk-rows">{shown.map((e) => <RankRow key={e.pos} e={e} champ={isChamp(e)} withDivision={withDivision} />)}</div>
+      <div className="rk-rows" inert={collapsible ? !collapsible.open : undefined}>{shown.map((e) => <RankRow key={e.pos} e={e} champ={isChamp(e)} withDivision={withDivision} />)}</div>
       {collapsible && extra.length > 0 && (
         <>
           <div className="rk-more"><div className="rk-rows">{extra.map((e) => <RankRow key={e.pos} e={e} champ={false} withDivision={withDivision} />)}</div></div>
-          <div className="rk-hint" aria-hidden="true">{collapsible.open ? '▴ clique fora para recolher' : `▾ ver até o top ${rows[rows.length - 1].pos}`}</div>
+          <div className="rk-hint" aria-hidden="true">{collapsible.open ? '▴ clique fora para recolher' : '▾ Expandir cartão'}</div>
         </>
       )}
     </>
@@ -47,7 +59,7 @@ function Rows({ rows, top, withDivision, collapsible }: { rows: Row[]; top: numb
 export function DivisionCard({ d, top, link = true, collapsible }: { d: OfficialBoard['divisions'][number]; top: number; link?: boolean; collapsible?: Collapsible }) {
   const open = !!collapsible?.open;
   return (
-    <div className={`rk-card ${collapsible ? 'collapsible' : ''} ${open ? 'open' : ''}`} onClick={collapsible && !open ? collapsible.onOpen : undefined}>
+    <div className={`rk-card ${collapsible ? 'collapsible' : ''} ${open ? 'open' : ''}`} {...cardProps(divisionName(d.key), collapsible)}>
       <div className="rk-head">
         <b>{divisionName(d.key)}<small>{fmtWeight(divisionLbs(d.key))}</small></b>
         {link && <Link to={`/lutadores?cat=${d.key}&ordem=oficial`}>Top 15 →</Link>}
@@ -61,7 +73,7 @@ export function DivisionCard({ d, top, link = true, collapsible }: { d: Official
 export function P4PCard({ title, rows, top = 15, collapsible }: { title: string; rows: Row[]; top?: number; collapsible?: Collapsible }) {
   const open = !!collapsible?.open;
   return (
-    <div className={`rk-card ${collapsible ? 'collapsible' : ''} ${open ? 'open' : ''}`} onClick={collapsible && !open ? collapsible.onOpen : undefined}>
+    <div className={`rk-card ${collapsible ? 'collapsible' : ''} ${open ? 'open' : ''}`} {...cardProps(title, collapsible)}>
       <div className="rk-head"><b>{title}</b></div>
       <Rows rows={rows} top={top} withDivision collapsible={collapsible} />
     </div>

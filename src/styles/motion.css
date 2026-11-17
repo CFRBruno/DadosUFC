@@ -452,3 +452,12 @@ a.rk-row:hover { background: #1b1b1f; transform: translateX(3px); }
 .rk-hint { text-align: center; margin: 6px 0 2px; font: 700 10.5px var(--font-mono); letter-spacing: .1em; color: var(--muted); text-transform: uppercase; }
 .rk-card:not(.open) .rk-hint { color: var(--brand); }
 .rank-row .nm .fav-btn, .rank-name .fav-btn { opacity: .55; } .rank-row .nm .fav-btn.on, .rank-name .fav-btn.on, .rank-row:hover .fav-btn { opacity: 1; }
+
+/* cartão recolhido = botão; as linhas só funcionam com ele expandido */
+.rk-card.collapsible:not(.open) { cursor: pointer; }
+.rk-card.collapsible:not(.open) .rk-rows { pointer-events: none; }
+.rk-card.collapsible:not(.open):focus-visible { outline: 2px solid var(--brand); outline-offset: 2px; }
+.rk-card.collapsible:not(.open) .rk-hint { display: block; margin: 8px 0 0; padding: 8px; border-radius: 10px; background: rgba(237, 28, 36, .12); color: #ff6b70; transition: background-color .25s; }
+.rk-card.collapsible:not(.open):hover .rk-hint { background: rgba(237, 28, 36, .24); }
+/* comparador: a estrela fica ao lado do X, espelhada nos dois lados */
+.pick-card.b .fav-btn.pick { right: auto; left: 44px; }
