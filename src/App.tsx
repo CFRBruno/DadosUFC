@@ -1,5 +1,5 @@
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { Link, NavLink, Route, Routes, useLocation } from 'react-router-dom';
+import { Link, Navigate, NavLink, Route, Routes, useLocation } from 'react-router-dom';
 import { QuickSearch } from './components/fighters';
 import { Icon, Logo } from './components/ui';
 import { useMeta } from './lib/data';
@@ -139,10 +139,11 @@ export default function App() {
           <Route path="/lutador/:slug" element={<FighterPage />} />
           <Route path="/lutador/:slug/luta/:fightId" element={<FightPage />} />
           <Route path="/comparar" element={<Compare />} />
-          <Route path="/ranking" element={<Ranking />} />
+          <Route path="/ranking" element={<OfficialRanking />} />
+          <Route path="/ranking/estatisticas" element={<Ranking />} />
           <Route path="/ranking/zebras" element={<Upsets />} />
           <Route path="/favoritos" element={<Favoritos />} />
-          <Route path="/ranking/ufc" element={<OfficialRanking />} />
+          <Route path="/ranking/ufc" element={<Navigate to="/ranking" replace />} />
           <Route path="/ranking/elo" element={<EloPeaks />} />
           <Route path="/infograficos" element={<Infograficos />} />
           <Route path="/eventos" element={<Events />} />

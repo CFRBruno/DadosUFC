@@ -59,4 +59,4 @@ export const RANK_BY_KEY = Object.fromEntries(RANK_STATS.map((s) => [s.key, s]))
 
 /** Link para o ranking de uma estatística, já filtrado pela categoria. */
 export const rankingUrl = (key: string, division?: string) =>
-  `/ranking?stat=${key}${division && division !== 'CW' && division !== 'OPEN' ? `&modo=cat&cat=${division}` : ''}`;
+  `/ranking/estatisticas?stat=${key}${division && division !== 'CW' && division !== 'OPEN' ? `&modo=cat&cat=${division}` : ''}`;

@@ -1,3 +1,4 @@
+import FavButton from '../../components/FavButton';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import '@fontsource/playfair-display/400-italic.css';
@@ -294,8 +295,8 @@ function subline(s: Snap): string {
 
 function FighterLink({ name, snaps }: { name: string; snaps: Snap[] }) {
   const ref = snaps.find((x) => x.fight && (x.fight.a.name === name || x.fight.b.name === name))?.fight;
-  const slug = ref ? (ref.a.name === name ? ref.a.slug : ref.b.slug) : null;
-  return slug ? <Link to={`/lutador/${slug}`}>{name}</Link> : <>{name}</>;
+  const p = ref ? (ref.a.name === name ? ref.a : ref.b) : null;
+  return p?.slug ? <><Link to={`/lutador/${p.slug}`}>{name}</Link>{p.id && <FavButton kind="fighters" id={p.id} name={name} className="sm" />}</> : <>{name}</>;
 }
 
 function Headline({ html }: { html: string }) {

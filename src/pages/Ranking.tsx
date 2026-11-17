@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import FavButton from '../components/FavButton';
 import RankTabs from '../components/RankTabs';
 import { Avatar, ErrorBox, Flag, Loading } from '../components/ui';
 import { useFighters, useJson } from '../lib/data';
@@ -120,7 +121,7 @@ export default function Ranking() {
                   <span className={`rank-pos ${ranks[i] <= 3 ? `top${ranks[i]}` : ''}`}>{ranks[i]}</span>
                   <Avatar name={x.f.name} id={x.f.id} size="sm" />
                   <div className="rank-name">
-                    <div className="nm"><Flag src={x.f.flag} country={x.f.country} /> {x.f.name}</div>
+                    <div className="nm"><Flag src={x.f.flag} country={x.f.country} /> {x.f.name} <FavButton kind="fighters" id={x.f.id} name={x.f.name} className="sm" /></div>
                     <div className="sub">
                       {mode === 'abs' && <>{DIVISION_BY_KEY[x.f.division]?.short} · </>}
                       {x.f.record.w}-{x.f.record.l}-{x.f.record.d} no UFC

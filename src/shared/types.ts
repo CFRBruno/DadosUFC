@@ -348,6 +348,7 @@ export interface UpsetFight {
 
 /** Pico de Elo de um lutador (todos os que já lutaram no UFC). */
 export interface EloPeakRow {
+  i: string;                  // id
   n: string;                  // nome
   s: string | null;           // slug (só quem tem página)
   p: number;                  // pico

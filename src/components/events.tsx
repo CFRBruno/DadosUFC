@@ -1,5 +1,6 @@
 import { Link, useNavigate } from 'react-router-dom';
 import { modelFavorite, modelHit } from '../lib/hits';
+import FavButton from './FavButton';
 import type { EventFight, FighterSummary, UpcomingBout } from '../shared/types';
 import { divisionName, recordStr } from '../lib/format';
 import { METHOD_LABEL } from '../shared/translate';
@@ -89,6 +90,7 @@ function Side({ id, name, slug, rec, right, cls = '', side }: { id: string | nul
         <div className="nm">{name}</div>
         <div className="rc">{rec}</div>
       </div>
+      {id && <FavButton kind="fighters" id={id} name={name} className="sm" />}
     </>
   );
   return slug ? (

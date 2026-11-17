@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { DivisionCard, P4PCard } from '../components/OfficialCards';
 import RankTabs from '../components/RankTabs';
@@ -9,6 +10,13 @@ import { fmtDate } from '../lib/format';
 export default function OfficialRanking() {
   const { data: board, error } = useOfficialBoard();
   const [params, setParams] = useSearchParams();
+  const [open, setOpen] = useState<string | null>(null);
+  // clicar fora do cartão aberto (no corpo do site ou em outro cartão) recolhe; no outro cartão o clique seguinte o expande
+  useEffect(() => {
+    const out = (e: Event) => { if (!(e.target instanceof Element) || !e.target.closest('.rk-card.open')) setOpen(null); };
+    document.addEventListener('pointerdown', out);
+    return () => document.removeEventListener('pointerdown', out);
+  }, []);
   const gender = params.get('genero') === 'f' ? 'f' : params.get('genero') === 'm' ? 'm' : '';
   const set = (v: string) => { const p = new URLSearchParams(params); if (v) p.set('genero', v); else p.delete('genero'); setParams(p, { replace: true }); };
   if (error) return <div className="container"><ErrorBox message={error} /></div>;
@@ -19,7 +27,7 @@ export default function OfficialRanking() {
       <div className="page-head">
         <span className="eyebrow">Ranking</span>
         <h1 style={{ marginTop: 8 }}>Ranking oficial do UFC</h1>
-        <p>Campeão e top 15 de cada categoria (Meta UFC Rankings{board.released ? `, divulgado em ${fmtDate(board.released)}` : ''}) e o pound-for-pound{board.p4p.released ? ` (painel de mídia, ${fmtDate(board.p4p.released)})` : ''}. O peso ao lado do nome é o do lutador, em kg e (lbs).</p>
+        <p>Campeão e top 15 de cada categoria (Meta UFC Rankings{board.released ? `, divulgado em ${fmtDate(board.released)}` : ''}) e o pound-for-pound{board.p4p.released ? ` (painel de mídia, ${fmtDate(board.p4p.released)})` : ''}. O limite de cada categoria aparece ao lado do nome do peso, em kg e (lbs). Mostramos o campeão e o top 5; clique numa categoria para abrir o top 15 (clicar fora recolhe).</p>
       </div>
       <div className="filters" style={{ marginBottom: 10 }}><RankTabs /></div>
       <div className="filters">
@@ -34,8 +42,8 @@ export default function OfficialRanking() {
           <div key={g.label} className="rk-group">
             <div className="rk-group-title">{g.label}</div>
             <div className="rk-grid rk-full">
-              {p4p.length > 0 && <P4PCard title="Pound for pound" rows={p4p} />}
-              {divs.map((d) => <DivisionCard key={d.key} d={d} top={15} link={false} />)}
+              {p4p.length > 0 && <P4PCard title="Pound for pound" rows={p4p} top={5} collapsible={{ open: open === `p4p-${g.label}`, onOpen: () => setOpen(`p4p-${g.label}`) }} />}
+              {divs.map((d) => <DivisionCard key={d.key} d={d} top={5} link={false} collapsible={{ open: open === d.key, onOpen: () => setOpen(d.key) }} />)}
             </div>
           </div>
         );

@@ -524,7 +524,7 @@ async function main() {
     const last = fs[fs.length - 1];
     const d = detailById.get(id);
     eloPeaks.push({
-      n: bios.get(id)?.name ?? id, s: d?.slug ?? null, p: peak[1], pd: peak[0], c: hist[hist.length - 1][1], f: fs.filter((x) => x.outcome !== 'NC').length || fs.length,
+      i: id, n: bios.get(id)?.name ?? id, s: d?.slug ?? null, p: peak[1], pd: peak[0], c: hist[hist.length - 1][1], f: fs.filter((x) => x.outcome !== 'NC').length || fs.length,
       v: lastDivision(id), y0: Number(fs[0].date.slice(0, 4)), y1: Number(last.date.slice(0, 4)), a: !!d?.active,
     });
   }

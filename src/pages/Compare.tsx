@@ -1,6 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { BodyMap, CmpBar } from '../components/charts';
+import FavButton from '../components/FavButton';
 import { compareUrl } from '../components/events';
 import { FighterPicker } from '../components/fighters';
 import { Avatar, CountUp, Flag, Icon, Loading, ResultBadge, Rich } from '../components/ui';
@@ -134,6 +135,7 @@ function PickCard({
       <div style={{ minWidth: 0 }}>
         {f.nickname && <div className="nick">"{f.nickname}"</div>}
         <Link to={`/lutador/${f.slug}`}><h3>{f.name}</h3></Link>
+        <FavButton kind="fighters" id={f.id} name={f.name} className="sm pick" />
         <div className="chips">
           <span className="chip chip-record">{recordStr(f.record)}</span>
           {f.eloRank && <span className="chip chip-rank">#{f.eloRank.division} Elo</span>}

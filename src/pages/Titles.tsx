@@ -1,3 +1,4 @@
+import FavButton from '../components/FavButton';
 import { lazy, Suspense, useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { Avatar, ErrorBox, Loading } from '../components/ui';
@@ -166,7 +167,8 @@ function TitleList() {
 
 function Name({ p, win }: { p: TitleFight['a']; win: boolean }) {
   const cls = win ? 'belt-w' : 'belt-l';
-  return p.slug ? <Link to={`/lutador/${p.slug}`} className={cls}>{p.name}</Link> : <span className={cls}>{p.name}</span>;
+  const star = p.id ? <FavButton kind="fighters" id={p.id} name={p.name} className="sm" /> : null;
+  return p.slug ? <><Link to={`/lutador/${p.slug}`} className={cls}>{p.name}</Link>{star}</> : <span className={cls}>{p.name}</span>;
 }
 
 function TitleRow({ t }: { t: TitleFight }) {

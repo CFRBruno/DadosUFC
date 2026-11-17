@@ -2,6 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { ResultBoutRow, UpcomingBoutRow } from '../components/events';
 import HeroFX from '../components/HeroFX';
+import FavButton from '../components/FavButton';
 import HeroEvents from '../components/HeroEvents';
 import { DivisionCard } from '../components/OfficialCards';
 import { CountUp, Loading } from '../components/ui';
@@ -95,7 +96,7 @@ export default function Home() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8, marginBottom: 16 }}>
                   <div>
                     <div className="eyebrow">{fmtDate(nextEvent.date, true)}</div>
-                    <h3 style={{ fontSize: 22, fontWeight: 900, marginTop: 6 }}>{nextEvent.name}</h3>
+                    <h3 style={{ fontSize: 22, fontWeight: 900, marginTop: 6, display: 'flex', alignItems: 'center', gap: 8 }}>{nextEvent.name} <FavButton kind="events" id={nextEvent.id} name={nextEvent.name} /></h3>
                     {nextEvent.location && <div className="note">{nextEvent.location}</div>}
                   </div>
                   <Link to={`/evento/${nextEvent.id}`} className="btn btn-ghost">Card completo</Link>
@@ -116,7 +117,7 @@ export default function Home() {
                 </div>
                 <div className="panel">
                   <div className="eyebrow">{fmtDate(lastEvent.date, true)}</div>
-                  <h3 style={{ fontSize: 22, fontWeight: 900, margin: '6px 0 16px' }}>{lastEvent.name}</h3>
+                  <h3 style={{ fontSize: 22, fontWeight: 900, margin: '6px 0 16px', display: 'flex', alignItems: 'center', gap: 8 }}>{lastEvent.name} <FavButton kind="events" id={lastEvent.id} name={lastEvent.name} /></h3>
                   {lastEvent.fights.slice(0, 5).map((f) => (
                     <ResultBoutRow key={f.id} f={f} />
                   ))}
@@ -130,7 +131,7 @@ export default function Home() {
           <>
             <div className="section-title">
               <h2>Ranking oficial do UFC</h2>
-              <Link to="/ranking/ufc">Ranking completo →</Link>
+              <Link to="/ranking">Ranking completo →</Link>
             </div>
             {[false, true].map((women) => {
               const divs = board.divisions.filter((d) => d.women === women);

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import FavButton from '../components/FavButton';
 import RankTabs from '../components/RankTabs';
 import { ErrorBox, Loading } from '../components/ui';
 import { useJson } from '../lib/data';
@@ -90,7 +91,7 @@ export default function EloPeaks() {
                 <>
                   <span className={`rank-pos ${ranks[i] <= 3 ? `top${ranks[i]}` : ''}`}>{ranks[i]}</span>
                   <div className="rank-name">
-                    <div className="nm">{x.n}{x.a && <span className="chip chip-up" style={{ marginLeft: 8 }}>ativo</span>}</div>
+                    <div className="nm">{x.n} <FavButton kind="fighters" id={x.i} name={x.n} className="sm" />{x.a && <span className="chip chip-up" style={{ marginLeft: 8 }}>ativo</span>}</div>
                     <div className="sub">{DIVISION_BY_KEY[x.v]?.short} · {x.y0 === x.y1 ? x.y0 : `${x.y0}–${x.y1}`} · {x.f} lutas · pico em {fmtDate(x.pd)} · atual {x.c}</div>
                   </div>
                   <div className="rank-bar" aria-hidden="true"><i style={{ width: `${Math.max(4, ((x.p - low) / Math.max(1, top - low)) * 100)}%` }} /></div>
