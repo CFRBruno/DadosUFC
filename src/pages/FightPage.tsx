@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import { BodyMap, CmpBar } from '../components/charts';
-import { Avatar, CountUp, ErrorBox, Loading, ResultBadge } from '../components/ui';
+import { Avatar, CountUp, FighterFlag, ErrorBox, Loading, ResultBadge } from '../components/ui';
 import { useFighter } from '../lib/data';
 import { divisionName, fmtDate, fmtInt, fmtPct, fmtTime, methodText } from '../lib/format';
 import { S, type FightEntry, type StatLine } from '../shared/types';
@@ -40,7 +40,7 @@ export default function FightPage() {
         <Link to={`/lutador/${f.slug}`} className="pick-card a">
           <Avatar name={f.name} id={f.id} side="a" size="lg" />
           <div>
-            <h3>{f.name}</h3>
+            <h3><FighterFlag id={f.id} />{f.name}</h3>
             <div className="chips"><span className="chip chip-record">{fight.recordBefore}</span><ResultBadge r={fight.result} /></div>
           </div>
         </Link>
@@ -49,14 +49,14 @@ export default function FightPage() {
           <Link to={`/lutador/${opp.slug}`} className="pick-card b">
             <Avatar name={opp.name} id={opp.id} side="b" size="lg" />
             <div>
-              <h3>{opp.name}</h3>
+              <h3><FighterFlag id={opp.id} />{opp.name}</h3>
               <div className="chips"><span className="chip chip-record">{fight.oppRecordBefore}</span></div>
             </div>
           </Link>
         ) : (
           <div className="pick-card b">
             <Avatar name={opp.name} id={opp.id} side="b" size="lg" />
-            <div><h3>{opp.name}</h3><div className="chips"><span className="chip chip-record">{fight.oppRecordBefore}</span></div></div>
+            <div><h3><FighterFlag id={opp.id} />{opp.name}</h3><div className="chips"><span className="chip chip-record">{fight.oppRecordBefore}</span></div></div>
           </div>
         )}
       </div>

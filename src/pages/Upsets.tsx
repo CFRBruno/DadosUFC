@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import RankTabs from '../components/RankTabs';
-import { ErrorBox, Loading } from '../components/ui';
+import { ErrorBox, FighterFlag, Loading } from '../components/ui';
 import { useJson } from '../lib/data';
 import { fmtDate, fmtPct } from '../lib/format';
 import { DIVISION_BY_KEY, MAIN_DIVISIONS, type DivisionKey } from '../shared/divisions';
@@ -123,9 +123,9 @@ function PastView({ toggle }: { toggle: React.ReactNode }) {
                   <span className={`rank-pos ${ranks[i] <= 3 ? `top${ranks[i]}` : ''}`}>{ranks[i]}</span>
                   <div className="up-main">
                     <div className="up-names">
-                      <b className="up-win">{win[0]}</b>
+                      <b className="up-win"><FighterFlag slug={win[1]} />{win[0]}</b>
                       <span className="up-def">venceu</span>
-                      <span className="up-lose">{lose[0]}</span>
+                      <span className="up-lose"><FighterFlag slug={lose[1]} />{lose[0]}</span>
                     </div>
                     <div className="sub">
                       {f.t && <span style={{ color: 'var(--brand)' }}>Cinturão · </span>}
@@ -241,9 +241,9 @@ function UpcomingView({ toggle }: { toggle: React.ReactNode }) {
                   <span className="rank-pos">{i + 1}</span>
                   <div className="up-main">
                     <div className="up-names">
-                      <b className="up-win">{favP[0]}</b>
+                      <b className="up-win"><FighterFlag slug={favP[1]} />{favP[0]}</b>
                       <span className="up-def">favorito(a) sobre</span>
-                      <span className="up-lose">{dogP[0]}</span>
+                      <span className="up-lose"><FighterFlag slug={dogP[1]} />{dogP[0]}</span>
                     </div>
                     <div className="sub">
                       {f.t && <span style={{ color: 'var(--brand)' }}>Cinturão · </span>}

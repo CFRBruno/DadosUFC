@@ -468,3 +468,8 @@ a.rk-row:hover { background: #1b1b1f; transform: translateX(3px); }
 .pick-card .fav-btn.pick { top: 10px; right: 12px; margin: 0; }
 .pick-card.b .fav-btn.pick { right: auto; left: 12px; }
 @media (max-width: 799px) { .pick-card.b .clear { left: auto; right: 10px; } .pick-card.b .fav-btn.pick { left: auto; right: 12px; } }
+
+/* bandeiras ao lado dos nomes nas lutas */
+.bout .side .nm .flag, .fc-side b .flag, .he-names .flag, .up-names .flag, .pick-card h3 .flag, .page-head + .pick-row h3 .flag, .fight-row .flag { width: 16px; height: 16px; margin-right: 5px; vertical-align: -3px; border-radius: 3px; object-fit: cover; }
+.he-names .flag { margin-right: 4px; width: 14px; height: 14px; vertical-align: -2px; }
+.pick-row h3 .flag { width: 22px; height: 22px; vertical-align: -3px; margin-right: 8px; }

@@ -7,6 +7,7 @@ import { fmtDate } from '../lib/format';
 import { DIVISION_BY_KEY } from '../shared/divisions';
 import type { EventInfo, UpcomingBout } from '../shared/types';
 import { compareUrl } from './events';
+import { FighterFlag } from './ui';
 
 /** Cinturão de campeão (fundo das disputas de título): placa central dourada e placas laterais. */
 function Belt() {
@@ -85,7 +86,7 @@ export default function HeroEvents() {
             {bouts.map(({ b, main, fav: bf }, r) => (
               <Link key={`${b.a.name}-${b.b.name}`} style={{ ['--r' as string]: r }} to={b.a.slug && b.b.slug ? compareUrl(b) : `/evento/${e.id}`} className={`he-row ${b.title ? 'title' : ''} ${main ? 'main' : ''} ${bf ? 'fav' : ''}`}>
                 {b.title && <Belt />}
-                <span className="he-names">{bf && <b className="he-s">★</b>}<i className="a">{last(b.a.name)}</i><em>×</em><i className="b">{last(b.b.name)}</i></span>
+                <span className="he-names">{bf && <b className="he-s">★</b>}<i className="a"><FighterFlag id={b.a.id} slug={b.a.slug} />{last(b.a.name)}</i><em>×</em><i className="b"><FighterFlag id={b.b.id} slug={b.b.slug} />{last(b.b.name)}</i></span>
                 <span className="he-tag">{b.title ? 'CINTURÃO' : main ? 'LUTA PRINCIPAL' : DIVISION_BY_KEY[b.division]?.short}</span>
               </Link>
             ))}

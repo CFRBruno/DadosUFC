@@ -156,6 +156,22 @@ export function Flag({ src, country }: { src?: string | null; country?: string |
   return <img className="flag" src={src} alt={country ?? ''} title={country ?? ''} width={18} height={18} loading="lazy" referrerPolicy="no-referrer" />;
 }
 
+type FlagMap = Map<string, { flag: string; country: string }>;
+const flagMaps = new WeakMap<object, FlagMap>();
+/** Bandeira do lutador, achada pelo id (ou pelo slug) na lista de lutadores. */
+export function FighterFlag({ id, slug }: { id?: string | null; slug?: string | null }) {
+  const list = useFighters().data;
+  if (!list || (!id && !slug)) return null;
+  let m = flagMaps.get(list);
+  if (!m) {
+    m = new Map();
+    for (const f of list) if (f.flag) { const v = { flag: f.flag, country: f.country }; m.set(f.id, v); m.set(f.slug, v); }
+    flagMaps.set(list, m);
+  }
+  const v = (id && m.get(id)) || (slug && m.get(slug)) || null;
+  return v ? <><Flag src={v.flag} country={v.country} />{' '}</> : null;
+}
+
 /** Número que "sobe" até o valor (ease-out); respeita prefers-reduced-motion. */
 export function CountUp({ value, format, ms = 900, delay = 0, fromZero = false, accelerate = false, onProgress }: {
   value: number; format: (n: number) => string; ms?: number; delay?: number;

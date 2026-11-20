@@ -4,7 +4,7 @@ import { DIVISION_BY_KEY } from '../shared/divisions';
 import type { FightEntry, FighterSummary } from '../shared/types';
 import { S } from '../shared/types';
 import { divisionName, fmtDate, fmtPct, fmtTime, methodText, recordStr } from '../lib/format';
-import { Avatar, Flag, Icon, ResultBadge } from './ui';
+import { Avatar, FighterFlag, Flag, Icon, ResultBadge } from './ui';
 import FavButton from './FavButton';
 import { useFavorites } from '../lib/favorites';
 import { useFighters } from '../lib/data';
@@ -136,7 +136,7 @@ export function FightRow({ f, fighterSlug, fighterName }: { f: FightEntry; fight
         <ResultBadge r={f.result} />
         <div style={{ minWidth: 0 }}>
           <div className="opp">
-            {f.opponent.name}{' '}
+            <FighterFlag id={f.opponent.id} />{f.opponent.name}{' '}
             {f.title && <span className="chip chip-rank" style={{ marginLeft: 4 }}>{f.interim ? 'Cinturão interino' : 'Cinturão'}</span>}
           </div>
           <div className="ev">{f.event} · {fmtDate(f.date)}</div>

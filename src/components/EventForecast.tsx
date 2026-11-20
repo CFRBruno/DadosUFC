@@ -5,7 +5,7 @@ import { loadJson, useModel } from '../lib/data';
 import { divisionName, fmtPct } from '../lib/format';
 import type { EventInfo, FighterDetail, FighterSummary, UpcomingBout } from '../shared/types';
 import { compareUrl } from './events';
-import { Avatar, Loading } from './ui';
+import { Avatar, FighterFlag, Loading } from './ui';
 
 const M_PT = { KO: 'KO/TKO', SUB: 'finalização', DEC: 'decisão' } as const;
 
@@ -41,7 +41,7 @@ export default function EventForecast({ ev, byId }: { ev: EventInfo; byId: Map<s
               <span>{label && <span style={{ color: 'var(--brand)' }}>{label} · </span>}{divisionName(b.division, true)} · {b.rounds} rounds</span>
             </div>
             <div className="fc-main">
-              <div className="fc-side"><Avatar name={b.a.name} id={b.a.id} size="sm" side="a" /><div><b>{b.a.name}</b><small>{fa ? `${fa.record.w}-${fa.record.l}-${fa.record.d}` : 'Estreia'}</small></div></div>
+              <div className="fc-side"><Avatar name={b.a.name} id={b.a.id} size="sm" side="a" /><div><b><FighterFlag id={b.a.id} slug={b.a.slug} />{b.a.name}</b><small>{fa ? `${fa.record.w}-${fa.record.l}-${fa.record.d}` : 'Estreia'}</small></div></div>
               <div className="fc-pct">
                 {an ? (
                   <>
@@ -50,7 +50,7 @@ export default function EventForecast({ ev, byId }: { ev: EventInfo; byId: Map<s
                   </>
                 ) : <small>sem dados suficientes</small>}
               </div>
-              <div className="fc-side right"><Avatar name={b.b.name} id={b.b.id} size="sm" side="b" /><div><b>{b.b.name}</b><small>{fb ? `${fb.record.w}-${fb.record.l}-${fb.record.d}` : 'Estreia'}</small></div></div>
+              <div className="fc-side right"><Avatar name={b.b.name} id={b.b.id} size="sm" side="b" /><div><b><FighterFlag id={b.b.id} slug={b.b.slug} />{b.b.name}</b><small>{fb ? `${fb.record.w}-${fb.record.l}-${fb.record.d}` : 'Estreia'}</small></div></div>
             </div>
             {an && (
               <div className="fc-foot">
