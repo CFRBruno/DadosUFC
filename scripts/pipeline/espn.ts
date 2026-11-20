@@ -255,3 +255,48 @@ export async function localPhotos(espnIds: string[], outDir: string, offline: bo
   if (fetched) console.log(`  ✓ ${fetched} fotos novas guardadas para a imagem de compartilhamento`);
   return have;
 }
+
+// --- Cartel profissional (todas as organizações) ----------------------------------------------------
+
+const REC_CACHE = path.join(RAW_DIR, 'cache-espn-records.json');
+/** Cartel geral do lutador na ESPN (todas as organizações, incluindo o UFC). */
+export interface EspnRecord { w: number; l: number; d: number; ko: number; sub: number; kl: number; sl: number }
+interface CachedRec { at: string; r: EspnRecord | null }
+
+/**
+ * Busca (com cache) o cartel geral de cada atleta. Refaz a busca quando o lutador lutou desde a última consulta
+ * (o cartel mudou) ou quando a consulta tem mais de 45 dias. `lastFight`: id ESPN → data da última luta conhecida.
+ */
+export async function fetchEspnRecords(ids: string[], lastFight: Map<string, string>, offline: boolean): Promise<Map<string, EspnRecord>> {
+  let cache: Record<string, CachedRec> = {};
+  try { cache = JSON.parse(await readFile(REC_CACHE, 'utf8')); } catch { /* vazio */ }
+  const now = new Date().toISOString().slice(0, 10);
+  const day = 864e5;
+  const stale = (id: string) => {
+    const c = cache[id];
+    if (!c) return true;
+    const lf = lastFight.get(id);
+    return (lf != null && Date.parse(lf) >= Date.parse(c.at) - 3 * day) || Date.parse(now) - Date.parse(c.at) > 45 * day;
+  };
+  const todo = offline ? [] : [...new Set(ids)].filter(stale);
+  let i = 0, failed = 0;
+  const worker = async () => {
+    while (i < todo.length) {
+      const id = todo[i++];
+      try {
+        const res = await fetch(`https://sports.core.api.espn.com/v2/sports/mma/athletes/${id}/records?lang=en&region=us`, { signal: AbortSignal.timeout(30_000) });
+        if (res.status === 404) { cache[id] = { at: now, r: null }; continue; }
+        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        const items = ((await res.json()) as { items?: { name: string; stats: { name: string; value: number }[] }[] }).items ?? [];
+        const st = Object.fromEntries((items.find((x) => x.name === 'overall')?.stats ?? []).map((x) => [x.name, x.value]));
+        cache[id] = { at: now, r: Object.keys(st).length ? { w: st.wins ?? 0, l: st.losses ?? 0, d: st.draws ?? 0, ko: st.tkos ?? 0, sub: st.submissions ?? 0, kl: st.tkoLosses ?? 0, sl: st.submissionLosses ?? 0 } : null };
+      } catch { failed++; }
+    }
+  };
+  await Promise.all(Array.from({ length: 8 }, worker));
+  if (todo.length) {
+    await writeFile(REC_CACHE, JSON.stringify(cache));
+    console.log(`  ✓ Cartéis profissionais (ESPN): ${todo.length - failed} consultados${failed ? `, ${failed} falhas` : ''}`);
+  }
+  return new Map(Object.entries(cache).flatMap(([k, v]) => (v.r ? [[k, v.r] as [string, EspnRecord]] : [])));
+}

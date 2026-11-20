@@ -232,6 +232,8 @@ export interface FighterDetail extends FighterSummary {
   next: UpcomingBout | null;
   /** retrato estatístico atual usado pelo modelo de previsão */
   fv: FeatureVec;
+  /** cartel fora do UFC (ESPN, todas as organizações), quando disponível */
+  preUfc: { w: number; l: number; d: number; ko: number; sub: number; dec: number } | null;
 }
 
 export interface UpcomingBout {

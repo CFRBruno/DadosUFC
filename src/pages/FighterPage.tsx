@@ -64,6 +64,7 @@ function Profile({ f }: { f: FighterDetail }) {
             {f.official && <OfficialChip o={f.official} />}
             {f.champ && <span className={`chip ${f.champ === 'atual' ? 'chip-gold' : 'chip-tag'}`}>{f.champ === 'atual' ? 'Campeão atual' : 'Ex-campeão do UFC'}</span>}
             {f.style && <span className="chip chip-style">{f.style}</span>}
+            {f.preUfc && f.preUfc.w + f.preUfc.l + f.preUfc.d > 0 && <span className="chip" title="Cartel em outras organizações antes do UFC (ESPN): vitórias-derrotas-empates">Fora do UFC {f.preUfc.w}-{f.preUfc.l}{f.preUfc.d ? `-${f.preUfc.d}` : ''}</span>}
             {f.streak && <span className={`chip ${f.streak.startsWith('V') ? 'chip-up' : 'chip-red'}`}>{f.streak.startsWith('V') ? `${f.streak.slice(1)} vitória(s) seguida(s)` : f.streak.startsWith('D') ? `${f.streak.slice(1)} derrota(s) seguida(s)` : 'Empate'}</span>}
           </div>
         </div>
@@ -101,6 +102,9 @@ function Profile({ f }: { f: FighterDetail }) {
         <div className="panel" style={{ marginTop: 16 }}>
           <div className="panel-title left">Estreante</div>
           <p className="text-2">{f.name} ainda não lutou no UFC. Assim que fizer a primeira luta, as estatísticas aparecem aqui automaticamente.</p>
+          {f.preUfc && f.preUfc.w + f.preUfc.l + f.preUfc.d > 0 && (
+            <p style={{ marginTop: 10 }}><b>Cartel fora do UFC (ESPN):</b> {f.preUfc.w}-{f.preUfc.l}{f.preUfc.d ? `-${f.preUfc.d}` : ''}, com {f.preUfc.ko} vitória{f.preUfc.ko === 1 ? '' : 's'} por nocaute, {f.preUfc.sub} por finalização e {f.preUfc.dec} por decisão. É o que o modelo usa para estimar o nível dele enquanto não há lutas no UFC.</p>
+          )}
         </div>
       ) : (
         <>

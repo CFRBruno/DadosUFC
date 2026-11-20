@@ -103,6 +103,20 @@ export function analyze(A: FighterDetail, B: FighterDetail, model: ModelParams, 
   const tdA = vA[idx('td')] * ((1 - vB[idx('tdDef')]) / (1 - pa.tdDef));
   const tdB = vB[idx('td')] * ((1 - vA[idx('tdDef')]) / (1 - pa.tdDef));
 
+  // cartel fora do UFC: pesa muito para quem tem pouca ou nenhuma luta no UFC
+  {
+    const v = stats.groups.pro ?? 0;
+    const pa = A.preUfc, pb = B.preUfc;
+    if (Math.abs(v) >= 0.015 && pa && pb) {
+      const favored: Factor['favored'] = v > 0 ? 'A' : 'B';
+      const rec = (p: NonNullable<typeof pa>) => `${p.w}-${p.l}${p.d ? `-${p.d}` : ''}`;
+      const [w, l, pw, pl] = favored === 'A' ? [nA, nB, pa, pb] : [nB, nA, pb, pa];
+      const fin = (p: NonNullable<typeof pa>) => (p.w ? Math.round(((p.ko + p.sub) / p.w) * 100) : 0);
+      factors.push({ key: 'pro', label: FACTOR_LABEL.pro, value: v, favored, text: `${w} tem o melhor cartel fora do UFC (${rec(pw)}, ${fin(pw)}% das vitórias antes do fim), contra ${rec(pl)} de ${l}. Pesa mais para quem tem poucas lutas no UFC.` });
+      factors.sort((x, y) => Math.abs(y.value) - Math.abs(x.value));
+    }
+  }
+
   const lowData = [A, B].filter((f) => f.totals.fights < 3).map((f) => f.name);
 
   // razões para cada lado

@@ -14,7 +14,7 @@ import { S } from '../../src/shared/types';
 import { emptyState } from '../../src/shared/model';
 import type { ModelParams } from '../../src/shared/types';
 import { computePriors, priorsFor, processChronologically } from './build';
-import { buildFeatures, currentSnapshot } from './features';
+import { buildFeatures, currentSnapshot, type Pre } from './features';
 import { loadOdds, marketLookup, updateOdds } from './odds';
 import { trainModel2, type MethodInfo } from './train';
 import { fetchMirror, fetchUpcoming, rawExists, RAW_DIR, type ScrapedEvent } from './fetch';
@@ -22,7 +22,7 @@ import { classifyStyle, computeForm, computePercentiles, computeRates, recentStr
 import { loadDataset, type RawFight } from './load';
 import { fetchWikiPhotos, photoMatcher } from './photos';
 import { buildTitleHistory } from './titleHistory';
-import { checkHeadshots, countryPt, espnHeadshot, espnPage, espnUpcoming, fetchEspn, localPhotos, matchEspnIds } from './espn';
+import { checkHeadshots, countryPt, espnHeadshot, espnPage, espnUpcoming, fetchEspn, fetchEspnRecords, localPhotos, matchEspnIds } from './espn';
 import { fetchOfficialRankings } from './rankings';
 import { loadScorecards, scorecardLookup, updateScorecards } from './scorecards';
 import { buildStory } from '../../src/lib/titleStory';
@@ -102,8 +102,59 @@ async function main() {
   await updateScorecards(scArchive, fights, offline);
   const scoresOf = scorecardLookup(scArchive);
   const proc = processChronologically(fights, bios, priors, fiveRoundDecFactor);
+  // 3. Escopo ------------------------------------------------------------------------
+  const fightsBy = new Map<string, RawFight[]>();
+  for (const f of fights) {
+    for (const s of f.fighters) {
+      if (!fightsBy.has(s.id)) fightsBy.set(s.id, []);
+      fightsBy.get(s.id)!.push(f);
+    }
+  }
+  const lastDivision = (id: string): DivisionKey => {
+    const fs = fightsBy.get(id) ?? [];
+    for (let i = fs.length - 1; i >= 0; i--) if (fs[i].division !== 'CW' && fs[i].division !== 'OPEN') return fs[i].division;
+    return fs.length ? fs[fs.length - 1].division : 'OPEN';
+  };
+
+  // nome → id (prefere quem lutou mais recentemente)
+  const idByName = new Map<string, string>();
+  for (const f of fights) for (const s of f.fighters) idByName.set(norm(s.name), s.id);
+  for (const b of bios.values()) if (!idByName.has(norm(b.name))) idByName.set(norm(b.name), b.id);
+
+  // ESPN ↔ nossos ids (lutadores ativos desde 2024)
+  const fightsByDate = new Map<string, [string, string][]>();
+  for (const f of fights) {
+    if (!fightsByDate.has(f.date)) fightsByDate.set(f.date, []);
+    fightsByDate.get(f.date)!.push([f.fighters[0].id, f.fighters[1].id]);
+  }
+  const active = [...fightsBy.entries()].filter(([, fs]) => fs[fs.length - 1].date >= SCOPE_FROM).map(([id]) => ({ id, name: bios.get(id)?.name ?? id }));
+  const espnOf = matchEspnIds(espn, active, (d) => fightsByDate.get(d) ?? []);
+  const ourOfEspn = new Map([...espnOf.entries()].map(([k, v]) => [v, k]));
+
+  // cartel fora do UFC: cartel geral da ESPN menos o que o UFC explica (todas as lutas da base)
+  const ufcTot = new Map<string, { w: number; l: number; ko: number; sub: number; kl: number; sl: number }>();
+  for (const f of fights) {
+    if (f.winner == null || f.outcome !== 'W') continue;
+    const win = f.fighters[f.winner], lose = f.fighters[1 - f.winner];
+    const tw = ufcTot.get(win.id) ?? { w: 0, l: 0, ko: 0, sub: 0, kl: 0, sl: 0 }, tl = ufcTot.get(lose.id) ?? { w: 0, l: 0, ko: 0, sub: 0, kl: 0, sl: 0 };
+    tw.w++; tl.l++;
+    if (f.method === 'KO') { tw.ko++; tl.kl++; } else if (f.method === 'SUB') { tw.sub++; tl.sl++; }
+    ufcTot.set(win.id, tw); ufcTot.set(lose.id, tl);
+  }
+  const lastFightOfEspn = new Map<string, string>();
+  for (const [oid, eid] of espnOf) { const fs = fightsBy.get(oid); if (fs?.length) lastFightOfEspn.set(eid, fs[fs.length - 1].date); }
+  let proRecs = await fetchEspnRecords([...espnOf.values()], lastFightOfEspn, offline);
+  const preOf = (id: string): Pre | null => {
+    const eid = espnOf.get(id);
+    const r = eid ? proRecs.get(eid) : undefined;
+    if (!r) return null;
+    const u = ufcTot.get(id) ?? { w: 0, l: 0, ko: 0, sub: 0, kl: 0, sl: 0 };
+    const w = Math.max(0, r.w - u.w), l = Math.max(0, r.l - u.l);
+    return { n: w + l + r.d, w, l, d: r.d, ko: Math.max(0, r.ko - u.ko), sub: Math.max(0, r.sub - u.sub), kl: Math.max(0, r.kl - u.kl), sl: Math.max(0, r.sl - u.sl) };
+  };
+
   console.log('• Gerando variáveis pré-luta e treinando o modelo…');
-  const feat = buildFeatures(fights, bios, priors);
+  const feat = buildFeatures(fights, bios, priors, '2003-01-01', preOf);
   const methodInfo = new Map<string, MethodInfo>(proc.samples.map((x) => [x.id, x]));
   const trained = trainModel2(feat.samples, feat.samples.map((x) => marketOf(x.date, x.an, x.bn)), methodInfo);
   const model: ModelParams = { version: 2, v2: trained.v2, priors, fiveRoundDecFactor, metrics: trained.metrics };
@@ -133,35 +184,6 @@ async function main() {
       `  Desde ${m.recent.from.slice(0, 4)} (${m.recent.n} lutas): ${pc(m.recent.accuracy)} (só estatísticas ${pc(m.recent.statsAccuracy)}) · só Elo ${pc(m.eloOnlyAccuracy)} · ` +
       `método ${pc(m.methodAccuracy)} · exato ${pc(m.exactAccuracy)} · pesos mercado/estatísticas ${model.v2.market ? model.v2.market.a.toFixed(3) + ' / ' + model.v2.market.b.toFixed(3) : '—'}`,
   );
-
-  // 3. Escopo ------------------------------------------------------------------------
-  const fightsBy = new Map<string, RawFight[]>();
-  for (const f of fights) {
-    for (const s of f.fighters) {
-      if (!fightsBy.has(s.id)) fightsBy.set(s.id, []);
-      fightsBy.get(s.id)!.push(f);
-    }
-  }
-  const lastDivision = (id: string): DivisionKey => {
-    const fs = fightsBy.get(id) ?? [];
-    for (let i = fs.length - 1; i >= 0; i--) if (fs[i].division !== 'CW' && fs[i].division !== 'OPEN') return fs[i].division;
-    return fs.length ? fs[fs.length - 1].division : 'OPEN';
-  };
-
-  // nome → id (prefere quem lutou mais recentemente)
-  const idByName = new Map<string, string>();
-  for (const f of fights) for (const s of f.fighters) idByName.set(norm(s.name), s.id);
-  for (const b of bios.values()) if (!idByName.has(norm(b.name))) idByName.set(norm(b.name), b.id);
-
-  // ESPN ↔ nossos ids (lutadores ativos desde 2024)
-  const fightsByDate = new Map<string, [string, string][]>();
-  for (const f of fights) {
-    if (!fightsByDate.has(f.date)) fightsByDate.set(f.date, []);
-    fightsByDate.get(f.date)!.push([f.fighters[0].id, f.fighters[1].id]);
-  }
-  const active = [...fightsBy.entries()].filter(([, fs]) => fs[fs.length - 1].date >= SCOPE_FROM).map(([id]) => ({ id, name: bios.get(id)?.name ?? id }));
-  const espnOf = matchEspnIds(espn, active, (d) => fightsByDate.get(d) ?? []);
-  const ourOfEspn = new Map([...espnOf.entries()].map(([k, v]) => [v, k]));
 
   // correções manuais de nacionalidade (a ESPN erra alguns cadastros)
   const countryFix: Record<string, { country: string; flag: string }> = {};
@@ -209,6 +231,9 @@ async function main() {
     upcomingEvents.push({ id: ev.id, name: ev.name, date: ev.date, location: ev.location, upcoming: true, fights: [], bouts, source: (ev as { source?: string }).source });
   }
 
+  // estreantes (próximos eventos): cartel deles também
+  proRecs = await fetchEspnRecords([...espnOf.values()], lastFightOfEspn, offline);
+  await writeFile(path.join(RAW_DIR, 'espn-ids.json'), JSON.stringify(Object.fromEntries(espnOf)));
   // slugs
   const slugOf = new Map<string, string>();
   const used = new Map<string, number>();
@@ -349,7 +374,8 @@ async function main() {
       titleFights: entries.filter((e) => e.title).length,
       fights: entries,
       next: nextBout.get(id) ?? null,
-      fv: currentSnapshot(feat.states, id, bio, priorsFor(priors, division)),
+      fv: currentSnapshot(feat.states, id, bio, priorsFor(priors, division), preOf(id)),
+      preUfc: (() => { const q = preOf(id); return q ? { w: q.w, l: q.l, d: q.d, ko: q.ko, sub: q.sub, dec: Math.max(0, q.w - q.ko - q.sub) } : null; })(),
     });
   }
 

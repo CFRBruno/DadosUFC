@@ -18,6 +18,7 @@ export const EXTRA = [
   'd_age', 'd_age_over', 'd_age_under', 'd_layoff', 'd_layoff_long', 'd_ko_recent', 'd_reach', 'd_height', 'd_ape',
   'd_stance_south', 'd_stance_switch', 'd_debut', 'd_tenure', 'd_n',
   'm_td', 'm_str', 'm_sub', 'm_ko', 'm_ctrl', 'm_tdj', 'm_strj', 'x_age_elo',
+  'pr_logn', 'pr_wr', 'pr_fin', 'pr_kl', 'pr_wr_u', 'pr_fin_u', 'pr_kl_u',
 ] as const;
 
 /**
@@ -74,8 +75,24 @@ export function pairVector(keys: string[], a: FeatureVec, b: FeatureVec): number
     A.jb_td * (1 - B.jb_tdDef) - B.jb_td * (1 - A.jb_tdDef),
     A.jb_slpm * (1 - B.jb_def) - B.jb_slpm * (1 - A.jb_def),
     ((ageA - ageB) * ((A.elo_k40 + B.elo_k40) / 2 - 1500)) / 100,
+    ...proDiff(a, b),
   );
   return row;
+}
+
+/**
+ * Cartel fora do UFC: peso grande para quem tem pouca ou nenhuma luta no UFC (1/(1+lutas no UFC)) e
+ * um peso pequeno fixo para os demais. Só entra quando os dois lados têm o dado.
+ */
+function proDiff(a: FeatureVec, b: FeatureVec): number[] {
+  if (!a._has || !b._has) return [0, 0, 0, 0, 0, 0, 0];
+  const pf = (f: FeatureVec) => {
+    const n = f._pn ?? 0, w = f._pw ?? 0, l = f._pl ?? 0;
+    return [Math.log1p(n), (w + 1) / (n + 2) - 0.5, ((f._pko ?? 0) + (f._psub ?? 0) + 0.4) / (w + 1) - 0.4, ((f._pkl ?? 0) + (f._psl ?? 0) + 0.3) / (l + 1) - 0.3];
+  };
+  const fa = pf(a), fb = pf(b);
+  const wa = 1 / (1 + (a.n ?? 0)), wb = 1 / (1 + (b.n ?? 0));
+  return [fa[0] * wa - fb[0] * wb, fa[1] * wa - fb[1] * wb, fa[2] * wa - fb[2] * wb, fa[3] * wa - fb[3] * wb, (fa[1] - fb[1]) * 0.2, (fa[2] - fb[2]) * 0.2, (fa[3] - fb[3]) * 0.2];
 }
 
 export const pairNames = (keys: string[]): string[] => [...keys.map((k) => 'd_' + k), ...EXTRA];
@@ -100,6 +117,7 @@ export const FACTOR_LABEL: Record<string, string> = {
   exp: 'Experiência no UFC',
   form: 'Fase recente',
   layoff: 'Tempo parado',
+  pro: 'Cartel fora do UFC',
   koLoss: 'Queixo (derrotas por nocaute)',
 };
 
@@ -115,6 +133,7 @@ export function groupOf(name: string): string {
     return stat;
   }
   if (/^(elo_k|elo_dyn|elo_mov|gl_r$|gl2_r$|gl_lo|opp_elo|beat_elo|best_win|winpct|elo_peak_gap|titles)/.test(k)) return 'elo';
+  if (/^pr_/.test(k)) return 'pro';
   if (/^(age|x_age_elo)/.test(k)) return 'age';
   if (/^(reach|height|ape|stance)/.test(k)) return 'reach';
   if (/^(logn|minutes|n$|tenure|five|debut|gl_rd|gl2_rd)/.test(k)) return 'exp';
@@ -218,7 +237,8 @@ export function confidence(
   score = Math.min(1, Math.max(0, score));
 
   // explicações
-  const deb = (f: FeatureVec, n: string) => { if (num(f.n) === 0) reasons.push({ good: false, text: `${n} é estreante: o modelo só conhece a média da categoria, sem nenhum resultado no UFC.` }); };
+  const rec = (f: FeatureVec) => `${num(f._pw)}-${num(f._pl)}${num(f._pn) - num(f._pw) - num(f._pl) > 0 ? `-${num(f._pn) - num(f._pw) - num(f._pl)}` : ''}`;
+  const deb = (f: FeatureVec, n: string) => { if (num(f.n) === 0) reasons.push({ good: false, text: f._has && num(f._pn) > 0 ? `${n} é estreante: sem resultados no UFC, o modelo usa o cartel de ${rec(f)} que ele tem em outras organizações (ESPN).` : `${n} é estreante: o modelo só conhece a média da categoria, sem nenhum resultado no UFC.` }); };
   deb(a, nA); deb(b, nB);
   const few = (f: FeatureVec, n: string) => { const k = num(f.n); if (k >= 1 && k < 4) reasons.push({ good: false, text: `${n} tem só ${k} luta${k > 1 ? 's' : ''} no UFC: as estatísticas ainda oscilam muito.` }); };
   few(a, nA); few(b, nB);

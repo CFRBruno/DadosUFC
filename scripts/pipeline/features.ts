@@ -26,6 +26,7 @@ export const ELO_VARIANTS = ['k24', 'k32', 'k40', 'k56', 'dyn', 'mov'] as const;
 type EloKey = (typeof ELO_VARIANTS)[number];
 
 interface FState {
+  pre: Pre | null;
   n: number; w: number; l: number; d: number;
   cum: Sums;
   ew: Record<LK, Sums>;
@@ -44,7 +45,12 @@ interface FState {
   dob: number | null; reach: number | null; height: number | null; stance: number;
 }
 
-const newState = (b: Bio | undefined): FState => ({
+/** Cartel fora do UFC (cartel geral da ESPN menos o que o UFC explica), ou null se não houver. */
+export interface Pre { n: number; w: number; l: number; d: number; ko: number; sub: number; kl: number; sl: number }
+export type PreOf = (id: string) => Pre | null;
+
+const newState = (b: Bio | undefined, pre: Pre | null = null): FState => ({
+  pre,
   n: 0, w: 0, l: 0, d: 0,
   cum: zero(),
   ew: { a: zero(), b: zero() },
@@ -151,6 +157,9 @@ export function staticSnapshot(st: FState, p: Priors): FeatureVec {
   f.reach = st.reach; f.height = st.height; f.stance = st.stance;
   f.ape = st.reach != null && st.height != null ? st.reach - st.height : null;
   f.debut = st.n === 0 && st.cum.cnt === 0 ? 1 : 0;
+  // cartel fora do UFC (campos com _: entram só via pairVector)
+  f._has = st.pre ? 1 : 0;
+  f._pn = st.pre?.n ?? 0; f._pw = st.pre?.w ?? 0; f._pl = st.pre?.l ?? 0; f._pko = st.pre?.ko ?? 0; f._psub = st.pre?.sub ?? 0; f._pkl = st.pre?.kl ?? 0; f._psl = st.pre?.sl ?? 0;
   // insumos dos campos que dependem da data (ver atDate)
   f._dob = st.dob; f._last = st.last; f._first = st.first; f._lastKo = st.lastKoLoss; f._lastLbs = st.lastLbs;
   f._gl_rd = st.gl.rd; f._gl_last = st.gl.last; f._gl2_rd = st.gl2.rd; f._gl2_last = st.gl2.last;
@@ -176,12 +185,12 @@ function glicko(me: FState['gl'], opp: { r: number; rd: number }, s: number, dat
 }
 
 export function buildFeatures(
-  fights: RawFight[], bios: Map<string, Bio>, priors: Record<string, Priors>, from = '2003-01-01',
+  fights: RawFight[], bios: Map<string, Bio>, priors: Record<string, Priors>, from = '2003-01-01', preOf: PreOf = () => null,
 ): { samples: Sample[]; states: Map<string, FState> } {
   const states = new Map<string, FState>();
   const get = (id: string) => {
     let s = states.get(id);
-    if (!s) { s = newState(bios.get(id)); states.set(id, s); }
+    if (!s) { s = newState(bios.get(id), preOf(id)); states.set(id, s); }
     return s;
   };
   const samples: Sample[] = [];
@@ -284,8 +293,8 @@ export function buildFeatures(
 }
 
 /** Retrato atual (parte estática) de um lutador, arredondado para o JSON do site. */
-export function currentSnapshot(states: Map<string, FState>, id: string, bio: Bio | undefined, p: Priors): FeatureVec {
-  const f = staticSnapshot(states.get(id) ?? newState(bio), p);
+export function currentSnapshot(states: Map<string, FState>, id: string, bio: Bio | undefined, p: Priors, pre: Pre | null = null): FeatureVec {
+  const f = staticSnapshot(states.get(id) ?? newState(bio, pre), p);
   for (const k of Object.keys(f)) {
     const v = f[k];
     if (typeof v === 'number' && !Number.isInteger(v)) f[k] = Math.round(v * 1e5) / 1e5;

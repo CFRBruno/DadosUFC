@@ -70,6 +70,8 @@ Os números são recalculados a cada atualização e aparecem em `/modelo`.
 
 - **Confiança da previsão** (alta, neutra, baixa): selo no comparador (com "ver por quê") e nas previsões do card. O nível usa o que o teste (lutas desde 2015) mostrou separar acertos de erros — tamanho da vantagem do favorito e concordância entre estatísticas e mercado —; estreia, poucas lutas, tempo parado, incerteza do rating e dados faltando aparecem como avisos com peso pequeno. Acerto histórico por nível: alta ≈77%, neutra ≈65%, baixa ≈56% (recalculado a cada atualização, em `/modelo`).
 
+- **Cartel fora do UFC:** para estreantes e lutadores com poucas lutas no UFC, o modelo usa o cartel geral da ESPN (todas as organizações) menos o que o UFC explica (vitórias, derrotas e finais antes do fim). Fica em cache em `data/raw/cache-espn-records.json` e é refeito para quem lutou desde a última consulta. Só traz o cartel (vitórias, derrotas, nocautes, finalizações); não traz o nível dos adversários nem estatísticas de golpes de outras organizações.
+
 ### Linhas de mercado
 
 A ESPN só publica as linhas perto da data da luta e depois as retira. Por isso, cada execução do pipeline guarda o que encontrar em `data/odds/archive.json`, e o GitHub Actions grava esse arquivo de volta no repositório (commit automático "Atualiza arquivo de linhas de mercado"). Se você trabalha no repositório localmente, faça `git pull` antes de enviar alterações.
