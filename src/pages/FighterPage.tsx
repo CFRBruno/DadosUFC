@@ -7,7 +7,7 @@ import { FightRow, OfficialChip } from '../components/fighters';
 import { Avatar, CountUp, ErrorBox, Flag, Icon, Loading } from '../components/ui';
 import { useFighter } from '../lib/data';
 import { rankingUrl } from '../lib/rankingStats';
-import { cmToFtIn, divisionName, fmtDate, fmtNum, fmtPct, recordStr } from '../lib/format';
+import { cmToFtIn, divisionName, fmtDate, fmtNum, fmtPct, pctColor, recordStr } from '../lib/format';
 import type { FighterDetail, Rates } from '../shared/types';
 
 type Tile = { key: keyof Rates; label: string; fmt: (r: Rates) => string; hint: string };
@@ -42,7 +42,7 @@ function Marked({ t }: { t: string }) {
         const m = /^\[\[([^|\]]+)\|([^\]]*)\]\]$/.exec(part);
         if (!m) return part;
         const n = Number(m[1]);
-        const color = Number.isFinite(n) ? `hsl(${Math.round(n * 1.2)} 72% 58%)` : '#c4b0f7';
+        const color = Number.isFinite(n) ? `pctColor(n)` : '#c4b0f7';
         return <b key={i} style={{ color, fontVariantNumeric: 'tabular-nums' }}>{m[2]}</b>;
       })}
     </>
@@ -189,9 +189,9 @@ function Profile({ f }: { f: FighterDetail }) {
             <div className="stat-tiles">
               {TILES.map((t) => {
                 const p = f.percentiles[t.key];
-                const col = p != null ? `hsl(${Math.round(p * 1.2)} 72% 55%)` : undefined;
+                const col = p != null ? pctColor(p) : undefined;
                 return (
-                  <Link to={rankingUrl(t.key, f.division)} className="stat-tile" style={col ? { borderColor: `hsl(${Math.round((p ?? 0) * 1.2)} 72% 55% / 0.45)` } : undefined} key={t.key} title={`${t.hint} — clique para ver o ranking`}>
+                  <Link to={rankingUrl(t.key, f.division)} className="stat-tile" style={col ? { borderColor: pctColor(p ?? 50, 0.45) } : undefined} key={t.key} title={`${t.hint} — clique para ver o ranking`}>
                     <div className="label">{t.label}</div>
                     <div className="value" style={col ? { color: col } : undefined}>{t.fmt(f.rates)}</div>
                     {p != null && (

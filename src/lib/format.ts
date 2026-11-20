@@ -56,3 +56,10 @@ export const todayIso = () => new Date().toISOString().slice(0, 10);
 
 /** "70 kg (155 lbs)" */
 export const fmtWeight = (lbs: number | null | undefined) => (lbs ? `${Math.round(lbs * 0.45359237)} kg (${lbs} lbs)` : '');
+
+/** Cor de um percentil (0–100): tons de verde para o lado positivo (50+), tons de vermelho para o negativo; mais forte quanto mais longe de 50. */
+export function pctColor(p: number, alpha?: number): string {
+  const s = Math.round(35 + Math.abs(p - 50) * 1.1);
+  const a = alpha != null ? ` / ${alpha}` : '';
+  return p >= 50 ? `hsl(142 ${s}% 52%${a})` : `hsl(0 ${s}% 62%${a})`;
+}
