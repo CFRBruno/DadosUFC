@@ -163,3 +163,78 @@ export function withMarket(m: Model2, z: number, marketP: number | null | undefi
   if (marketP == null || !m.market) return sigmoid2(z);
   return sigmoid2(m.market.a * logit(marketP) + m.market.b * z);
 }
+
+// --- Confiança da previsão ------------------------------------------------------------
+
+export type ConfLevel = 'alta' | 'neutra' | 'baixa';
+export interface Confidence {
+  /** 0–1 */
+  score: number;
+  level: ConfLevel;
+  /** o que pesou, do mais importante ao menos; `good` = aumenta a confiança */
+  reasons: { good: boolean; text: string }[];
+}
+
+/** Limites calibrados com as lutas de 2015 em diante (ver `npm run data`: acerto por nível de confiança). */
+export const CONF_HIGH = 0.72;
+export const CONF_LOW = 0.42;
+
+/**
+ * Quão confiável é a previsão desta luta, a partir do que o modelo sabe sobre cada lutador:
+ * número de lutas no UFC (e estreia), incerteza do rating (Glicko), tempo parado, dados cadastrais
+ * faltando e, quando há linha de mercado, se ela concorda com as estatísticas.
+ * Não mede a chance de vitória (uma luta 50–50 pode ter confiança alta); mede o quanto dá para confiar nos números.
+ */
+export function confidence(
+  a: FeatureVec, b: FeatureVec,
+  o: { nameA?: string; nameB?: string; market?: number | null; pStats?: number; p?: number } = {},
+): Confidence {
+  const nA = o.nameA ?? 'O lutador A', nB = o.nameB ?? 'O lutador B';
+  const reasons: Confidence['reasons'] = [];
+  const num = (v: number | null | undefined, d = 0) => (typeof v === 'number' && Number.isFinite(v) ? v : d);
+  const fa = num(a.n), fb = num(b.n);
+  const exp = (n: number) => 1 - Math.exp(-n / 4); // 0 lutas → 0 · 3 → 0,53 · 8 → 0,86
+  const lo = Math.min(fa, fb), hi = Math.max(fa, fb);
+  const expScore = 0.65 * exp(lo) + 0.35 * exp(hi);
+
+  const rdA = num(a.gl_rd, 350), rdB = num(b.gl_rd, 350);
+  const rdScore = 1 - Math.min(1, Math.max(0, ((rdA + rdB) / 2 - 60) / 290));
+
+  const lay = (f: FeatureVec) => (f.layoff == null ? 0 : Math.min(1, Math.max(0, (num(f.layoff) - 450) / 700)));
+  const rust = Math.max(lay(a), lay(b));
+  const info = (f: FeatureVec) => (f.age == null ? 0.4 : 0) + (f.reach == null ? 0.2 : 0);
+  const miss = Math.max(info(a), info(b));
+
+  const has = o.market != null;
+  let disagree = false;
+  if (has && o.pStats != null) disagree = (o.market! >= 0.5) !== (o.pStats >= 0.5) && Math.abs(o.market! - o.pStats) > 0.08;
+  // Testado nas lutas de 2015 em diante: o que de fato separa acertos de erros é (1) o tamanho da vantagem do favorito
+  // e (2) estatísticas e mercado concordarem. Experiência, tempo parado e incerteza do rating quase não mudam o acerto
+  // (o modelo já os trata), então entram só com peso pequeno e como avisos.
+  const margin = Math.min(1, Math.abs((o.p ?? 0.5) - 0.5) / 0.3);
+  const agree = has ? (disagree ? 0 : 1) : 0.4;
+  const soft = 0.6 * expScore + 0.15 * rdScore + 0.15 * (1 - rust) + 0.1 * (1 - miss);
+  let score = 0.55 * margin + 0.3 * agree + 0.15 * soft;
+  score = Math.min(1, Math.max(0, score));
+
+  // explicações
+  const deb = (f: FeatureVec, n: string) => { if (num(f.n) === 0) reasons.push({ good: false, text: `${n} é estreante: o modelo só conhece a média da categoria, sem nenhum resultado no UFC.` }); };
+  deb(a, nA); deb(b, nB);
+  const few = (f: FeatureVec, n: string) => { const k = num(f.n); if (k >= 1 && k < 4) reasons.push({ good: false, text: `${n} tem só ${k} luta${k > 1 ? 's' : ''} no UFC: as estatísticas ainda oscilam muito.` }); };
+  few(a, nA); few(b, nB);
+  if (lo >= 6) reasons.push({ good: true, text: `Os dois têm histórico longo no UFC (${fa} e ${fb} lutas).` });
+  else if (lo >= 4 && fa > 0 && fb > 0) reasons.push({ good: true, text: `Os dois têm um histórico razoável no UFC (${fa} e ${fb} lutas).` });
+  const lg = (f: FeatureVec, n: string) => { const d = num(f.layoff); if (f.layoff != null && d > 450) reasons.push({ good: false, text: `${n} está há ${Math.round(d / 30)} meses sem lutar (risco de ferrugem).` }); };
+  lg(a, nA); lg(b, nB);
+  const ri = (f: FeatureVec, n: string, rd: number) => { if (num(f.n) >= 1 && rd > 190) reasons.push({ good: false, text: `O rating de ${n} ainda é incerto (poucos adversários de nível conhecido).` }); };
+  ri(a, nA, rdA); ri(b, nB, rdB);
+  const mi = (f: FeatureVec, n: string) => { if (f.age == null) reasons.push({ good: false, text: `Falta a data de nascimento de ${n}: a idade não entra no cálculo.` }); else if (f.reach == null) reasons.push({ good: false, text: `Falta a envergadura de ${n}.` }); };
+  mi(a, nA); mi(b, nB);
+  if (o.p != null) { const mg = Math.abs(o.p - 0.5); if (mg >= 0.2) reasons.push({ good: true, text: `Há uma vantagem clara de um lado (${Math.round(Math.max(o.p, 1 - o.p) * 100)}%).` }); else if (mg < 0.08) reasons.push({ good: false, text: 'Luta muito parelha (perto de 50–50): o resultado é difícil de cravar.' }); }
+  if (has && !disagree) reasons.push({ good: true, text: 'Há linha de mercado e ela está de acordo com as estatísticas.' });
+  if (has && disagree) reasons.push({ good: false, text: 'Estatísticas e mercado apontam favoritos diferentes.' });
+  if (!has) reasons.push({ good: false, text: 'Sem linha de mercado: a previsão usa só as estatísticas.' });
+
+  const level: ConfLevel = score >= CONF_HIGH ? 'alta' : score < CONF_LOW ? 'baixa' : 'neutra';
+  return { score, level, reasons: reasons.sort((x, y) => Number(x.good) - Number(y.good)) };
+}

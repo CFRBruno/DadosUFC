@@ -68,6 +68,8 @@ Os números são recalculados a cada atualização e aparecem em `/modelo`.
 
 - **Nacionalidade:** vem da ESPN, que às vezes erra (ex.: Brendan Allen aparecia como brasileiro). Correções ficam em `data/manual/countries.json` (nome → país e código da bandeira).
 
+- **Confiança da previsão** (alta, neutra, baixa): selo no comparador (com "ver por quê") e nas previsões do card. O nível usa o que o teste (lutas desde 2015) mostrou separar acertos de erros — tamanho da vantagem do favorito e concordância entre estatísticas e mercado —; estreia, poucas lutas, tempo parado, incerteza do rating e dados faltando aparecem como avisos com peso pequeno. Acerto histórico por nível: alta ≈77%, neutra ≈65%, baixa ≈56% (recalculado a cada atualização, em `/modelo`).
+
 ### Linhas de mercado
 
 A ESPN só publica as linhas perto da data da luta e depois as retira. Por isso, cada execução do pipeline guarda o que encontrar em `data/odds/archive.json`, e o GitHub Actions grava esse arquivo de volta no repositório (commit automático "Atualiza arquivo de linhas de mercado"). Se você trabalha no repositório localmente, faça `git pull` antes de enviar alterações.

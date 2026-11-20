@@ -52,6 +52,15 @@ export default function About() {
         </div>
       </div>
 
+      {m.byConfidence && (
+        <div className="panel prose" style={{ marginTop: 16 }}>
+          <div className="panel-title left">Confiança da previsão</div>
+          <p>Cada previsão ganha um selo de confiança (alta, neutra ou baixa). Ele não é a chance de vitória: mede o quanto dá para confiar nos números daquela luta. Testamos o que realmente separa acertos de erros nas lutas desde 2015 e usamos só o que se mostrou útil: <b>o tamanho da vantagem do favorito</b> e <b>estatísticas e mercado concordarem</b>. Outros fatores (estreia, poucas lutas, tempo parado, incerteza do rating, dados faltando) quase não alteram o acerto, porque o modelo já os trata; eles aparecem como avisos em "ver por quê", com peso pequeno no selo.</p>
+          <div className="kpis" style={{ marginTop: 10 }}>
+            {m.byConfidence.map((r) => <div className="kpi" key={r.level}><b>{fmtPct(r.accuracy, 1)}</b><span>acerto com confiança {r.level} ({r.n.toLocaleString('pt-BR')} lutas)</span></div>)}
+          </div>
+        </div>
+      )}
       {events && <Scoreboard events={events.past} />}
 
       <div className="panel" style={{ marginTop: 16 }}>

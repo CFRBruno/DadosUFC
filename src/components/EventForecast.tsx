@@ -4,6 +4,7 @@ import { analyze, shortName, type Analysis } from '../lib/compare';
 import { loadJson, useModel } from '../lib/data';
 import { divisionName, fmtPct } from '../lib/format';
 import type { EventInfo, FighterDetail, FighterSummary, UpcomingBout } from '../shared/types';
+import ConfidenceBadge from './ConfidenceBadge';
 import { compareUrl } from './events';
 import { Avatar, FighterFlag, Loading } from './ui';
 
@@ -54,6 +55,7 @@ export default function EventForecast({ ev, byId }: { ev: EventInfo; byId: Map<s
             </div>
             {an && (
               <div className="fc-foot">
+                <span className="fc-conf"><ConfidenceBadge c={an.confidence} /></span>
                 <span><em>Mais provável:</em> <b className={an.mostLikely.side === 'A' ? 'fa' : 'fb'}>{shortName(an.mostLikely.side === 'A' ? b.a.name : b.b.name)} por {M_PT[an.mostLikely.method]}</b> ({fmtPct(an.mostLikely.p)})</span>
                 {an.usesMarket && an.pMarket != null ? (
                   <span className="fc-reads">

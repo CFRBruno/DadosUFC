@@ -68,6 +68,8 @@ export interface ModelMetrics {
   recent: { from: string; n: number; accuracy: number; logLoss: number; statsAccuracy: number };
   /** lutas com linha de mercado no histórico */
   marketFights: number;
+  /** acerto histórico (2015 em diante) por nível de confiança */
+  byConfidence?: { level: 'alta' | 'neutra' | 'baixa'; n: number; accuracy: number }[];
 }
 
 export interface ModelParams {

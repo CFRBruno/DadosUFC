@@ -2,7 +2,7 @@
 
 import { DIVISION_BY_KEY, divisionLbs, type DivisionKey } from '../shared/divisions';
 import { blendPriors, FEATURES, featureValues, methodPrior, outcomes, type OutcomeTable } from '../shared/model';
-import { atDate, FACTOR_LABEL, predictStats, withMarket } from '../shared/model2';
+import { atDate, confidence, FACTOR_LABEL, predictStats, withMarket, type Confidence } from '../shared/model2';
 import type { FightEntry, FighterDetail, ModelParams, Priors } from '../shared/types';
 import { fmtNum, fmtPct } from './format';
 
@@ -32,6 +32,8 @@ export interface Analysis {
   pStats: number;
   /** a previsão inclui o sinal de mercado (luta marcada)? */
   usesMarket: boolean;
+  /** confiança da previsão (alta, neutra ou baixa) e o que pesou */
+  confidence: Confidence;
   /** chance de A segundo o mercado (probabilidade implícita sem a margem da casa), quando há */
   pMarket: number | null;
   table: OutcomeTable;
@@ -58,7 +60,8 @@ export function analyze(A: FighterDetail, B: FighterDetail, model: ModelParams, 
   const vb = featureValues(B.totals, pa, opts.date);
   const when = Date.parse(opts.date);
   const lbs = divisionLbs(division);
-  const stats = predictStats(model.v2, atDate(A.fv, when, lbs), atDate(B.fv, when, lbs));
+  const fvA = atDate(A.fv, when, lbs), fvB = atDate(B.fv, when, lbs);
+  const stats = predictStats(model.v2, fvA, fvB);
   const usesMarket = opts.market != null && !!model.v2.market;
   const pred = { pA: withMarket(model.v2, stats.z, opts.market), rawA: va.raw, rawB: vb.raw, valuesA: va.v, valuesB: vb.v };
   const prior = methodPrior(pa, opts.rounds, model.fiveRoundDecFactor);
@@ -205,6 +208,7 @@ export function analyze(A: FighterDetail, B: FighterDetail, model: ModelParams, 
   return {
     pA: pred.pA,
     pStats: stats.p,
+    confidence: confidence(fvA, fvB, { nameA: A.name, nameB: B.name, market: opts.market ?? null, pStats: stats.p, p: pred.pA }),
     usesMarket,
     pMarket: opts.market ?? null,
     table,

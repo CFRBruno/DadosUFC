@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
 import { BodyMap, CmpBar } from '../components/charts';
 import FavButton from '../components/FavButton';
+import ConfidenceBadge from '../components/ConfidenceBadge';
 import { compareUrl } from '../components/events';
 import { FighterPicker } from '../components/fighters';
 import { Avatar, CountUp, Flag, Icon, Loading, ResultBadge, Rich } from '../components/ui';
@@ -198,6 +199,7 @@ function AnalysisView({ A, B, an, model }: { A: FighterDetail; B: FighterDetail;
         ) : (
           <p className="note" style={{ marginTop: 14, textAlign: 'center' }}>Sem linha de mercado para esta luta: a previsão usa apenas as estatísticas.</p>
         )}
+        <div className="conf-row"><ConfidenceBadge c={an.confidence} detail /></div>
         <div className="outcome-grid">
           {(['A', 'B'] as const).map((side) => (
             <div key={side}>

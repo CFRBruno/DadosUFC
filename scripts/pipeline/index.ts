@@ -5,7 +5,7 @@
 import { mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { DIVISION_BY_KEY, divisionLbs, MAIN_DIVISIONS, parseWeightClass, type DivisionKey } from '../../src/shared/divisions';
-import { atDate, predictStats, withMarket } from '../../src/shared/model2';
+import { atDate, CONF_HIGH, CONF_LOW, confidence, predictStats, withMarket } from '../../src/shared/model2';
 import type {
   RankingRow, TitleFight,
   EventInfo, FightEntry, FighterDetail, FighterSummary, FightPred, MethodBreakdown, EloPeakRow, InfographicsData, Meta, OfficialBoard, StatRank, UpcomingForecast, UpsetFight, TitleReign, UpcomingBout,
@@ -107,6 +107,23 @@ async function main() {
   const methodInfo = new Map<string, MethodInfo>(proc.samples.map((x) => [x.id, x]));
   const trained = trainModel2(feat.samples, feat.samples.map((x) => marketOf(x.date, x.an, x.bn)), methodInfo);
   const model: ModelParams = { version: 2, v2: trained.v2, priors, fiveRoundDecFactor, metrics: trained.metrics };
+  // diagnóstico: acerto por nível de confiança (previsões feitas só com o passado)
+  {
+    const q: { score: number; ok: boolean }[] = [];
+    for (const smp of feat.samples) {
+      const po = trained.pOos.get(smp.id);
+      if (!po || smp.y === 0.5) continue;
+      const mk = marketOf(smp.date, smp.an, smp.bn);
+      const zs = trained.zOos.get(smp.id);
+      const c = confidence(smp.fa, smp.fb, { market: po.mk ? mk : null, pStats: zs == null ? undefined : 1 / (1 + Math.exp(-zs)), p: po.p });
+      q.push({ score: c.score, ok: (po.p >= 0.5) === (smp.y === 1) });
+    }
+    const lv = (x: number) => (x >= CONF_HIGH ? 'alta' : x < CONF_LOW ? 'baixa' : 'neutra');
+    const rows = ['alta', 'neutra', 'baixa'].map((k) => { const g = q.filter((x) => lv(x.score) === k); return `${k} ${g.length} lutas (${((g.length / q.length) * 100).toFixed(0)}%) → ${(g.filter((x) => x.ok).length / Math.max(1, g.length) * 100).toFixed(1)}%`; });
+    const sorted = [...q].map((x) => x.score).sort((x, y) => x - y);
+    model.metrics.byConfidence = (['alta', 'neutra', 'baixa'] as const).map((k) => { const g = q.filter((x) => lv(x.score) === k); return { level: k, n: g.length, accuracy: g.filter((x) => x.ok).length / Math.max(1, g.length) }; });
+    console.log(`  Confiança (acerto por nível): ${rows.join(' · ')} | quantis 10/25/50/75/90: ${[0.1, 0.25, 0.5, 0.75, 0.9].map((t) => sorted[Math.floor(t * sorted.length)].toFixed(2)).join(' ')}`);
+  }
   const m = model.metrics;
   const pc = (x: number) => (x * 100).toFixed(1) + '%';
   console.log(
