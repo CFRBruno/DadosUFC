@@ -390,7 +390,7 @@ async function main() {
       eloRank: null,
       totals: st,
       wins, losses, target, targetAbs, position,
-      styleTags: [], styleText: '',
+      styleTags: [], styleText: '', styleWhy: {},
       strengths: [], weaknesses: [],
       fiveRoundFights: entries.filter((e) => e.scheduledRounds === 5).length,
       titleFights: entries.filter((e) => e.title).length,
@@ -413,6 +413,7 @@ async function main() {
     d.styleShift = styleShift([...d.fights].reverse(), d.division, d.women, shiftPct);
     d.styleTags = s.tags;
     d.styleText = s.text;
+    d.styleWhy = s.why;
     const sw = strengthsWeaknesses(d.totals, d.rates, d.percentiles, d.fights, DIVISION_BY_KEY[d.division]?.name ?? 'UFC', today, d.age);
     d.strengths = sw.strengths;
     d.weaknesses = sw.weaknesses;

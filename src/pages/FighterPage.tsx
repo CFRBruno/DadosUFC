@@ -35,6 +35,7 @@ export default function FighterPage() {
 }
 
 function Profile({ f }: { f: FighterDetail }) {
+  const [whyOpen, setWhyOpen] = useState<string | null>(null);
   const [resFilter, setResFilter] = useState<'' | 'W' | 'L'>('');
   const [methodFilter, setMethodFilter] = useState<'' | 'KO' | 'SUB' | 'DEC'>('');
   const fights = useMemo(
@@ -117,9 +118,15 @@ function Profile({ f }: { f: FighterDetail }) {
           <div className="panel" style={{ marginTop: 16 }}>
             <div className="panel-title left">Estilo de luta</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-              <span className="chip chip-style" style={{ fontSize: 13, padding: '4px 10px' }}>{f.style}</span>
-              {f.styleTags.map((t) => <span key={t} className="chip chip-tag">{t}</span>)}
+              {[f.style, ...f.styleTags].map((t, i) => (
+                <button key={t} type="button" aria-expanded={whyOpen === t} onClick={() => setWhyOpen(whyOpen === t ? null : t)}
+                  className={`chip ${i === 0 ? 'chip-style' : 'chip-tag'} chip-btn${whyOpen === t ? ' on' : ''}`} style={i === 0 ? { fontSize: 13, padding: '4px 10px' } : undefined}>{t}</button>
+              ))}
             </div>
+            {whyOpen && f.styleWhy?.[whyOpen] && (
+              <div className="why-box" role="note"><b>{whyOpen}:</b> {f.styleWhy[whyOpen]}</div>
+            )}
+            {!whyOpen && <div className="text-3" style={{ fontSize: 12, marginBottom: 10 }}>Toque em um estilo para ver o motivo.</div>}
             <p className="text-2" style={{ lineHeight: 1.7 }}>{f.styleText}</p>
             {f.styleShift && (
               <div style={{ marginTop: 14 }}>

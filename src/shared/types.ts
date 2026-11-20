@@ -232,6 +232,8 @@ export interface FighterDetail extends FighterSummary {
   position: { dist: number; clinch: number; ground: number };
   styleTags: string[];
   styleText: string;
+  /** por que o lutador tem o estilo e cada marca (texto com os números dele) */
+  styleWhy: Record<string, string>;
   strengths: Insight[];
   weaknesses: Insight[];
   fiveRoundFights: number;

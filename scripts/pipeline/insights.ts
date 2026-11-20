@@ -121,7 +121,7 @@ export function computeForm(entries: FightEntry[], window = 5): FormInfo | null 
 
 // --- Estilo -------------------------------------------------------------------------
 
-export interface StyleResult { style: string; tags: string[]; text: string }
+export interface StyleResult { style: string; tags: string[]; text: string; why: Record<string, string> }
 
 export function classifyStyle(
   st: ModelState,
@@ -141,7 +141,7 @@ export function classifyStyle(
   const g = (k: keyof Rates) => p[k] ?? 50;
 
   if (st.fights < 1 || st.time < 60) {
-    return { style: 'Estreante', tags: [], text: 'Ainda sem lutas registradas no UFC — não há estatísticas suficientes para definir o estilo.' };
+    return { style: 'Estreante', tags: [], why: {}, text: 'Ainda sem lutas registradas no UFC — não há estatísticas suficientes para definir o estilo.' };
   }
 
   const wrestling = (g('td') + g('ctrl')) / 2;
@@ -157,18 +157,22 @@ export function classifyStyle(
   else style = 'Trocador';
 
   const tags: string[] = [];
-  if (g('slpm') >= 75) tags.push('Volume alto');
-  if (g('kd') >= 75 || (st.wins >= 3 && st.koW / st.wins >= 0.5)) tags.push('Mão pesada');
-  if (g('def') >= 70 && g('slpm') <= 50) tags.push('Contra-ataque');
-  if (legShare >= 0.22) tags.push('Chutes nas pernas');
-  if (bodyShare >= 0.24) tags.push('Trabalho de corpo');
-  if (clinchShare >= 0.25) tags.push('Clinch');
-  if (groundShare >= 0.25 && g('ctrl') >= 60) tags.push('Ground and pound');
-  if (g('sub') >= 75) tags.push('Ameaça de finalização');
-  if (g('td') >= 75) tags.push('Quedas');
-  if (g('tdDef') >= 80) tags.push('Anti-queda');
-  if (rates.paceRatio != null && rates.paceRatio >= 1.1) tags.push('Cardio forte');
-  if (st.wins >= 3 && rates.finishRate >= 0.7) tags.push('Finalizador nato');
+  const why: Record<string, string> = {};
+  const top = (k: keyof Rates) => `melhor que ${g(k)}% dos lutadores da divisão`;
+  const sh = (n: number) => `${Math.round(n * 100)}%`;
+  const add = (t: string, e: string) => { tags.push(t); why[t] = e; };
+  if (g('slpm') >= 75) add('Volume alto', `Conecta ${nf(rates.slpm, 2)} golpes significativos por minuto, ${top('slpm')}. Regra: percentil de volume de 75 ou mais.`);
+  if (g('kd') >= 75 || (st.wins >= 3 && st.koW / st.wins >= 0.5)) add('Mão pesada', `${st.koW} das ${st.wins} vitórias foram por nocaute (${st.wins ? sh(st.koW / st.wins) : '0%'}) e a taxa de knockdowns é ${top('kd')}. Regra: percentil de knockdowns de 75 ou mais, ou metade das vitórias por nocaute (com 3+ vitórias).`);
+  if (g('def') >= 70 && g('slpm') <= 50) add('Contra-ataque', `Evita ${pc(rates.def)} dos golpes recebidos (${top('def')}) com volume de ataque baixo (${nf(rates.slpm, 2)} por minuto): defende bem sem precisar atacar muito. Regra: defesa no percentil 70+ e volume no percentil 50 ou menos.`);
+  if (legShare >= 0.22) add('Chutes nas pernas', `${sh(legShare)} dos golpes conectados foram nas pernas (referência: 22% ou mais).`);
+  if (bodyShare >= 0.24) add('Trabalho de corpo', `${sh(bodyShare)} dos golpes conectados foram no corpo (referência: 24% ou mais).`);
+  if (clinchShare >= 0.25) add('Clinch', `${sh(clinchShare)} dos golpes conectados aconteceram no clinch (referência: 25% ou mais).`);
+  if (groundShare >= 0.25 && g('ctrl') >= 60) add('Ground and pound', `${sh(groundShare)} dos golpes conectados foram no solo e o tempo de controle é ${top('ctrl')}: domina o chão e bate de cima.`);
+  if (g('sub') >= 75) add('Ameaça de finalização', `Tenta ${nf(rates.sub, 2)} finalizações a cada 15 min, ${top('sub')}${st.subW ? ` e já finalizou ${st.subW} adversário(s) no UFC` : ''}.`);
+  if (g('td') >= 75) add('Quedas', `Média de ${nf(rates.td, 2)} quedas a cada 15 min, ${top('td')}.`);
+  if (g('tdDef') >= 80) add('Anti-queda', `Defende ${pc(rates.tdDef)} das quedas tentadas contra ele (${top('tdDef')}).`);
+  if (rates.paceRatio != null && rates.paceRatio >= 1.1) add('Cardio forte', `Nos rounds finais mantém ${nf(rates.paceRatio, 2)}x o ritmo de golpes dos rounds iniciais (referência: 1,10x ou mais): não cai de produção.`);
+  if (st.wins >= 3 && rates.finishRate >= 0.7) add('Finalizador nato', `${pc(rates.finishRate)} das vitórias vieram antes da decisão (referência: 70% ou mais, com 3+ vitórias).`);
 
   const parts: string[] = [];
   const intro: Record<string, string> = {
@@ -196,7 +200,15 @@ export function classifyStyle(
   if (st.wins > 0) {
     parts.push(`Das ${st.wins} vitórias no UFC, ${st.koW} foram por nocaute, ${st.subW} por finalização e ${st.decW} por decisão.`);
   }
-  return { style, tags, text: parts.join(' ') };
+  const why0: Record<string, string> = {
+    Wrestler: `Índice de luta agarrada (quedas e controle) no percentil ${Math.round(wrestling)} da divisão, acima do limite de 72 e maior que o de jiu-jitsu (${Math.round(bjj)}). Quedas: ${nf(rates.td, 2)} a cada 15 min.`,
+    'Especialista em jiu-jitsu': `Finalizações no percentil ${Math.round(bjj)} (mínimo 80), com finalizações concluídas e envolvimento real no chão (quedas no percentil ${g('td')}, controle no ${g('ctrl')}).`,
+    'Lutador completo': `Bom em pé e no chão ao mesmo tempo: índice de luta agarrada no percentil ${Math.round(wrestling)} e índice de trocação (volume, knockdowns e precisão) no ${Math.round(striking)}. Os dois passam de 58.`,
+    Grappler: `Índice de luta agarrada no percentil ${Math.round(wrestling)} e finalizações no ${Math.round(bjj)}: o jogo de chão pesa mais que a trocação (percentil ${Math.round(striking)}).`,
+    Trocador: `O jogo de chão não se destaca (luta agarrada no percentil ${Math.round(wrestling)}, finalizações no ${Math.round(bjj)}), então o perfil é de trocação: volume, knockdowns e precisão no percentil ${Math.round(striking)}.`,
+  };
+  why[style] = why0[style];
+  return { style, tags, why, text: parts.join(' ') };
 }
 
 // --- Pontos fortes e fracos --------------------------------------------------------------
