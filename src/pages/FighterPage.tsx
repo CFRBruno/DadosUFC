@@ -42,6 +42,7 @@ function Profile({ f }: { f: FighterDetail }) {
     () => f.fights.filter((x) => (!resFilter || x.result === resFilter) && (!methodFilter || x.method === methodFilter)),
     [f.fights, resFilter, methodFilter],
   );
+  const sel = whyOpen && (whyOpen === f.style || f.styleTags.includes(whyOpen)) ? whyOpen : f.style;
   const debut = f.fights.length === 0;
   const tileCount = TILES.filter((t) => f.percentiles[t.key] != null).length;
 
@@ -118,15 +119,18 @@ function Profile({ f }: { f: FighterDetail }) {
           <div className="panel" style={{ marginTop: 16 }}>
             <div className="panel-title left">Estilo de luta</div>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 12 }}>
-              {[f.style, ...f.styleTags].map((t, i) => (
-                <button key={t} type="button" aria-expanded={whyOpen === t} onClick={() => setWhyOpen(whyOpen === t ? null : t)}
-                  className={`chip ${i === 0 ? 'chip-style' : 'chip-tag'} chip-btn${whyOpen === t ? ' on' : ''}`} style={i === 0 ? { fontSize: 13, padding: '4px 10px' } : undefined}>{t}</button>
-              ))}
+              {[f.style, ...f.styleTags].map((t, i) => {
+                const on = sel === t;
+                return (
+                  <button key={t} type="button" aria-pressed={on} onClick={() => setWhyOpen(t)}
+                    className={`chip ${i === 0 ? 'chip-style' : 'chip-tag'} chip-btn${on ? ' on' : ''}`} style={i === 0 ? { fontSize: 13, padding: '4px 10px' } : undefined}>{on ? '✓ ' : ''}{t}</button>
+                );
+              })}
             </div>
-            {whyOpen && f.styleWhy?.[whyOpen] && (
-              <div className="why-box" role="note"><b>{whyOpen}:</b> {f.styleWhy[whyOpen]}</div>
+            {f.styleWhy?.[sel] && (
+              <div className="why-box" role="note"><b>{sel}:</b> {f.styleWhy[sel]}</div>
             )}
-            {!whyOpen && <div className="text-3" style={{ fontSize: 12, marginBottom: 10 }}>Toque em um estilo para ver o motivo.</div>}
+            <div className="text-3" style={{ fontSize: 12, marginBottom: 10 }}>Toque em um estilo para ver o motivo.</div>
             <p className="text-2" style={{ lineHeight: 1.7 }}>{f.styleText}</p>
             {f.styleShift && (
               <div style={{ marginTop: 14 }}>
@@ -171,14 +175,15 @@ function Profile({ f }: { f: FighterDetail }) {
             <div className="stat-tiles">
               {TILES.map((t) => {
                 const p = f.percentiles[t.key];
+                const col = p != null ? `hsl(${Math.round(p * 1.2)} 72% 55%)` : undefined;
                 return (
-                  <Link to={rankingUrl(t.key, f.division)} className="stat-tile" key={t.key} title={`${t.hint} — clique para ver o ranking`}>
+                  <Link to={rankingUrl(t.key, f.division)} className="stat-tile" style={col ? { borderColor: `hsl(${Math.round((p ?? 0) * 1.2)} 72% 55% / 0.45)` } : undefined} key={t.key} title={`${t.hint} — clique para ver o ranking`}>
                     <div className="label">{t.label}</div>
-                    <div className="value">{t.fmt(f.rates)}</div>
+                    <div className="value" style={col ? { color: col } : undefined}>{t.fmt(f.rates)}</div>
                     {p != null && (
                       <>
-                        <div className="pct-bar"><i style={{ width: `${p}%` }} /></div>
-                        <div className="pct-label"><span>Percentil</span><span>{p}</span></div>
+                        <div className="pct-bar"><i style={{ width: `${p}%`, background: col }} /></div>
+                        <div className="pct-label"><span>Percentil</span><span style={{ color: col }}>{p}</span></div>
                         {f.statRanks[t.key] && (
                           <div className="pct-label rank-line" title={f.statRanks[t.key]!.scope === 'cat' ? `Posição entre os lutadores do ${divisionName(f.division)} no site` : 'Categoria pequena: posição entre todos os lutadores do mesmo gênero no site'}>
                             <span>Posição</span><span><b>{f.statRanks[t.key]!.pos}º</b> de {f.statRanks[t.key]!.of}{f.statRanks[t.key]!.scope === 'gen' ? ' (gênero)' : ''}</span>

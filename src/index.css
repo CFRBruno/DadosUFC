@@ -4,5 +4,5 @@
 .status-banner.aposentado { border-color: #d4a017; background: rgba(212, 160, 23, 0.12); }
 
 button.chip-btn { cursor: pointer; font: inherit; border: 0; }
-button.chip-btn.on { outline: 2px solid currentColor; outline-offset: 1px; }
+button.chip-btn.on { background: #6d4fd6; border: 1px solid #c4b0f7; color: #fff; box-shadow: 0 0 0 2px rgba(196, 176, 247, 0.35); }
 .why-box { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; background: rgba(255, 255, 255, 0.05); border-left: 3px solid var(--red, #e11d2e); line-height: 1.6; }
