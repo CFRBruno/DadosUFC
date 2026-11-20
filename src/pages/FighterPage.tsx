@@ -65,9 +65,15 @@ function Profile({ f }: { f: FighterDetail }) {
             {f.champ && <span className={`chip ${f.champ === 'atual' ? 'chip-gold' : 'chip-tag'}`}>{f.champ === 'atual' ? 'Campeão atual' : 'Ex-campeão do UFC'}</span>}
             {f.style && <span className="chip chip-style">{f.style}</span>}
             {f.preUfc && f.preUfc.w + f.preUfc.l + f.preUfc.d > 0 && <span className="chip" title="Cartel em outras organizações antes do UFC (ESPN): vitórias-derrotas-empates">Fora do UFC {f.preUfc.w}-{f.preUfc.l}{f.preUfc.d ? `-${f.preUfc.d}` : ''}</span>}
+            {f.titlesOutside ? <span className="chip chip-tag" title="Vitórias em lutas de cinturão fora do UFC, segundo a ESPN. A contagem inclui cinturões regionais e pode ser imprecisa.">{f.titlesOutside} vitória{f.titlesOutside > 1 ? 's' : ''} por cinturão fora do UFC</span> : null}
             {f.streak && <span className={`chip ${f.streak.startsWith('V') ? 'chip-up' : 'chip-red'}`}>{f.streak.startsWith('V') ? `${f.streak.slice(1)} vitória(s) seguida(s)` : f.streak.startsWith('D') ? `${f.streak.slice(1)} derrota(s) seguida(s)` : 'Empate'}</span>}
           </div>
         </div>
+        {f.ufcStatus && (
+          <div className={`status-banner ${f.ufcStatus.kind}`} role="status">
+            <b>{f.ufcStatus.kind === 'aposentado' ? 'Aposentado do UFC' : f.ufcStatus.kind === 'dispensado' ? 'Dispensado do UFC' : 'Saiu do UFC'}</b> em {fmtDate(f.ufcStatus.date)}
+          </div>
+        )}
         <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
           <FavButton kind="fighters" id={f.id} name={f.name} className="big" />
           <Link to={`/comparar?a=${f.slug}`} className="btn btn-primary"><Icon name="swords" className="arrow" /> Comparar</Link>
@@ -115,6 +121,19 @@ function Profile({ f }: { f: FighterDetail }) {
               {f.styleTags.map((t) => <span key={t} className="chip chip-tag">{t}</span>)}
             </div>
             <p className="text-2" style={{ lineHeight: 1.7 }}>{f.styleText}</p>
+            {f.styleShift && (
+              <div style={{ marginTop: 14 }}>
+                <div className="text-3" style={{ fontSize: 12, marginBottom: 6 }}>Mudança de estilo no UFC (estatísticas por fase da carreira)</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center' }}>
+                  {f.styleShift.map((x, i) => (
+                    <span key={x.from} style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                      {i > 0 && <span aria-hidden>→</span>}
+                      <span className="chip chip-tag" title={`${x.fights} lutas`}>{x.style} · {x.from.slice(0, 4)}–{x.to.slice(0, 4)}</span>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
 
           <div className="grid-2" style={{ marginTop: 16 }}>

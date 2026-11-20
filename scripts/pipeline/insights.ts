@@ -1,6 +1,7 @@
 // Taxas de carreira, percentis, estilo de luta e pontos fortes/fracos (regras).
 
-import type { FightEntry, FormInfo, Insight, ModelState, Rates, StatRank } from '../../src/shared/types';
+import { addFight, emptyState } from '../../src/shared/model';
+import type { FightEntry, FormInfo, Insight, ModelState, Rates, StatRank, StyleSegment } from '../../src/shared/types';
 import { S } from '../../src/shared/types';
 
 const nf = (n: number, d = 1) => n.toLocaleString('pt-BR', { minimumFractionDigits: d, maximumFractionDigits: d });
@@ -270,4 +271,63 @@ export function recentStreak(fights: FightEntry[]): number {
     n++;
   }
   return n;
+}
+
+// --- Mudança de estilo ao longo da carreira (estatísticas do UFC) ------------------------------------------
+
+type Pool = { group: string; women: boolean; rates: Rates; st: ModelState };
+
+/** Percentil de uma taxa de uma janela da carreira contra a carreira de todos os lutadores do mesmo grupo. */
+export function makePercentiler(items: Pool[]): (group: string, women: boolean, key: keyof Rates, v: number) => number {
+  const pools = new Map<string, number[]>();
+  const add = (k: string, v: number) => { if (!pools.has(k)) pools.set(k, []); pools.get(k)!.push(v); };
+  for (const it of items) {
+    for (const [key] of PCT_KEYS) {
+      if (!eligibleFor(key, it.st)) continue;
+      add(`${it.group}|${key}`, it.rates[key] as number);
+      add(`${it.women ? 'F' : 'M'}|${key}`, it.rates[key] as number);
+    }
+  }
+  for (const v of pools.values()) v.sort((a, b) => a - b);
+  return (group, women, key, v) => {
+    let arr = pools.get(`${group}|${key}`) ?? [];
+    if (arr.length < 15) arr = pools.get(`${women ? 'F' : 'M'}|${key}`) ?? [];
+    if (!arr.length) return 50;
+    const higher = PCT_KEYS.find(([k]) => k === key)?.[1] ?? true;
+    let below = 0, equal = 0;
+    for (const x of arr) { if (higher ? x < v : x > v) below++; else if (x === v) equal++; }
+    return Math.round((100 * (below + equal / 2)) / arr.length);
+  };
+}
+
+/**
+ * Divide a carreira no UFC (lutas com estatísticas, da mais antiga à mais recente) em até 4 trechos de 4+ lutas,
+ * classifica o estilo de cada um com a mesma regra do perfil e junta trechos vizinhos de mesmo estilo.
+ * Só retorna algo quando há mudança de estilo com mudança real no perfil de luta (diferença de pelo menos
+ * 20 pontos de percentil no índice de luta agarrada) entre o primeiro e o último trecho.
+ */
+export function styleShift(chrono: FightEntry[], group: string, women: boolean, pct: ReturnType<typeof makePercentiler>): StyleSegment[] | null {
+  const es = chrono.filter((e) => e.stats && e.result !== 'NC');
+  if (es.length < 8) return null;
+  const k = Math.min(4, Math.floor(es.length / 4));
+  const chunks: FightEntry[][] = [];
+  for (let i = 0; i < k; i++) chunks.push(es.slice(Math.round((i * es.length) / k), Math.round(((i + 1) * es.length) / k)));
+  const segs = chunks.map((c) => {
+    const st = emptyState();
+    for (const e of c) addFight(st, { me: e.stats!.me, opp: e.stats!.opp, result: e.result, method: e.method, durationSec: e.durationSec, date: e.date });
+    const r = computeRates(st, c);
+    const p: Partial<Record<keyof Rates, number>> = {};
+    for (const [key] of PCT_KEYS) p[key] = pct(group, women, key, r[key] as number);
+    const style = classifyStyle(st, r, p, { head: 0, body: 0, leg: 0 }, { dist: 0, clinch: 0, ground: 0 }).style;
+    const idx = ((p.td ?? 50) + (p.ctrl ?? 50)) / 2;
+    return { from: c[0].date, to: c[c.length - 1].date, style, fights: c.length, idx };
+  });
+  const merged: (StyleSegment & { idx: number })[] = [];
+  for (const s of segs) {
+    const last = merged[merged.length - 1];
+    if (last && last.style === s.style) { last.to = s.to; last.fights += s.fights; last.idx = (last.idx + s.idx) / 2; }
+    else merged.push({ ...s });
+  }
+  if (merged.length < 2 || merged[0].style === merged[merged.length - 1].style || Math.abs(merged[merged.length - 1].idx - merged[0].idx) < 25) return null;
+  return merged.map(({ from, to, style, fights }) => ({ from, to, style, fights }));
 }

@@ -260,7 +260,7 @@ export async function localPhotos(espnIds: string[], outDir: string, offline: bo
 
 const REC_CACHE = path.join(RAW_DIR, 'cache-espn-records.json');
 /** Cartel geral do lutador na ESPN (todas as organizações, incluindo o UFC). */
-export interface EspnRecord { w: number; l: number; d: number; ko: number; sub: number; kl: number; sl: number }
+export interface EspnRecord { w: number; l: number; d: number; ko: number; sub: number; kl: number; sl: number; tw?: number }
 interface CachedRec { at: string; r: EspnRecord | null }
 
 /**
@@ -275,6 +275,7 @@ export async function fetchEspnRecords(ids: string[], lastFight: Map<string, str
   const stale = (id: string) => {
     const c = cache[id];
     if (!c) return true;
+    if (c.r && c.r.tw === undefined) return true; // cache antigo, sem as vitórias em disputa de cinturão
     const lf = lastFight.get(id);
     return (lf != null && Date.parse(lf) >= Date.parse(c.at) - 3 * day) || Date.parse(now) - Date.parse(c.at) > 45 * day;
   };
@@ -289,7 +290,7 @@ export async function fetchEspnRecords(ids: string[], lastFight: Map<string, str
         if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const items = ((await res.json()) as { items?: { name: string; stats: { name: string; value: number }[] }[] }).items ?? [];
         const st = Object.fromEntries((items.find((x) => x.name === 'overall')?.stats ?? []).map((x) => [x.name, x.value]));
-        cache[id] = { at: now, r: Object.keys(st).length ? { w: st.wins ?? 0, l: st.losses ?? 0, d: st.draws ?? 0, ko: st.tkos ?? 0, sub: st.submissions ?? 0, kl: st.tkoLosses ?? 0, sl: st.submissionLosses ?? 0 } : null };
+        cache[id] = { at: now, r: Object.keys(st).length ? { w: st.wins ?? 0, l: st.losses ?? 0, d: st.draws ?? 0, ko: st.tkos ?? 0, sub: st.submissions ?? 0, kl: st.tkoLosses ?? 0, sl: st.submissionLosses ?? 0, tw: st.titleWins ?? 0 } : null };
       } catch { failed++; }
     }
   };

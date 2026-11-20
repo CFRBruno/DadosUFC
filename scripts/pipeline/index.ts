@@ -16,9 +16,10 @@ import type { ModelParams } from '../../src/shared/types';
 import { computePriors, priorsFor, processChronologically } from './build';
 import { buildFeatures, currentSnapshot, type Pre } from './features';
 import { loadOdds, marketLookup, updateOdds } from './odds';
+import { loadStatus, updateStatus } from './status';
 import { trainModel2, type MethodInfo } from './train';
 import { fetchMirror, fetchUpcoming, rawExists, RAW_DIR, type ScrapedEvent } from './fetch';
-import { classifyStyle, computeForm, computePercentiles, computeRates, recentStreak, strengthsWeaknesses } from './insights';
+import { classifyStyle, computeForm, computePercentiles, computeRates, makePercentiler, styleShift, recentStreak, strengthsWeaknesses } from './insights';
 import { loadDataset, type RawFight } from './load';
 import { fetchWikiPhotos, photoMatcher } from './photos';
 import { buildTitleHistory } from './titleHistory';
@@ -67,6 +68,8 @@ async function main() {
   console.log('• Buscando calendário, fotos e países na ESPN…');
   const espn = await fetchEspn(offline, Number(SCOPE_FROM.slice(0, 4)));
   // linhas de mercado: insumo interno do modelo (o site não mostra odds)
+  const statusArchive = await loadStatus();
+  await updateStatus(statusArchive, offline);
   const oddsArchive = await loadOdds();
   await updateOdds(oddsArchive, espn, offline);
   const marketOf = marketLookup(oddsArchive);
@@ -133,6 +136,7 @@ async function main() {
 
   // cartel fora do UFC: cartel geral da ESPN menos o que o UFC explica (todas as lutas da base)
   const ufcTot = new Map<string, { w: number; l: number; ko: number; sub: number; kl: number; sl: number }>();
+  const ufcTitleWins = new Map<string, number>();
   for (const f of fights) {
     if (f.winner == null || f.outcome !== 'W') continue;
     const win = f.fighters[f.winner], lose = f.fighters[1 - f.winner];
@@ -140,10 +144,25 @@ async function main() {
     tw.w++; tl.l++;
     if (f.method === 'KO') { tw.ko++; tl.kl++; } else if (f.method === 'SUB') { tw.sub++; tl.sl++; }
     ufcTot.set(win.id, tw); ufcTot.set(lose.id, tl);
+    if (f.title) ufcTitleWins.set(win.id, (ufcTitleWins.get(win.id) ?? 0) + 1);
   }
   const lastFightOfEspn = new Map<string, string>();
   for (const [oid, eid] of espnOf) { const fs = fightsBy.get(oid); if (fs?.length) lastFightOfEspn.set(eid, fs[fs.length - 1].date); }
   let proRecs = await fetchEspnRecords([...espnOf.values()], lastFightOfEspn, offline);
+  /** vitórias em disputa de cinturão fora do UFC (total da ESPN menos as do UFC); null se a ESPN não informou */
+  const ufcStatusOf = (id: string) => {
+    const nm = bios.get(id)?.name;
+    if (!nm) return null;
+    const hit = Object.values(statusArchive).filter((e) => idByName.get(norm(e.n)) === id).sort((a, b) => b.d.localeCompare(a.d))[0];
+    // quem voltou a lutar depois da data não tem mais o aviso
+    const last = lastFightOfEspn.get(espnOf.get(id) ?? '') ?? fightsBy.get(id)?.at(-1)?.date ?? '';
+    return hit && hit.d >= last ? { kind: hit.kind, date: hit.d, reason: hit.reason } : null;
+  };
+  const titlesOutside = (id: string): number | null => {
+    const eid = espnOf.get(id);
+    const r = eid ? proRecs.get(eid) : undefined;
+    return r && r.tw != null ? Math.max(0, r.tw - (ufcTitleWins.get(id) ?? 0)) : null;
+  };
   const preOf = (id: string): Pre | null => {
     const eid = espnOf.get(id);
     const r = eid ? proRecs.get(eid) : undefined;
@@ -340,6 +359,9 @@ async function main() {
       streak: lastRes && streakN ? `${lastRes === 'W' ? 'V' : lastRes === 'L' ? 'D' : 'E'}${streakN}` : '',
       upcoming: nextBout.has(id),
       active: nextBout.has(id) || (entries[0]?.date ?? '') >= ACTIVE_FROM,
+      ufcStatus: ufcStatusOf(id),
+      titlesOutside: titlesOutside(id),
+      styleShift: null,
       ...(() => {
         const eid = espnOf.get(id);
         const ath = eid ? espn.athletes.get(eid) : undefined;
@@ -381,12 +403,14 @@ async function main() {
 
   // percentis, estilo, pontos fortes/fracos, ranking Elo
   const ranksOut = new Map<string, Partial<Record<keyof FighterDetail['rates'], StatRank>>>();
+  const shiftPct = makePercentiler(details.map((d) => ({ group: d.division, women: d.women, rates: d.rates, st: d.totals })));
   const pcts = computePercentiles(details.map((d) => ({ id: d.id, group: d.division, women: d.women, rates: d.rates, st: d.totals })), ranksOut);
   for (const d of details) {
     d.percentiles = pcts.get(d.id) ?? {};
     d.statRanks = ranksOut.get(d.id) ?? {};
     const s = classifyStyle(d.totals, d.rates, d.percentiles, d.target, d.position);
     d.style = s.style;
+    d.styleShift = styleShift([...d.fights].reverse(), d.division, d.women, shiftPct);
     d.styleTags = s.tags;
     d.styleText = s.text;
     const sw = strengthsWeaknesses(d.totals, d.rates, d.percentiles, d.fights, DIVISION_BY_KEY[d.division]?.name ?? 'UFC', today, d.age);
@@ -617,8 +641,8 @@ async function main() {
   }
 
   const summaries: FighterSummary[] = details
-    .map(({ id, slug, name, nickname, division, women, record, elo, lastFight, age, style, streak, upcoming, active, photo, photoPage, country, flag, photoLocal, official, champ }) => ({
-      id, slug, name, nickname, division, women, record, elo, lastFight, age, style, streak, upcoming, active, photo, photoPage, country, flag, photoLocal, official, champ,
+    .map(({ id, slug, name, nickname, division, women, record, elo, lastFight, age, style, streak, upcoming, active, photo, photoPage, country, flag, photoLocal, official, champ, ufcStatus }) => ({
+      id, slug, name, nickname, division, women, record, elo, lastFight, age, style, streak, upcoming, active, photo, photoPage, country, flag, photoLocal, official, champ, ufcStatus,
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
   await writeFile(path.join(OUT, 'fighters.json'), JSON.stringify(summaries));

@@ -172,6 +172,12 @@ export interface TitleReign {
   endKind: 'lost' | 'vacated' | 'ongoing' | 'interim';
 }
 
+/** Trecho da carreira no UFC com o estilo de luta daquele período. */
+export interface StyleSegment { from: string; to: string; style: string; fights: number }
+
+/** Aposentadoria ou dispensa do UFC (Wikipédia), com a data. */
+export interface UfcStatus { kind: 'aposentado' | 'dispensado' | 'outro'; date: string; reason: string }
+
 export interface FighterSummary {
   id: string;
   slug: string;
@@ -188,6 +194,8 @@ export interface FighterSummary {
   upcoming: boolean;
   /** lutou em 2026 ou tem luta marcada */
   active: boolean;
+  /** aposentadoria ou dispensa recente, com data */
+  ufcStatus: UfcStatus | null;
   /** foto (Wikimedia Commons) e página do arquivo, para crédito/licença */
   photo: string | null;
   photoPage: string | null;
@@ -232,6 +240,10 @@ export interface FighterDetail extends FighterSummary {
   next: UpcomingBout | null;
   /** retrato estatístico atual usado pelo modelo de previsão */
   fv: FeatureVec;
+  /** vitórias em disputas de cinturão fora do UFC (ESPN; inclui cinturões regionais) */
+  titlesOutside: number | null;
+  /** mudança de estilo ao longo da carreira no UFC (estatísticas), quando houve */
+  styleShift: StyleSegment[] | null;
   /** cartel fora do UFC (ESPN, todas as organizações), quando disponível */
   preUfc: { w: number; l: number; d: number; ko: number; sub: number; dec: number } | null;
 }

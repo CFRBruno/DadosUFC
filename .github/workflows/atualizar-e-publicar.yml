@@ -54,10 +54,10 @@ jobs:
       - name: Guardar linhas de mercado
         if: ${{ github.ref_name == github.event.repository.default_branch }}
         run: |
-          if [ -n "$(git status --porcelain data/odds data/scorecards)" ]; then
+          if [ -n "$(git status --porcelain data/odds data/scorecards data/status)" ]; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-            git add data/odds data/scorecards
+            git add data/odds data/scorecards data/status
             git commit -m "Atualiza arquivos de mercado e scorecards"
             git push || echo "::warning::Não foi possível gravar o arquivo de mercado agora; a próxima execução tenta de novo."
           fi

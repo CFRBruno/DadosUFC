@@ -76,6 +76,8 @@ Os números são recalculados a cada atualização e aparecem em `/modelo`.
 
 A ESPN só publica as linhas perto da data da luta e depois as retira. Por isso, cada execução do pipeline guarda o que encontrar em `data/odds/archive.json`, e o GitHub Actions grava esse arquivo de volta no repositório (commit automático "Atualiza arquivo de linhas de mercado"). Se você trabalha no repositório localmente, faça `git pull` antes de enviar alterações.
 
+Aposentadorias e dispensas do UFC vêm da seção "Recent releases and retirements" da Wikipédia, que cobre só o último mês. Cada execução acrescenta o que encontrar em `data/status/archive.json`, então o histórico cresce daqui para frente; quem saiu antes não mostra data.
+
 ## Rodando no seu computador
 
 Requer Node.js 22+.
@@ -154,6 +156,7 @@ data/manual/        dados curados à mão:
   title-notes.json    vacâncias, promoções, motivos dos interinos e histórico do BMF (fonte: Wikipedia)
   photos.json         fotos manuais (nome → URL), com prioridade sobre ESPN/Wikimedia
 data/odds/          arquivo histórico das linhas de mercado (atualizado pelo pipeline)
+data/status/        aposentadorias e dispensas do UFC acumuladas (Wikipédia; atualizado pelo pipeline)
 ```
 
 ### Linha do tempo dos cinturões
