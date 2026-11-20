@@ -123,15 +123,15 @@ function Profile({ f }: { f: FighterDetail }) {
                 const on = sel === t;
                 return (
                   <button key={t} type="button" aria-pressed={on} onClick={() => setWhyOpen(t)}
-                    className={`chip ${i === 0 ? 'chip-style' : 'chip-tag'} chip-btn${on ? ' on' : ''}`} style={i === 0 ? { fontSize: 13, padding: '4px 10px' } : undefined}>{on ? '✓ ' : ''}{t}</button>
+                    className={`chip ${on ? 'chip-style' : 'chip-tag'} chip-btn${on ? ' on' : ''}`} style={i === 0 ? { fontSize: 13, padding: '4px 10px' } : undefined}>{on ? '✓ ' : ''}{t}</button>
                 );
               })}
             </div>
-            {f.styleWhy?.[sel] && (
-              <div className="why-box" role="note"><b>{sel}:</b> {f.styleWhy[sel]}</div>
-            )}
             <div className="text-3" style={{ fontSize: 12, marginBottom: 10 }}>Toque em um estilo para ver o motivo.</div>
-            <p className="text-2" style={{ lineHeight: 1.7 }}>{f.styleText}</p>
+            <p className="text-2" style={{ lineHeight: 1.7 }}>
+              <b style={{ color: 'var(--text)' }}>{sel}.</b> {f.styleWhy?.[sel]}
+              {sel === f.style && <> {f.styleText}</>}
+            </p>
             {f.styleShift && (
               <div style={{ marginTop: 14 }}>
                 <div className="text-3" style={{ fontSize: 12, marginBottom: 6 }}>Mudança de estilo no UFC (estatísticas por fase da carreira)</div>
