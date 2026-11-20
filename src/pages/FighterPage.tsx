@@ -34,6 +34,21 @@ export default function FighterPage() {
   return <Profile f={f} />;
 }
 
+/** Texto com números marcados como [[percentil|valor]]: colore de vermelho (0) a verde (100); '-' = destaque neutro. */
+function Marked({ t }: { t: string }) {
+  return (
+    <>
+      {t.split(/(\[\[[^|\]]+\|[^\]]*\]\])/).map((part, i) => {
+        const m = /^\[\[([^|\]]+)\|([^\]]*)\]\]$/.exec(part);
+        if (!m) return part;
+        const n = Number(m[1]);
+        const color = Number.isFinite(n) ? `hsl(${Math.round(n * 1.2)} 72% 58%)` : '#c4b0f7';
+        return <b key={i} style={{ color, fontVariantNumeric: 'tabular-nums' }}>{m[2]}</b>;
+      })}
+    </>
+  );
+}
+
 function Profile({ f }: { f: FighterDetail }) {
   const [whyOpen, setWhyOpen] = useState<string | null>(null);
   const [resFilter, setResFilter] = useState<'' | 'W' | 'L'>('');
@@ -127,10 +142,9 @@ function Profile({ f }: { f: FighterDetail }) {
                 );
               })}
             </div>
-            <div className="text-3" style={{ fontSize: 12, marginBottom: 10 }}>Toque em um estilo para ver o motivo.</div>
             <p className="text-2" style={{ lineHeight: 1.7 }}>
-              <b style={{ color: 'var(--text)' }}>{sel}.</b> {f.styleWhy?.[sel]}
-              {sel === f.style && <> {f.styleText}</>}
+              <b style={{ color: 'var(--text)' }}>{sel}.</b> <Marked t={f.styleWhy?.[sel] ?? ''} />
+              {sel === f.style && <> <Marked t={f.styleText} /></>}
             </p>
             {f.styleShift && (
               <div style={{ marginTop: 14 }}>
