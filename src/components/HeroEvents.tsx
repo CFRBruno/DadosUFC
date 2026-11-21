@@ -7,7 +7,8 @@ import { fmtDate } from '../lib/format';
 import { DIVISION_BY_KEY } from '../shared/divisions';
 import type { EventInfo, UpcomingBout } from '../shared/types';
 import { compareUrl } from './events';
-import { FighterFlag, ProspectTag } from './ui';
+import { FighterFlag, LiveDot, ProspectTag } from './ui';
+import { liveOf, useLive } from '../lib/live';
 
 /** Cinturão de campeão (fundo das disputas de título): placa central dourada e placas laterais. */
 function Belt() {
@@ -55,6 +56,7 @@ export default function HeroEvents() {
   const events = useRecentEvents().data;
   const fighters = useFighters().data;
   const fav = useFavorites();
+  const live = useLive();
   const cards = useMemo(() => {
     if (!events || !fighters) return [];
     const byId = new Map(fighters.map((f) => [f.id, f]));
@@ -73,7 +75,7 @@ export default function HeroEvents() {
         <div key={e.id} className={`he-card ${favEvent || favFighters.length ? 'gold' : ''}`} style={{ ['--i' as string]: i }} data-depth={String(8 + i * 5)}>
           <Link to={`/evento/${e.id}`} className="he-head">
             <span className="he-titles">
-              <span className="he-when">{i === 0 ? 'PRÓXIMO · ' : ''}{fmtDate(e.date)}</span>
+              <span className="he-when">{live.liveEvents.has(e.id.replace(/^espn-/, '')) ? <LiveDot /> : <>{i === 0 ? 'PRÓXIMO · ' : ''}{fmtDate(e.date)}</>}</span>
               <b>{e.name}</b>
             </span>
             <FavButton kind="events" id={e.id} name={e.name} className="he-star" />
@@ -87,7 +89,7 @@ export default function HeroEvents() {
               <Link key={`${b.a.name}-${b.b.name}`} style={{ ['--r' as string]: r }} to={b.a.slug && b.b.slug ? compareUrl(b) : `/evento/${e.id}`} className={`he-row ${b.title ? 'title' : ''} ${main ? 'main' : ''} ${bf ? 'fav' : ''}`}>
                 {b.title && <Belt />}
                 <span className="he-names">{bf && <b className="he-s">★</b>}<i className="a"><FighterFlag id={b.a.id} slug={b.a.slug} />{last(b.a.name)}<ProspectTag id={b.a.id} compact /></i><em>×</em><i className="b"><FighterFlag id={b.b.id} slug={b.b.slug} />{last(b.b.name)}<ProspectTag id={b.b.id} compact /></i></span>
-                <span className="he-tag">{b.title ? 'CINTURÃO' : main ? 'LUTA PRINCIPAL' : DIVISION_BY_KEY[b.division]?.short}</span>
+                {(() => { const lv = liveOf(live, e.id, b.a.name, b.b.name); return lv?.state === 'live' ? <span className="he-tag"><LiveDot label={`R${lv.period} ${lv.clock}`} /></span> : lv?.state === 'done' ? <span className="he-tag he-done">{lv.winner ? `${lv.winner.split(' ').slice(-1)[0]} · ${[lv.method, `R${lv.period}`, lv.clock].filter(Boolean).join(' ')}` : 'Sem resultado'}</span> : <span className="he-tag">{b.title ? 'CINTURÃO' : main ? 'LUTA PRINCIPAL' : DIVISION_BY_KEY[b.division]?.short}</span>; })()}
               </Link>
             ))}
           </div>

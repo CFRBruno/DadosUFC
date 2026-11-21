@@ -2,7 +2,8 @@ import type { ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { modelFavorite, modelHit } from '../lib/hits';
 import FavButton from './FavButton';
-import { FighterFlag, ProspectTag } from './ui';
+import { useLive, liveOf } from '../lib/live';
+import { FighterFlag, LiveStrip, ProspectTag } from './ui';
 import type { EventFight, FighterSummary, UpcomingBout } from '../shared/types';
 import { divisionName, recordStr } from '../lib/format';
 import { METHOD_LABEL } from '../shared/translate';
@@ -55,11 +56,13 @@ export function UpcomingBoutRow({ b, byId }: { b: UpcomingBout; byId: Map<string
   const fa = b.a.id ? byId.get(b.a.id) : undefined;
   const fb = b.b.id ? byId.get(b.b.id) : undefined;
   const label = b.order === 0 ? 'Luta principal' : b.title ? 'Cinturão' : null;
+  const live = liveOf(useLive(), b.eventId, b.a.name, b.b.name);
   return (
     <div className="bout-wrap">
       <div className="bout-meta">
         <span>{label && <span style={{ color: 'var(--brand)' }}>{label} · </span>}{divisionName(b.division, true)} · {b.rounds} rounds</span>
       </div>
+      <LiveStrip live={live} />
       <div className="bout">
         <Side id={b.a.id} name={b.a.name} slug={b.a.slug} rec={fa ? recordStr(fa.record) : 'Estreia'} side="a" prospect />
         <div className="mid">

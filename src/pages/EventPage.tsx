@@ -4,7 +4,8 @@ import EventForecast from '../components/EventForecast';
 import FavButton from '../components/FavButton';
 import { ResultBoutRow, SegGroups, UpcomingBoutRow } from '../components/events';
 import { eventScore } from '../lib/hits';
-import { ErrorBox, Loading } from '../components/ui';
+import { ErrorBox, LiveDot, Loading } from '../components/ui';
+import { useLive } from '../lib/live';
 import { useEvents, useFighters } from '../lib/data';
 import { fmtDate } from '../lib/format';
 
@@ -13,6 +14,7 @@ export default function EventPage() {
   const { data, error } = useEvents();
   const fighters = useFighters().data;
   const [tab, setTab] = useState<'previsoes' | 'card'>('previsoes');
+  const liveEvents = useLive().liveEvents;
   const byId = useMemo(() => new Map((fighters ?? []).map((f) => [f.id, f])), [fighters]);
   if (error) return <div className="container"><ErrorBox message={error} /></div>;
   if (!data) return <Loading />;
@@ -22,6 +24,7 @@ export default function EventPage() {
     <div className="container">
       <div className="page-head">
         <span className="eyebrow">{fmtDate(ev.date, true)}</span>
+        {liveEvents.has(ev.id.replace(/^espn-/, '')) && <div style={{ marginTop: 6 }}><LiveDot label="Evento ao vivo" /></div>}
         <h1 style={{ marginTop: 8, display: 'flex', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>{ev.name} <FavButton kind="events" id={ev.id} name={ev.name} className="big" /></h1>
         <p>{ev.location}{ev.source === 'manual' ? ' · card cadastrado manualmente' : ''}</p>
       </div>

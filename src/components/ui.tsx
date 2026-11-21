@@ -221,3 +221,23 @@ export function CountUp({ value, format, ms = 900, delay = 0, fromZero = false, 
   }, [value, ms, delay, accelerate]);
   return <>{format(shown)}</>;
 }
+
+/** Indicador piscando de luta ao vivo. */
+export function LiveDot({ label = 'Ao vivo' }: { label?: string }) {
+  return <span className="live-dot"><i aria-hidden="true" />{label}</span>;
+}
+
+/** Faixa ao vivo/resultado de uma luta (ESPN): piscando enquanto rola, vencedor + método + round + minutagem ao terminar. */
+export function LiveStrip({ live }: { live: import('../lib/live').LiveBout | null }) {
+  if (!live) return null;
+  if (live.state === 'live') return <div className="live-strip live"><LiveDot /><b>Round {live.period}{live.rounds ? ` de ${live.rounds}` : ''}</b><span>{live.clock}</span></div>;
+  if (live.state === 'pre') return <div className="live-strip pre"><LiveDot label="Na entrada" /></div>;
+  const lose = live.winner ? live.names.find((n) => n !== live.winner) : null;
+  return (
+    <div className="live-strip done">
+      <b>{live.winner ? `Venceu: ${live.winner}` : 'Sem vencedor (empate ou sem resultado)'}</b>
+      <span>{[live.method, `R${live.period}`, live.clock].filter(Boolean).join(' · ')}</span>
+      {lose && <small>derrota de {lose}</small>}
+    </div>
+  );
+}

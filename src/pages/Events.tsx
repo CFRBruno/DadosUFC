@@ -3,7 +3,8 @@ import { Link, useSearchParams } from 'react-router-dom';
 import { ResultBoutRow, UpcomingBoutRow } from '../components/events';
 import FavButton from '../components/FavButton';
 import { useFavorites } from '../lib/favorites';
-import { ErrorBox, Icon, Loading } from '../components/ui';
+import { ErrorBox, Icon, LiveDot, Loading } from '../components/ui';
+import { useLive } from '../lib/live';
 import { shortName } from '../lib/compare';
 import { useEvents, useFighters } from '../lib/data';
 import type { EventInfo, FighterSummary } from '../shared/types';
@@ -134,6 +135,7 @@ function EventItem({ e, open, onToggle, isNext, byId }: { e: EventInfo; open: bo
   }
   const favEvent = useFavorites().events.includes(e.id);
   const count = e.upcoming ? e.bouts.length : e.fights.length;
+  const isLive = useLive().liveEvents.has(e.id.replace(/^espn-/, ''));
   const prospects = e.upcoming ? new Set(e.bouts.flatMap((b) => [b.a.id, b.b.id]).filter((id): id is string => !!id && !!byId.get(id)?.prospect)).size : 0;
   return (
     <div className={`tl-item ${open ? 'open' : ''} ${e.upcoming ? 'upcoming' : ''} ${favEvent ? 'is-fav' : ''}`}>
@@ -151,7 +153,8 @@ function EventItem({ e, open, onToggle, isNext, byId }: { e: EventInfo; open: bo
         </div>
         <div className="tl-info">
           <div className="tl-badges">
-            {isNext && <span className="chip chip-red">Próximo</span>}
+            {isLive && <LiveDot />}
+            {isNext && !isLive && <span className="chip chip-red">Próximo</span>}
             {e.upcoming && !isNext && <span className="chip chip-up">Em breve</span>}
             {!e.upcoming && <span className="chip">Realizado</span>}
             <span className="note">{count} luta{count === 1 ? '' : 's'}</span>
