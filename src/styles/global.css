@@ -749,3 +749,13 @@ button.chip-btn.chip-style { border-color: #8b6ee6; background: #2a1f4d; box-sha
   .prospect-card { grid-template-columns: auto 1fr auto; }
   .prospect-card .avatar { display: none; }
 }
+.prospect-tag { display: inline-block; margin-left: 8px; padding: 1px 8px; border-radius: 999px; border: 1px solid #14532d; background: #08200f; color: #4ade80; font-size: 10px; font-weight: 800; letter-spacing: 0.08em; text-transform: uppercase; vertical-align: middle; white-space: nowrap; }
+.prospect-tag.compact { margin-left: 4px; padding: 0 5px; font-size: 9px; }
+
+/* celular: lutador A, botão e lutador B empilhados (em 3 colunas os nomes sumiam) */
+@media (max-width: 599px) {
+  div.bout { grid-template-columns: 1fr; gap: 8px; }
+  .bout .side.right { flex-direction: row; text-align: left; }
+  .bout .side .nm { white-space: normal; }
+  .bout .mid { display: flex; align-items: center; justify-content: center; gap: 12px; }
+}

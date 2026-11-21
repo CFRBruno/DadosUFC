@@ -134,6 +134,7 @@ function EventItem({ e, open, onToggle, isNext, byId }: { e: EventInfo; open: bo
   }
   const favEvent = useFavorites().events.includes(e.id);
   const count = e.upcoming ? e.bouts.length : e.fights.length;
+  const prospects = e.upcoming ? new Set(e.bouts.flatMap((b) => [b.a.id, b.b.id]).filter((id): id is string => !!id && !!byId.get(id)?.prospect)).size : 0;
   return (
     <div className={`tl-item ${open ? 'open' : ''} ${e.upcoming ? 'upcoming' : ''} ${favEvent ? 'is-fav' : ''}`}>
       <FavButton kind="events" id={e.id} name={e.name} className="corner" />
@@ -154,6 +155,7 @@ function EventItem({ e, open, onToggle, isNext, byId }: { e: EventInfo; open: bo
             {e.upcoming && !isNext && <span className="chip chip-up">Em breve</span>}
             {!e.upcoming && <span className="chip">Realizado</span>}
             <span className="note">{count} luta{count === 1 ? '' : 's'}</span>
+            {prospects > 0 && <span className="prospect-tag" style={{ marginLeft: 0 }} title="Lutadores prospectos neste card">{prospects} prospecto{prospects === 1 ? '' : 's'}</span>}
           </div>
           <div className="tl-name">{e.name}</div>
           <div className="tl-sub">{[mainLine, e.location].filter(Boolean).join(' · ')}</div>

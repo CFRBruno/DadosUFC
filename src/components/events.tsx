@@ -2,7 +2,7 @@ import type { ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { modelFavorite, modelHit } from '../lib/hits';
 import FavButton from './FavButton';
-import { FighterFlag } from './ui';
+import { FighterFlag, ProspectTag } from './ui';
 import type { EventFight, FighterSummary, UpcomingBout } from '../shared/types';
 import { divisionName, recordStr } from '../lib/format';
 import { METHOD_LABEL } from '../shared/translate';
@@ -61,7 +61,7 @@ export function UpcomingBoutRow({ b, byId }: { b: UpcomingBout; byId: Map<string
         <span>{label && <span style={{ color: 'var(--brand)' }}>{label} · </span>}{divisionName(b.division, true)} · {b.rounds} rounds</span>
       </div>
       <div className="bout">
-        <Side id={b.a.id} name={b.a.name} slug={b.a.slug} rec={fa ? recordStr(fa.record) : 'Estreia'} side="a" />
+        <Side id={b.a.id} name={b.a.name} slug={b.a.slug} rec={fa ? recordStr(fa.record) : 'Estreia'} side="a" prospect />
         <div className="mid">
           <b className="vs">vs</b>
           {b.a.slug && b.b.slug && (
@@ -70,7 +70,7 @@ export function UpcomingBoutRow({ b, byId }: { b: UpcomingBout; byId: Map<string
             </Link>
           )}
         </div>
-        <Side id={b.b.id} name={b.b.name} slug={b.b.slug} rec={fb ? recordStr(fb.record) : 'Estreia'} side="b" right />
+        <Side id={b.b.id} name={b.b.name} slug={b.b.slug} rec={fb ? recordStr(fb.record) : 'Estreia'} side="b" right prospect />
       </div>
     </div>
   );
@@ -117,12 +117,12 @@ export function ResultBoutRow({ f }: { f: EventFight }) {
   );
 }
 
-function Side({ id, name, slug, rec, right, cls = '', side }: { id: string | null; name: string; slug: string | null; rec: string; right?: boolean; cls?: string; side: 'a' | 'b' }) {
+function Side({ id, name, slug, rec, right, cls = '', side, prospect }: { id: string | null; name: string; slug: string | null; rec: string; right?: boolean; cls?: string; side: 'a' | 'b'; prospect?: boolean }) {
   const inner = (
     <>
       <Avatar name={name} id={id} size="sm" side={side} />
       <div style={{ minWidth: 0 }}>
-        <div className="nm"><FighterFlag id={id} slug={slug} />{name}</div>
+        <div className="nm"><FighterFlag id={id} slug={slug} />{name}{prospect && <ProspectTag id={id} />}</div>
         <div className="rc">{rec}</div>
       </div>
       {id && <FavButton kind="fighters" id={id} name={name} className="sm" />}

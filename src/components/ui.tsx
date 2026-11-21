@@ -1,6 +1,7 @@
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
 import { useFighters } from '../lib/data';
 import { initials } from '../lib/format';
+import type { FighterSummary } from '../shared/types';
 
 type IconName = 'home' | 'users' | 'swords' | 'calendar' | 'chart' | 'x' | 'up' | 'down' | 'chev' | 'info' | 'trophy' | 'belt' | 'more' | 'search' | 'copy' | 'share';
 
@@ -154,6 +155,20 @@ export function ResultBadge({ r }: { r: 'W' | 'L' | 'D' | 'NC' }) {
 export function Flag({ src, country }: { src?: string | null; country?: string | null }) {
   if (!src) return null;
   return <img className="flag" src={src} alt={country ?? ''} title={country ?? ''} width={18} height={18} loading="lazy" referrerPolicy="no-referrer" />;
+}
+
+/** Selo "Prospecto" (até 5 lutas no UFC, números acima da média, termina cedo), achado pelo id do lutador. */
+export function ProspectTag({ id, compact }: { id?: string | null; compact?: boolean }) {
+  const list = useFighters().data;
+  if (!list || !id) return null;
+  const p = prospectMap(list).get(id);
+  return p ? <span className={`prospect-tag${compact ? ' compact' : ''}`} title={`Prospecto #${p.rank}: ${p.tags.slice(0, 2).join(' · ')}`}>{compact ? 'P' : 'Prospecto'}</span> : null;
+}
+const prospectMaps = new WeakMap<object, Map<string, NonNullable<FighterSummary['prospect']>>>();
+function prospectMap(list: FighterSummary[]) {
+  let m = prospectMaps.get(list);
+  if (!m) { m = new Map(); for (const f of list) if (f.prospect) m.set(f.id, f.prospect); prospectMaps.set(list, m); }
+  return m;
 }
 
 type FlagMap = Map<string, { flag: string; country: string }>;
