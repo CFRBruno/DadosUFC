@@ -7,6 +7,23 @@ import { divisionName, recordStr } from '../lib/format';
 import { METHOD_LABEL } from '../shared/translate';
 import { Avatar, Icon } from './ui';
 
+type Seg = 'main' | 'prelims' | 'early';
+const SEG_RANK: Record<Seg, number> = { main: 0, prelims: 1, early: 2 };
+export const SEG_LABEL: Record<Seg, string> = { main: 'Card principal', prelims: 'Card preliminar', early: 'Preliminares iniciais' };
+
+/** Ordena do card principal para os preliminares (ordem original mantida dentro de cada trecho; sem trecho vai ao fim). */
+export function bySegment<T>(items: T[], seg: (x: T) => Seg | undefined): T[] {
+  if (!items.some((x) => seg(x))) return items;
+  const rank = (x: T) => { const s = seg(x); return s ? SEG_RANK[s] : 9; };
+  return items.map((x, i) => [x, i] as const).sort((a, b) => rank(a[0]) - rank(b[0]) || a[1] - b[1]).map((x) => x[0]);
+}
+
+/** Título de seção, mostrado quando o trecho do card muda em relação à luta anterior. */
+export function SegHeading({ seg, prev }: { seg: Seg | undefined; prev: Seg | undefined }) {
+  if (!seg || seg === prev) return null;
+  return <h3 className="seg-heading">{SEG_LABEL[seg]}</h3>;
+}
+
 export function compareUrl(b: UpcomingBout) {
   const p = new URLSearchParams();
   if (b.a.slug) p.set('a', b.a.slug);

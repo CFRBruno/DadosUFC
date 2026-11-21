@@ -6,3 +6,6 @@
 button.chip-btn { cursor: pointer; font: inherit; border: 0; }
 button.chip-btn { border: 1px solid var(--border-strong); }
 .why-box { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; background: rgba(255, 255, 255, 0.05); border-left: 3px solid var(--red, #e11d2e); line-height: 1.6; }
+
+.seg-heading { margin: 20px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border-strong); font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand); }
+.seg-heading:first-child { margin-top: 4px; }

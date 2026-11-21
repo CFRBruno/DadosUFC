@@ -17,6 +17,7 @@ import { computePriors, priorsFor, processChronologically } from './build';
 import { buildFeatures, currentSnapshot, type Pre } from './features';
 import { loadOdds, marketLookup, updateOdds } from './odds';
 import { loadStatus, updateStatus } from './status';
+import { loadSegments } from './segments';
 import { trainModel2, type MethodInfo } from './train';
 import { fetchMirror, fetchUpcoming, rawExists, RAW_DIR, type ScrapedEvent } from './fetch';
 import { classifyStyle, computeForm, computePercentiles, computeRates, makePercentiler, styleShift, recentStreak, strengthsWeaknesses } from './insights';
@@ -70,6 +71,7 @@ async function main() {
   // linhas de mercado: insumo interno do modelo (o site não mostra odds)
   const statusArchive = await loadStatus();
   await updateStatus(statusArchive, offline);
+  const segmentOf = await loadSegments(espn, offline);
   const oddsArchive = await loadOdds();
   await updateOdds(oddsArchive, espn, offline);
   const marketOf = marketLookup(oddsArchive);
@@ -243,6 +245,8 @@ async function main() {
       };
       const mk = marketOf(ev.date, bt.a.name, bt.b.name);
       if (mk != null) bout.mk = mk;
+      const sg = segmentOf(ev.date, bt.a.name, bt.b.name);
+      if (sg) bout.seg = sg;
       bouts.push(bout);
       if (!nextBout.has(ia)) nextBout.set(ia, bout);
       if (!nextBout.has(ib)) nextBout.set(ib, bout);
@@ -451,6 +455,7 @@ async function main() {
       division: f.division,
       title: f.title,
       scheduledRounds: f.scheduledRounds,
+      ...(() => { const sg = segmentOf(f.date, f.fighters[0].name, f.fighters[1].name); return sg ? { seg: sg } : {}; })(),
       ...(() => {
         const po = trained.pOos.get(f.id), mi = methodInfo.get(f.id);
         if (!po || !mi) return {};

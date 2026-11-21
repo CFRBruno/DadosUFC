@@ -250,6 +250,8 @@ export interface FighterDetail extends FighterSummary {
   preUfc: { w: number; l: number; d: number; ko: number; sub: number; dec: number } | null;
 }
 
+export type CardSegment = 'main' | 'prelims' | 'early';
+
 export interface UpcomingBout {
   eventId: string;
   event: string;
@@ -260,6 +262,8 @@ export interface UpcomingBout {
   rounds: number;
   /** ordem no card (0 = luta principal) */
   order: number;
+  /** trecho do card: principal, preliminar ou preliminar inicial (quando a ESPN informa) */
+  seg?: CardSegment;
   a: { id: string | null; name: string; slug: string | null };
   b: { id: string | null; name: string; slug: string | null };
   /** sinal de mercado para o lutador `a` (insumo interno do modelo; não é exibido) */
@@ -280,6 +284,7 @@ export interface EventFight {
   division: DivisionKey;
   title: boolean;
   scheduledRounds: number;
+  seg?: CardSegment;
   /** previsão feita antes da luta (treinada só com lutas anteriores), do ponto de vista do lutador `a` */
   pred?: { pA: number; mk: boolean; shA: { KO: number; SUB: number; DEC: number }; shB: { KO: number; SUB: number; DEC: number } };
 }
