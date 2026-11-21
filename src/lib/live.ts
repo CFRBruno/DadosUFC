@@ -13,6 +13,10 @@ export interface LiveBout {
   winner: string | null;
   method: string | null;
   names: [string, string];
+  /** ids da ESPN: luta e os dois lutadores (na ordem de `names`), para buscar estatísticas */
+  compId: string;
+  eventId: string;
+  ids: [string, string];
 }
 
 interface Snapshot { bouts: Map<string, LiveBout>; liveEvents: Set<string>; fetchedAt: number }
@@ -26,7 +30,8 @@ const METHOD: [RegExp, string][] = [[/kotko|ko|tko/i, 'KO/TKO'], [/submission|su
 interface EspnComp {
   status: { period?: number; displayClock?: string; type: { name: string; state?: string } };
   format?: { regulation?: { periods?: number } };
-  competitors: { winner?: boolean; athlete: { displayName: string } }[];
+  id?: string;
+  competitors: { id?: string; winner?: boolean; athlete: { displayName: string } }[];
   details?: { type?: { text?: string } }[];
 }
 interface EspnEvent { id: string; status: { type: { name: string } }; competitions?: EspnComp[] }
@@ -52,7 +57,7 @@ function parse(events: EspnEvent[]): Snapshot {
       const txt = (c.details ?? []).map((d) => d.type?.text ?? '').find((s) => /Unofficial Winner/i.test(s)) ?? '';
       const method = state === 'done' ? METHOD.find(([re]) => re.test(txt.replace(/Unofficial Winner/i, '')))?.[1] ?? null : null;
       if (state === 'live') anyLive = true;
-      bouts.set(`${e.id}|${pairKey(x, y)}`, { state, period: c.status.period ?? 0, rounds: c.format?.regulation?.periods ?? 3, clock: c.status.displayClock ?? '', winner: win, method, names: [x, y] });
+      bouts.set(`${e.id}|${pairKey(x, y)}`, { state, period: c.status.period ?? 0, rounds: c.format?.regulation?.periods ?? 3, clock: c.status.displayClock ?? '', winner: win, method, names: [x, y], compId: c.id ?? '', eventId: e.id, ids: [c.competitors[0].id ?? '', c.competitors[1].id ?? ''] });
       bouts.set(pairKey(x, y), bouts.get(`${e.id}|${pairKey(x, y)}`)!);
     }
     if (anyLive || e.status.type.name === 'STATUS_IN_PROGRESS') liveEvents.add(e.id);
@@ -129,3 +134,54 @@ export function currentBout<T extends { a: { name: string }; b: { name: string }
     doneCount: done.length,
   };
 }
+
+// --- Estatísticas da luta (ESPN core API): totais acumulados até agora + lances por round ----------------------
+
+export interface FightStats {
+  /** por lutador (na ordem de `names`): valores acumulados da luta inteira */
+  fighters: [Record<string, number>, Record<string, number>];
+  /** lances por round (knockdowns e quedas) e marcadores de fim de round */
+  rounds: { period: number; events: { clock: string; text: string }[]; ended: boolean }[];
+  fetchedAt: number;
+}
+
+const CORE = 'https://sports.core.api.espn.com/v2/sports/mma/leagues/ufc/events';
+const PLAY_PT: Record<string, string> = { Knockdown: 'Knockdown', Takedown: 'Queda', 'Takedown Attempt': 'Tentativa de queda', 'Submission Attempt': 'Tentativa de finalização', 'Significant Strike': 'Golpe significativo' };
+
+async function getJson<T>(u: string): Promise<T> {
+  const r = await fetch(u);
+  if (!r.ok) throw new Error(String(r.status));
+  return (await r.json()) as T;
+}
+
+export async function fetchFightStats(b: LiveBout): Promise<FightStats> {
+  const base = `${CORE}/${b.eventId}/competitions/${b.compId}`;
+  const stat = async (id: string) => {
+    const d = await getJson<{ splits?: { categories?: { stats?: { abbreviation: string; value: number; displayValue: string }[] }[] } }>(`${base}/competitors/${id}/statistics/0`);
+    const out: Record<string, number> = {};
+    for (const c of d.splits?.categories ?? []) for (const s of c.stats ?? []) {
+      const k = s.abbreviation.trim();
+      out[k] = k === 'TIC' ? clockSec(s.displayValue) : Number(s.value);
+    }
+    return out;
+  };
+  const plays = async () => {
+    const d = await getJson<{ items?: { type?: { text?: string }; period?: { number?: number }; clock?: { displayValue?: string } }[] }>(`${base}/plays?limit=300`);
+    const by = new Map<number, { period: number; events: { clock: string; text: string }[]; ended: boolean }>();
+    for (const p of d.items ?? []) {
+      const n = p.period?.number ?? 0;
+      if (!n) continue;
+      if (!by.has(n)) by.set(n, { period: n, events: [], ended: false });
+      const r = by.get(n)!;
+      const t = p.type?.text ?? '';
+      if (t === 'Round End') r.ended = true;
+      else if (PLAY_PT[t] && t !== 'Takedown Attempt') r.events.push({ clock: p.clock?.displayValue ?? '', text: PLAY_PT[t] });
+    }
+    return [...by.values()].sort((x, y) => x.period - y.period);
+  };
+  const [a, c, rounds] = await Promise.all([stat(b.ids[0]), stat(b.ids[1]), plays().catch(() => [])]);
+  return { fighters: [a, c], rounds, fetchedAt: Date.now() };
+}
+
+export const clockSec = (s: string) => { const m = /^(\d+):(\d{2})$/.exec(s ?? ''); return m ? Number(m[1]) * 60 + Number(m[2]) : 0; };
+export const fmtClock = (sec: number) => `${Math.floor(sec / 60)}:${String(Math.round(sec % 60)).padStart(2, '0')}`;

@@ -1,4 +1,5 @@
 import { Fragment, useEffect, useRef, useState, type ReactNode } from 'react';
+import { fetchFightStats, fmtClock } from '../lib/live';
 import { useFighters } from '../lib/data';
 import { initials } from '../lib/format';
 import type { FighterSummary } from '../shared/types';
@@ -229,15 +230,84 @@ export function LiveDot({ label = 'Ao vivo' }: { label?: string }) {
 
 /** Faixa ao vivo/resultado de uma luta (ESPN): piscando enquanto rola, vencedor + método + round + minutagem ao terminar. */
 export function LiveStrip({ live }: { live: import('../lib/live').LiveBout | null }) {
+  const [open, setOpen] = useState(false);
   if (!live) return null;
-  if (live.state === 'live') return <div className="live-strip live"><LiveDot /><b>Round {live.period}{live.rounds ? ` de ${live.rounds}` : ''}</b><span>{live.clock}</span></div>;
-  if (live.state === 'pre') return <div className="live-strip pre"><LiveDot label="Na entrada" /></div>;
-  const lose = live.winner ? live.names.find((n) => n !== live.winner) : null;
+  const toggle = live.state === 'pre' ? null : (
+    <button type="button" className="live-more" aria-expanded={open} onClick={() => setOpen(!open)}>{open ? 'Ocultar dados' : 'Ver dados da luta'}</button>
+  );
+  let strip: ReactNode;
+  if (live.state === 'live') strip = <div className="live-strip live"><LiveDot /><b>Round {live.period}{live.rounds ? ` de ${live.rounds}` : ''}</b><span>{live.clock}</span>{toggle}</div>;
+  else if (live.state === 'pre') strip = <div className="live-strip pre"><LiveDot label="Na entrada" /></div>;
+  else {
+    const lose = live.winner ? live.names.find((n) => n !== live.winner) : null;
+    strip = (
+      <div className="live-strip done">
+        <b>{live.winner ? `Venceu: ${live.winner}` : 'Sem vencedor (empate ou sem resultado)'}</b>
+        <span>{[live.method, `R${live.period}`, live.clock].filter(Boolean).join(' · ')}</span>
+        {lose && <small>derrota de {lose}</small>}
+        {toggle}
+      </div>
+    );
+  }
+  return <>{strip}{open && <LiveStats live={live} />}</>;
+}
+
+const STAT_ROWS: { label: string; land: string; att?: string; time?: boolean }[] = [
+  { label: 'Golpes significativos', land: 'SSL', att: 'SSA' },
+  { label: 'Golpes totais', land: 'TSL', att: 'TSA' },
+  { label: 'Knockdowns', land: 'KD' },
+  { label: 'Quedas', land: 'TDL', att: 'TDA' },
+  { label: 'Tentativas de finalização', land: 'SM' },
+  { label: 'Reversões', land: 'RV' },
+  { label: 'Controle', land: 'TIC', time: true },
+];
+
+/** Estatísticas acumuladas da luta e lances por round (ESPN); atualiza a cada 20 s enquanto a luta rola. */
+function LiveStats({ live }: { live: import('../lib/live').LiveBout }) {
+  const [st, setSt] = useState<import('../lib/live').FightStats | null>(null);
+  const [err, setErr] = useState(false);
+  useEffect(() => {
+    let alive = true, timer: ReturnType<typeof setTimeout> | undefined;
+    const run = async () => {
+      try {
+        const s = await fetchFightStats(live);
+        if (alive) { setSt(s); setErr(false); }
+      } catch { if (alive) setErr(true); }
+      if (alive && live.state === 'live') timer = setTimeout(run, 20_000);
+    };
+    void run();
+    return () => { alive = false; if (timer) clearTimeout(timer); };
+  }, [live.compId, live.state]); // eslint-disable-line react-hooks/exhaustive-deps
+  if (err && !st) return <div className="live-stats note">Dados da luta indisponíveis no momento.</div>;
+  if (!st) return <div className="live-stats note">Carregando dados da luta…</div>;
+  const [A, B] = st.fighters;
+  const has = Object.keys(A).length > 0;
   return (
-    <div className="live-strip done">
-      <b>{live.winner ? `Venceu: ${live.winner}` : 'Sem vencedor (empate ou sem resultado)'}</b>
-      <span>{[live.method, `R${live.period}`, live.clock].filter(Boolean).join(' · ')}</span>
-      {lose && <small>derrota de {lose}</small>}
+    <div className="live-stats">
+      <div className="ls-head"><b>{live.names[0]}</b><span>{live.state === 'live' ? 'até agora' : 'luta inteira'}</span><b>{live.names[1]}</b></div>
+      {has ? STAT_ROWS.map((r) => {
+        const a = A[r.land] ?? 0, b = B[r.land] ?? 0, tot = a + b || 1;
+        const show = (v: number, att?: number) => (r.time ? fmtClock(v) : r.att ? `${v}/${att ?? 0}` : String(v));
+        return (
+          <div className="ls-row" key={r.label}>
+            <span className={a > b ? 'lead' : ''}>{show(a, A[r.att ?? ''])}</span>
+            <div className="ls-mid"><small>{r.label}</small><div className="ls-bar"><i style={{ width: `${(a / tot) * 100}%` }} /><i className="b" style={{ width: `${(b / tot) * 100}%` }} /></div></div>
+            <span className={b > a ? 'lead' : ''}>{show(b, B[r.att ?? ''])}</span>
+          </div>
+        );
+      }) : <p className="note">A ESPN ainda não publicou as estatísticas desta luta.</p>}
+      {st.rounds.length > 0 && (
+        <div className="ls-rounds">
+          <small>Lances por round</small>
+          {st.rounds.map((r) => (
+            <div key={r.period} className="ls-round">
+              <b>R{r.period}</b>
+              <span>{r.events.length ? r.events.map((e) => `${e.text} ${e.clock}`).join(' · ') : 'sem lances marcados'}{r.ended ? ' · encerrado' : ' · em andamento'}</span>
+            </div>
+          ))}
+        </div>
+      )}
+      <p className="note ls-note">Totais acumulados da luta: a ESPN não publica os números separados por round. Depois do evento, o detalhe round a round entra na página da luta.</p>
     </div>
   );
 }
