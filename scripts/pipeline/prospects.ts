@@ -9,10 +9,13 @@
 //              + 12% domínio (absorve pouco, defende bem)
 //              + 8% adversários (Elo médio dos oponentes batidos)
 //              − penalidades por derrotas e por decisões.
+// Filtros: no máximo 1 derrota (e só com 3+ vitórias, todas antes da decisão), 75%+ das vitórias antes da decisão,
+// no máximo 1 em 4 lutas decidida pelos juízes e nota mínima de 55.
 
 import type { FighterDetail, Prospect } from '../../src/shared/types';
 
 const MAX_FIGHTS = 5;
+const MIN_SCORE = 55;
 const clamp = (x: number, a = 0, b = 1) => Math.max(a, Math.min(b, x));
 
 type Pool = { women: boolean; rates: FighterDetail['rates'] };
@@ -41,7 +44,9 @@ export function computeProspects(details: FighterDetail[], today: string): Map<s
     const st = d.totals;
     if (d.fights.length < 1 || d.fights.length > MAX_FIGHTS) continue;
     if (!d.active || (d.lastFight ?? '') < cutoff || d.ufcStatus?.kind === 'dispensado' || d.ufcStatus?.kind === 'aposentado') continue;
-    if (st.time < 120 || st.wins < 1 || st.wins < 2 * st.losses || st.losses > 1) continue;
+    if (st.time < 120 || st.wins < 1 || st.losses > 1) continue;
+    // "implacável": no máximo uma derrota, e só se vier com 3+ vitórias, todas antes da decisão
+    if (st.losses === 1 && !(st.wins >= 3 && st.koW + st.subW === st.wins)) continue;
     const decided = d.fights.filter((e) => e.result !== 'NC');
     const fin = st.koW + st.subW;
     const finScore = (fin + 0.5) / (st.wins + 1); // prior de 50% para amostras pequenas
@@ -66,7 +71,9 @@ export function computeProspects(details: FighterDetail[], today: string): Map<s
     score -= 12 * st.losses + 14 * decShare;
     score *= 0.88 + 0.12 * Math.min(1, st.time / 900); // pouca luta = nota puxada para baixo
     // exigência mínima: precisa ter terminado luta(s) e ser claramente acima da média
-    if (fin < 1 || fin / st.wins < 0.5 || offense < 0.6) continue;
+    // exigência mínima: pelo menos 75% das vitórias antes da decisão, no máximo 1 em 4 lutas indo para os juízes
+    if (fin < 1 || fin / st.wins < 0.75 || decShare > 0.25 || offense < 0.6) continue;
+    if (score < MIN_SCORE) continue;
     const tags: string[] = [];
     if (st.losses === 0) tags.push('Invicto no UFC');
     if (st.koW >= 1 && st.subW >= 1) tags.push('Versátil: nocaute e finalização');

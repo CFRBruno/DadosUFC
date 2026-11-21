@@ -21,7 +21,7 @@ export default function Prospects() {
       <div className="page-head">
         <span className="eyebrow">Para assistir</span>
         <h1>Prospectos</h1>
-        <p>Lutadores com até 5 lutas no UFC que já têm números muito acima da média e terminam as lutas antes da decisão: nocaute ou finalização.</p>
+        <p>Lutadores com até 5 lutas no UFC, quase sempre invictos, com números muito acima da média e vitórias que terminam antes da decisão: nocaute ou finalização.</p>
       </div>
       <div className="filters">
         <select value={div} onChange={(e) => setDiv(e.target.value)} aria-label="Categoria">
@@ -58,8 +58,9 @@ export default function Prospects() {
       <details className="panel" style={{ marginTop: 20 }}>
         <summary style={{ cursor: 'pointer', fontWeight: 700 }}>Como a nota é calculada</summary>
         <p className="note" style={{ marginTop: 10, lineHeight: 1.7 }}>
-          Entram lutadores ativos com 1 a 5 lutas no UFC, no máximo 1 derrota e pelo menos metade das vitórias antes da decisão. A nota (0 a 100) soma:
-          finalização (28%, vitórias que não foram para os juízes), ofensiva (24%, golpes, knockdowns, finalizações e quedas comparados ao resto do UFC),
+          Entram lutadores ativos com 1 a 5 lutas no UFC que cumpram todos os requisitos: pelo menos 75% das vitórias antes da decisão,
+          no máximo 1 em 4 lutas decidida pelos juízes, nenhuma derrota (uma derrota só é aceita com 3 ou mais vitórias, todas antes da decisão) e nota mínima de 55.
+          A nota (0 a 100) soma finalização (28%, vitórias que não foram para os juízes), ofensiva (24%, golpes, knockdowns, finalizações e quedas comparados ao resto do UFC),
           versatilidade (14%, bom em pé e no chão), rapidez (14%), domínio (12%, absorve pouco e defende bem) e nível dos adversários batidos (8%).
           Derrotas e decisões tiram pontos, e poucos minutos de luta puxam a nota para baixo. É um retrato do que já aconteceu, não uma previsão de carreira.
         </p>
