@@ -18,6 +18,7 @@ import { buildFeatures, currentSnapshot, type Pre } from './features';
 import { loadOdds, marketLookup, updateOdds } from './odds';
 import { loadStatus, updateStatus } from './status';
 import { loadSegments } from './segments';
+import { computeProspects } from './prospects';
 import { trainModel2, type MethodInfo } from './train';
 import { fetchMirror, fetchUpcoming, rawExists, RAW_DIR, type ScrapedEvent } from './fetch';
 import { classifyStyle, computeForm, computePercentiles, computeRates, makePercentiler, styleShift, recentStreak, strengthsWeaknesses } from './insights';
@@ -364,6 +365,7 @@ async function main() {
       upcoming: nextBout.has(id),
       active: nextBout.has(id) || (entries[0]?.date ?? '') >= ACTIVE_FROM,
       ufcStatus: ufcStatusOf(id),
+      prospect: null,
       titlesOutside: titlesOutside(id),
       styleShift: null,
       ...(() => {
@@ -422,6 +424,9 @@ async function main() {
     d.strengths = sw.strengths;
     d.weaknesses = sw.weaknesses;
   }
+  const prospects = computeProspects(details, today);
+  for (const d of details) d.prospect = prospects.get(d.id) ?? null;
+  console.log(`  Prospectos: ${prospects.size} · top 12: ${details.filter((d) => d.prospect).sort((a, b) => a.prospect!.rank - b.prospect!.rank).slice(0, 12).map((d) => `${d.name} (${d.prospect!.score})`).join(', ')}`);
   const byDiv = new Map<string, FighterDetail[]>();
   for (const d of details) {
     if (!d.fights.length) continue;
@@ -647,8 +652,8 @@ async function main() {
   }
 
   const summaries: FighterSummary[] = details
-    .map(({ id, slug, name, nickname, division, women, record, elo, lastFight, age, style, streak, upcoming, active, photo, photoPage, country, flag, photoLocal, official, champ, ufcStatus }) => ({
-      id, slug, name, nickname, division, women, record, elo, lastFight, age, style, streak, upcoming, active, photo, photoPage, country, flag, photoLocal, official, champ, ufcStatus,
+    .map(({ id, slug, name, nickname, division, women, record, elo, lastFight, age, style, streak, upcoming, active, photo, photoPage, country, flag, photoLocal, official, champ, ufcStatus, prospect }) => ({
+      id, slug, name, nickname, division, women, record, elo, lastFight, age, style, streak, upcoming, active, photo, photoPage, country, flag, photoLocal, official, champ, ufcStatus, prospect,
     }))
     .sort((a, b) => a.name.localeCompare(b.name));
   await writeFile(path.join(OUT, 'fighters.json'), JSON.stringify(summaries));

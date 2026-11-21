@@ -172,6 +172,9 @@ export interface TitleReign {
   endKind: 'lost' | 'vacated' | 'ongoing' | 'interim';
 }
 
+/** Prospecto: poucas lutas no UFC, números muito acima da média e vitórias que terminam cedo. */
+export interface Prospect { score: number; rank: number; tags: string[]; why: string[]; fights: number }
+
 /** Trecho da carreira no UFC com o estilo de luta daquele período. */
 export interface StyleSegment { from: string; to: string; style: string; fights: number }
 
@@ -196,6 +199,8 @@ export interface FighterSummary {
   active: boolean;
   /** aposentadoria ou dispensa recente, com data */
   ufcStatus: UfcStatus | null;
+  /** destaque de "prospecto" (até 5 lutas, finalizador), quando se aplica */
+  prospect: Prospect | null;
   /** foto (Wikimedia Commons) e página do arquivo, para crédito/licença */
   photo: string | null;
   photoPage: string | null;

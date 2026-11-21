@@ -82,6 +82,7 @@ function Profile({ f }: { f: FighterDetail }) {
             {f.champ && <span className={`chip ${f.champ === 'atual' ? 'chip-gold' : 'chip-tag'}`}>{f.champ === 'atual' ? 'Campeão atual' : 'Ex-campeão do UFC'}</span>}
             {f.style && <span className="chip chip-style">{f.style}</span>}
             {f.preUfc && f.preUfc.w + f.preUfc.l + f.preUfc.d > 0 && <span className="chip" title="Cartel em outras organizações antes do UFC (ESPN): vitórias-derrotas-empates">Fora do UFC {f.preUfc.w}-{f.preUfc.l}{f.preUfc.d ? `-${f.preUfc.d}` : ''}</span>}
+            {f.prospect && <Link to="/prospectos" className="chip chip-up" title="Poucas lutas no UFC, números acima da média e vitórias que terminam cedo">Prospecto #{f.prospect.rank}</Link>}
             {f.titlesOutside ? <span className="chip chip-tag" title="Vitórias em lutas de cinturão fora do UFC, segundo a ESPN. A contagem inclui cinturões regionais e pode ser imprecisa.">{f.titlesOutside} vitória{f.titlesOutside > 1 ? 's' : ''} por cinturão fora do UFC</span> : null}
             {f.streak && <span className={`chip ${f.streak.startsWith('V') ? 'chip-up' : 'chip-red'}`}>{f.streak.startsWith('V') ? `${f.streak.slice(1)} vitória(s) seguida(s)` : f.streak.startsWith('D') ? `${f.streak.slice(1)} derrota(s) seguida(s)` : 'Empate'}</span>}
           </div>

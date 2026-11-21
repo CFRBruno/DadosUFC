@@ -19,6 +19,7 @@ import EloPeaks from './pages/EloPeaks';
 import Infograficos from './pages/Infograficos';
 import OfficialRanking from './pages/OfficialRanking';
 import Favoritos from './pages/Favoritos';
+import Prospects from './pages/Prospects';
 import { useFavorites } from './lib/favorites';
 
 type Nav = { to: string; label: string; icon: Parameters<typeof Icon>[0]['name']; end?: boolean };
@@ -28,6 +29,7 @@ const NAV: Nav[] = [
   { to: '/comparar', label: 'Comparar', icon: 'swords' },
   { to: '/ranking', label: 'Ranking', icon: 'trophy' },
   { to: '/eventos', label: 'Eventos', icon: 'calendar' },
+  { to: '/prospectos', label: 'Prospectos', icon: 'users' },
   { to: '/cinturoes', label: 'Cinturões', icon: 'belt' },
   { to: '/infograficos', label: 'Infográficos', icon: 'chart' },
   { to: '/modelo', label: 'Modelo', icon: 'chart' },
@@ -147,6 +149,7 @@ export default function App() {
           <Route path="/ranking/elo" element={<EloPeaks />} />
           <Route path="/infograficos" element={<Infograficos />} />
           <Route path="/eventos" element={<Events />} />
+          <Route path="/prospectos" element={<Prospects />} />
           <Route path="/evento/:id" element={<EventPage />} />
           <Route path="/cinturoes" element={<Titles />} />
           <Route path="/modelo" element={<About />} />
