@@ -4,7 +4,7 @@ import { ResultBoutRow, UpcomingBoutRow } from '../components/events';
 import FavButton from '../components/FavButton';
 import { useFavorites } from '../lib/favorites';
 import { ErrorBox, Icon, LiveDot, Loading } from '../components/ui';
-import { useLive } from '../lib/live';
+import { currentBout, liveOf, useLive } from '../lib/live';
 import { shortName } from '../lib/compare';
 import { useEvents, useFighters } from '../lib/data';
 import type { EventInfo, FighterSummary } from '../shared/types';
@@ -77,6 +77,8 @@ export default function Events() {
         <p>Todos os eventos do UFC desde janeiro de 2016, mais os próximos cards. Clique num evento para ver as lutas.</p>
       </div>
 
+      {data && <LivePriority events={data.upcoming} />}
+
       <div className="filters">
         <div className="seg" role="group" aria-label="Mostrar">
           {([['todos', 'Todos'], ['realizados', 'Realizados'], ['proximos', 'Próximos']] as const).map(([v, l]) => (
@@ -118,6 +120,39 @@ export default function Events() {
           {list.length === 0 && <div className="empty">Nenhum evento.</div>}
         </div>
       )}
+    </div>
+  );
+}
+
+/** Área prioritária do evento que está acontecendo agora: leva ao card e rola até a luta atual. */
+function LivePriority({ events }: { events: EventInfo[] }) {
+  const snap = useLive();
+  const live = events.filter((e) => snap.liveEvents.has(e.id.replace(/^espn-/, '')));
+  if (!live.length) return null;
+  return (
+    <div className="live-priority-list">
+      {live.map((e) => {
+        const info = currentBout(snap, e.id, e.bouts);
+        const lastWin = info.last?.live.winner;
+        return (
+          <Link key={e.id} to={`/evento/${e.id}?ir=atual`} className="live-priority" aria-label={`Evento ao vivo: ${e.name}. Ir para a luta atual`}>
+            <LiveDot label="Evento ao vivo" />
+            <div className="lp-name">{e.name}</div>
+            {info.current && (
+              <div className="lp-now">
+                {info.isLive ? 'Agora' : 'A seguir'}: {shortName(info.current.a.name)} × {shortName(info.current.b.name)}
+                {info.isLive && (() => { const lv = liveOf(snap, e.id, info.current!.a.name, info.current!.b.name); return lv ? ` · R${lv.period} ${lv.clock}` : ''; })()}
+              </div>
+            )}
+            {info.last && (
+              <div className="lp-last">
+                Última concluída: <b>{lastWin ?? 'sem vencedor'}</b>{lastWin ? ` venceu ${shortName(info.last.live.names.find((n) => n !== lastWin) ?? '')}` : ''} · {[info.last.live.method, `R${info.last.live.period}`, info.last.live.clock].filter(Boolean).join(' · ')}
+              </div>
+            )}
+            <span className="lp-cta">Ir para a luta atual →</span>
+          </Link>
+        );
+      })}
     </div>
   );
 }

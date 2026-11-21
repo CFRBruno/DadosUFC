@@ -100,3 +100,32 @@ export function useLive(): Snapshot {
 export function liveOf(s: Snapshot, eventId: string | null | undefined, a: string, b: string): LiveBout | null {
   return (eventId && s.bouts.get(`${eventId.replace(/^espn-/, '')}|${pairKey(a, b)}`)) || s.bouts.get(pairKey(a, b)) || null;
 }
+
+export interface CurrentInfo<T> {
+  /** luta rolando agora, ou a próxima a começar */
+  current: T | null;
+  /** true quando `current` está rolando de fato */
+  isLive: boolean;
+  /** última luta concluída (a mais perto da luta principal), com o resultado */
+  last: { bout: T; live: LiveBout } | null;
+  doneCount: number;
+}
+
+/**
+ * Qual é a luta "atual" de um evento ao vivo. O card é listado da luta principal (order 0) para baixo
+ * e acontece de baixo para cima; então a atual é a que está rolando ou, não havendo, a primeira ainda
+ * não concluída depois da última luta encerrada (a de maior `order` entre as pendentes).
+ */
+export function currentBout<T extends { a: { name: string }; b: { name: string }; order: number }>(s: Snapshot, eventId: string, bouts: T[]): CurrentInfo<T> {
+  const withLive = bouts.map((b) => ({ b, lv: liveOf(s, eventId, b.a.name, b.b.name) }));
+  const liveNow = withLive.find((x) => x.lv?.state === 'live');
+  const done = withLive.filter((x) => x.lv?.state === 'done').sort((x, y) => x.b.order - y.b.order);
+  const pending = withLive.filter((x) => x.lv?.state !== 'done').sort((x, y) => y.b.order - x.b.order);
+  const next = liveNow ?? pending[0] ?? null;
+  return {
+    current: next ? next.b : null,
+    isLive: !!liveNow,
+    last: done[0] ? { bout: done[0].b, live: done[0].lv! } : null,
+    doneCount: done.length,
+  };
+}

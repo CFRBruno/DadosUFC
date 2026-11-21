@@ -7,7 +7,7 @@ import type { EventInfo, FighterDetail, FighterSummary, UpcomingBout } from '../
 import ConfidenceBadge from './ConfidenceBadge';
 import { SegGroups, compareUrl } from './events';
 import { Avatar, FighterFlag, LiveStrip, Loading, ProspectTag } from './ui';
-import { liveOf, useLive } from '../lib/live';
+import { liveOf, pairKey, useLive } from '../lib/live';
 
 const M_PT = { KO: 'KO/TKO', SUB: 'finalização', DEC: 'decisão' } as const;
 
@@ -39,7 +39,7 @@ export default function EventForecast({ ev, byId }: { ev: EventInfo; byId: Map<s
         const fa = b.a.id ? byId.get(b.a.id) : undefined, fb = b.b.id ? byId.get(b.b.id) : undefined;
         const label = b.order === 0 ? 'Luta principal' : b.title ? 'Cinturão' : null;
         return (
-          <div className="fc-card" key={i}>
+          <div className="fc-card" key={i} data-bout={pairKey(b.a.name, b.b.name)}>
             <LiveStrip live={liveOf(liveSnap, b.eventId, b.a.name, b.b.name)} />
             <div className="bout-meta">
               <span>{label && <span style={{ color: 'var(--brand)' }}>{label} · </span>}{divisionName(b.division, true)} · {b.rounds} rounds</span>
