@@ -24,7 +24,7 @@ export const pairKey = (a: string, b: string) => [norm(a), norm(b)].sort().join(
 const METHOD: [RegExp, string][] = [[/kotko|ko|tko/i, 'KO/TKO'], [/submission|sub/i, 'Finalização'], [/decision/i, 'Decisão']];
 
 interface EspnComp {
-  status: { period?: number; displayClock?: string; type: { name: string } };
+  status: { period?: number; displayClock?: string; type: { name: string; state?: string } };
   format?: { regulation?: { periods?: number } };
   competitors: { winner?: boolean; athlete: { displayName: string } }[];
   details?: { type?: { text?: string } }[];
@@ -39,7 +39,13 @@ function parse(events: EspnEvent[]): Snapshot {
     for (const c of e.competitions ?? []) {
       if (c.competitors.length !== 2) continue;
       const t = c.status.type.name;
-      const state = t === 'STATUS_IN_PROGRESS' ? 'live' : t === 'STATUS_FINAL' ? 'done' : t === 'STATUS_PRE_FIGHT' ? 'pre' : null;
+      // pelo "state" da ESPN (in = rolando, inclusive no intervalo entre rounds; post = encerrada), com o nome como reserva
+      const st = c.status.type.state;
+      const state = st === 'in' || t === 'STATUS_IN_PROGRESS' ? 'live'
+        : t === 'STATUS_FINAL' || (st === 'post' && !/CANCEL|POSTPON/.test(t)) ? 'done'
+        : t === 'STATUS_PRE_FIGHT' ? 'pre'
+        : t !== 'STATUS_SCHEDULED' && st && st !== 'pre' ? 'live' // qualquer outro estado intermediário da ESPN
+        : null;
       if (!state) continue;
       const [x, y] = c.competitors.map((k) => k.athlete.displayName) as [string, string];
       const win = c.competitors.find((k) => k.winner)?.athlete.displayName ?? null;
