@@ -715,3 +715,19 @@ a.belt-w:hover, a.belt-l:hover { text-decoration: underline; }
 .reign-list li { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 10px 12px; background: var(--surface-2); border: 1px solid var(--border); border-radius: var(--radius); }
 .reign-when, .reign-def { color: var(--text-2); font-size: 13px; }
 .reign-def { margin-left: auto; font-weight: 700; }
+
+/* --- Perfil: aviso de aposentadoria/dispensa, estilos clicáveis --- */
+.status-banner { margin: 12px 0 0; padding: 10px 14px; border-radius: 10px; border: 1px solid var(--border-strong); background: rgba(255, 255, 255, 0.05); }
+.status-banner.dispensado { border-color: #d63a3a; background: rgba(214, 58, 58, 0.12); }
+.status-banner.aposentado { border-color: #d4a017; background: rgba(212, 160, 23, 0.12); }
+button.chip-btn { cursor: pointer; font: inherit; font-weight: 700; border: 1px solid var(--border-strong); }
+button.chip-btn.chip-style { border-color: #8b6ee6; background: #2a1f4d; box-shadow: 0 0 0 2px rgba(139, 110, 230, 0.3); }
+
+/* --- Evento: card principal / preliminares em caixas --- */
+.seg-groups { display: flex; flex-direction: column; gap: 34px; margin-top: 8px; }
+.seg-box { position: relative; border: 1px solid var(--border-strong); border-radius: 16px; padding: 26px 12px 8px; }
+.seg-box .fc-card, .seg-box .bout { margin-bottom: 12px; }
+.seg-heading { position: absolute; top: -13px; left: 16px; display: inline-flex; align-items: center; gap: 10px; margin: 0; padding: 4px 14px; border: 1px solid var(--border-strong); border-radius: 999px; background: #1a1a1a; font-size: 12px; font-weight: 800; letter-spacing: 0.14em; text-transform: uppercase; color: var(--text); white-space: nowrap; }
+.seg-heading small { font-size: 11px; font-weight: 600; letter-spacing: 0.02em; text-transform: none; color: var(--muted); }
+.seg-main { border-color: rgba(237, 28, 36, 0.6); }
+.seg-main .seg-heading { border-color: rgba(237, 28, 36, 0.8); color: #ff4d55; }
