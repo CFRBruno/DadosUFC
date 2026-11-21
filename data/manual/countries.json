@@ -1,4 +1,11 @@
 {
   "_ajuda": "Correções de nacionalidade quando a ESPN erra. Chave: nome do lutador. 'country' em português; 'flag' é o código da bandeira da ESPN (usa, bra, eng, rus…).",
-  "Brendan Allen": { "country": "Estados Unidos", "flag": "usa" }
+  "Brendan Allen": {
+    "country": "Estados Unidos",
+    "flag": "usa"
+  },
+  "Nikolas Motta": {
+    "country": "Brasil",
+    "flag": "bra"
+  }
 }
