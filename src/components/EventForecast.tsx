@@ -5,7 +5,7 @@ import { loadJson, useModel } from '../lib/data';
 import { divisionName, fmtPct } from '../lib/format';
 import type { EventInfo, FighterDetail, FighterSummary, UpcomingBout } from '../shared/types';
 import ConfidenceBadge from './ConfidenceBadge';
-import { SegHeading, bySegment, compareUrl } from './events';
+import { SegGroups, compareUrl } from './events';
 import { Avatar, FighterFlag, Loading } from './ui';
 
 const M_PT = { KO: 'KO/TKO', SUB: 'finalização', DEC: 'decisão' } as const;
@@ -33,13 +33,11 @@ export default function EventForecast({ ev, byId }: { ev: EventInfo; byId: Map<s
   if (!rows) return <Loading label="Calculando as previsões do card…" />;
   return (
     <div className="forecast">
-      {bySegment(rows, (r) => r.b.seg).map(({ b, an }, i, all) => {
+      <SegGroups items={rows} seg={(r) => r.b.seg} render={({ b, an }, i) => {
         const fa = b.a.id ? byId.get(b.a.id) : undefined, fb = b.b.id ? byId.get(b.b.id) : undefined;
         const label = b.order === 0 ? 'Luta principal' : b.title ? 'Cinturão' : null;
         return (
-          <div key={i}>
-          <SegHeading seg={b.seg} prev={all[i - 1]?.b.seg} />
-          <div className="fc-card">
+          <div className="fc-card" key={i}>
             <div className="bout-meta">
               <span>{label && <span style={{ color: 'var(--brand)' }}>{label} · </span>}{divisionName(b.division, true)} · {b.rounds} rounds</span>
             </div>
@@ -69,9 +67,8 @@ export default function EventForecast({ ev, byId }: { ev: EventInfo; byId: Map<s
               </div>
             )}
           </div>
-          </div>
         );
-      })}
+      }} />
     </div>
   );
 }

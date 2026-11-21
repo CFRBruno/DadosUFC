@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { modelFavorite, modelHit } from '../lib/hits';
 import FavButton from './FavButton';
@@ -18,10 +19,26 @@ export function bySegment<T>(items: T[], seg: (x: T) => Seg | undefined): T[] {
   return items.map((x, i) => [x, i] as const).sort((a, b) => rank(a[0]) - rank(b[0]) || a[1] - b[1]).map((x) => x[0]);
 }
 
-/** Título de seção, mostrado quando o trecho do card muda em relação à luta anterior. */
-export function SegHeading({ seg, prev }: { seg: Seg | undefined; prev: Seg | undefined }) {
-  if (!seg || seg === prev) return null;
-  return <h3 className="seg-heading">{SEG_LABEL[seg]}</h3>;
+/** Agrupa por trecho do card, cada um numa caixa com contorno fino e título em destaque. */
+export function SegGroups<T>({ items, seg, render }: { items: T[]; seg: (x: T) => Seg | undefined; render: (x: T, i: number) => ReactNode }) {
+  const sorted = bySegment(items, seg);
+  const groups: { seg: Seg | undefined; items: { x: T; i: number }[] }[] = [];
+  sorted.forEach((x, i) => {
+    const s = seg(x);
+    const last = groups[groups.length - 1];
+    if (last && last.seg === s) last.items.push({ x, i });
+    else groups.push({ seg: s, items: [{ x, i }] });
+  });
+  return (
+    <div className="seg-groups">
+      {groups.map((g, gi) => (
+        <section key={gi} className={`seg-box${g.seg ? ' seg-' + g.seg : ''}`}>
+          {g.seg && <h3 className="seg-heading"><span>{SEG_LABEL[g.seg]}</span><small>{g.items.length} {g.items.length === 1 ? 'luta' : 'lutas'}</small></h3>}
+          {g.items.map(({ x, i }) => render(x, i))}
+        </section>
+      ))}
+    </div>
+  );
 }
 
 export function compareUrl(b: UpcomingBout) {

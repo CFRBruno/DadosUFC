@@ -7,5 +7,10 @@ button.chip-btn { cursor: pointer; font: inherit; border: 0; }
 button.chip-btn { border: 1px solid var(--border-strong); }
 .why-box { margin: 0 0 12px; padding: 10px 14px; border-radius: 10px; background: rgba(255, 255, 255, 0.05); border-left: 3px solid var(--red, #e11d2e); line-height: 1.6; }
 
-.seg-heading { margin: 20px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border-strong); font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--brand); }
-.seg-heading:first-child { margin-top: 4px; }
+
+.seg-groups { display: flex; flex-direction: column; gap: 28px; }
+.seg-box { border: 1px solid var(--border-strong); border-radius: 14px; padding: 0 14px 6px; background: rgba(255, 255, 255, 0.015); }
+.seg-box.seg-main { border-color: rgba(237, 28, 36, 0.55); }
+.seg-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin: 0 -14px 8px; padding: 12px 14px; border-bottom: 1px solid var(--border-strong); border-radius: 14px 14px 0 0; background: rgba(255, 255, 255, 0.04); font-size: 15px; font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text); }
+.seg-heading small { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; color: var(--muted); text-transform: none; }
+.seg-main .seg-heading { color: var(--brand); background: rgba(237, 28, 36, 0.1); border-bottom-color: rgba(237, 28, 36, 0.4); }

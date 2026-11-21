@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import EventForecast from '../components/EventForecast';
 import FavButton from '../components/FavButton';
-import { ResultBoutRow, SegHeading, UpcomingBoutRow, bySegment } from '../components/events';
+import { ResultBoutRow, SegGroups, UpcomingBoutRow } from '../components/events';
 import { eventScore } from '../lib/hits';
 import { ErrorBox, Loading } from '../components/ui';
 import { useEvents, useFighters } from '../lib/data';
@@ -47,8 +47,8 @@ export default function EventPage() {
             ) : null;
           })()}
           {ev.upcoming
-            ? bySegment(ev.bouts, (b) => b.seg).map((b, i, a) => <div key={i}><SegHeading seg={b.seg} prev={a[i - 1]?.seg} /><UpcomingBoutRow b={b} byId={byId} /></div>)
-            : bySegment(ev.fights, (f) => f.seg).map((f, i, a) => <div key={f.id}><SegHeading seg={f.seg} prev={a[i - 1]?.seg} /><ResultBoutRow f={f} /></div>)}
+            ? <SegGroups items={ev.bouts} seg={(b) => b.seg} render={(b, i) => <UpcomingBoutRow key={i} b={b} byId={byId} />} />
+            : <SegGroups items={ev.fights} seg={(f) => f.seg} render={(f) => <ResultBoutRow key={f.id} f={f} />} />}
           {ev.upcoming && ev.bouts.length === 0 && <p className="note">Card ainda não divulgado.</p>}
         </div>
       )}
